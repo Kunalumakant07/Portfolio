@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300&family=Open+Sans:wght@400;600;700&family=Poppins&display=swap');
+*{
+    margin: 0;
+    padding: 0;
+}
+.menu{
+    font-family: 'Fira Sans', sans-serif;
+    background-color: aqua;
+    width: 20vw;
+}
+
+.menu nav{
+    font-size: 30px;
+    padding: 10px;
+}
+
+.menu nav li{
+list-style: none;
+font-size: 35px;
+padding: 35px 0;
+}
+
+.main{
+    background-color: yellow;
+    width: 80vw;
+}
+
+.container{
+    display: flex;
+}
