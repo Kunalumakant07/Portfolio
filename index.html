@@ -4,210 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Umakant Kunal - Portfolio</title>
+    <title>Umakant Kunal - Web Developer Portfolio</title>
+    <meta name="description" content="Umakant Kunal's portfolio showcasing web development skills and projects. Explore my work in HTML, CSS, JavaScript, Bootstrap, C++, and Git.">
+    <meta name="keywords" content="web development, portfolio, HTML, CSS, JavaScript, Bootstrap, C++, Git">
+    <meta name="author" content="Umakant Kunal">
+    <!-- Open Graph meta tags for social media sharing -->
+    <meta property="og:title" content="Umakant Kunal - Web Developer Portfolio">
+    <meta property="og:description" content="Umakant Kunal's portfolio showcasing web development skills.">
+    <meta property="og:image" content="URL_TO_YOUR_PROFILE_IMAGE">
+    <meta property="og:url" content="URL_TO_YOUR_WEBSITE">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.1/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 10px;
-            padding: 0;
-            box-sizing: border-box;
-            color: #ffffff;
-            overflow-x: hidden;
-            transition: background 0.5s ease;
-            background-color: #000000; /* Choose a suitable background color */
-        }
-
-header {
-background-size: 200% 200%;
-    
-    padding: 1em;
-    text-align: center;
-    color: #ffffff;
-    position: relative;
-}
-header h1 {
-    color: rgb(255, 252, 252);
-    z-index: 1;
-}
-
-
-nav {
-    position:fixed;
-    background-color: #000000; 
-    padding: 15px 0; /* Add padding for better appearance */
-}
-
-nav a {
-    text-decoration: none;
-    margin: 0 1em;
-    font-weight: bold;
-    transition: color 0.3s ease; /* Add smooth color transition */
-}
-
-.hero {
-    text-align: center;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    padding: 2em;
-    color: #fff;
-    position: relative;
-    background-size: 200% 200%;
-    background-image: linear-gradient(45deg, #FFA07A, #FF00FF, #00CED1, #FF00FF);
-    animation: gradientAnimation 10s infinite alternate;
-}
-
-@keyframes gradientAnimation {
-    0% {
-        background-position: 0% 50%;
-    }
-    100% {
-        background-position: 100% 50%;
-    }
-}
-
-.hero img {
-    max-width: 200px;
-    height: auto;
-    border-radius: 10%;
-    margin-bottom: 1em;
-    animation: bounce 1s infinite alternate;
-    /* Add 3D shadow effect */
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-}
-
-@keyframes bounce {
-    0% {
-        transform: translateY(0);
-    }
-    100% {
-        transform: translateY(-10px); /* Adjust the bounce height as needed */
-    }
-}
-
-
-
-        .hero h2,
-        .hero p {
-            margin-top: 20px;
-            animation: fadeInUp 1s ease-out; /* Add fade-in-up animation */
-        }
-
-        .portfolio {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            padding: 2em;
-            background-color: #fff;
-        }
-
-        .project {
-            width: 30%;
-            margin: 1em;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .project img {
-            width: 100%;
-            height: auto;
-        }
-
-        .project h3,
-        .project p {
-            padding: 1em;
-            margin: 0;
-        }
-
-        .about {
-            background-color: #0080ff;
-            color: #fff;
-            padding: 4em 2em;
-            text-align: center;
-        }
-
-        .footer {
-            border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-            background-color: #343a40;
-            color: #fff;
-            text-align: center;
-            padding: 1em;
-            bottom: 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .social-icons {
-            margin-right: 20px;
-            font-size: 30px;
-            color: #fff;
-        }
-
-        /* Add animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-    </style>
-    <script>
-        // Smooth scrolling using jQuery
-        $(document).ready(function () {
-            $("nav a").on('click', function (event) {
-                if (this.hash !== "") {
-                    event.preventDefault();
-                    var hash = this.hash;
-                    $('html, body').animate({
-                        scrollTop: $(hash).offset().top
-                    }, 800, function () {
-                        window.location.hash = hash;
-                    });
-                }
-            });
-        });
-    </script>
+    <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="dark-mode">
 
-    <div class="container-fluid">
+    <div class="container-fluid" id="home">
 
-        <header>
-            <h1>UMAKANT KUNAL</h1>
+        <header role="banner">
+            <h1>Umakant Kunal</h1>
         </header>
 
-        <nav class="navbar navbar-expand-lg navbar-dark">
+        <nav class="navbar navbar-expand-lg navbar-dark" role="navigation">
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            <div class="dark-mode-container">
+                <button class="btn btn-dark" onclick="toggleDarkMode()" aria-label="Toggle Dark Mode">
+                    <i class="fas fa-moon"></i> Dark Mode
+                </button>
+            </div>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
@@ -217,66 +46,104 @@ nav a {
                 </ul>
             </div>
         </nav>
-
-        <div class="hero" id="home">
-            <img src="images/IMG_20220406_085922.jpg" alt="Profile Image">
+        
+        <div class="hero" id="Home">
+            <img src="images/profile-pic (6).png" alt="Umakant Kunal - Web Developer" title="Profile Image" loading="lazy">
             <h2>Welcome to My Portfolio</h2>
-            <p>Showcasing my amazing work and skills.</p>
+            <p>You can visit my GitHub for projects code and details.</p>
             <a href="resources/Resume.pdf" download="Umakant_Kunal_CV.pdf">
                 <button class="btn btn-primary">
                     <i class="fas fa-download"></i> Download CV
                 </button>
             </a>
-            
-        </div>
+                    </div>
 
         <div id="portfolio" class="portfolio">
             <div class="project">
-                <img src="images/bailey-zindel-NRQV-hBF10M-uash.jpg" alt="Project 1">
-                <h3>Project 1</h3>
-                <p>Description of the project.</p>
+                <img src="resources/projects/project_1.png" alt="Project 1">
+                <h3>Portfolio website</h3>
+                <p>Designed my own portfolio website using html,css and javascript.Also used external css and javascript libraries like bootstrap,fontawesome,jquery for proper page design and responsiveness.</p>
             </div>
 
             <div class="project">
-                <img src="images/ian-dooley-DuBNA1QMpPA-uplash.jpg" alt="Project 2">
-                <h3>Project 2</h3>
-                <p>Description of the project.</p>
+                <img src="resources/projects/project_2.png" alt="Project 2">
+                <h3>Lost and Found Webapp</h3>
+                <p>My biggest and complex project till now and i am working on it for more improvements - Lost and Found Webapp for my university.Used core html,css,javascript(for frontend)and php,MySql(for backend), libraries like PhP Mailer.</p>
             </div>
 
             <div class="project">
-                <img src="images/patrick-tomasso-QMDap1TAu0g-unsplash.jpg" alt="Project 3">
-                <h3>Project 3</h3>
-                <p>Description of the project.</p>
+                <img src="resources/projects/project_3.png" alt="Project 3">
+                <h3>Mass Mail Dispatcher</h3>
+                <p>Mass Mail Dispatcher using html,css and javascript.Used mailJs service integration for sending mails.</p>
             </div>
+
+            <div class="project">
+                <img src="resources/projects/project_4.png" alt="Project 4">
+                <h3>News Search</h3>
+                <p>News search webapp - search news from keywords.Used API Integration like NewsAPI,NewsCatcher API and GNews API.</p>
+            </div>
+
+            <div class="project">
+                <img src="resources/projects/project_5.png" alt="Project 5">
+                <h3>Book Finder</h3>
+                <p>Uses Google Books API for searching books.You can read also.</p>
+            </div>
+
+             <div class="project">
+                <img src="resources/projects/project_6.png" alt="Project 6">
+                <h3>Music Player</h3>
+                <p>This project is made by using core html,css,javascript. External css like fontawesome for icons.</p>
+            </div>
+
         </div>
-
         <div id="about" class="about">
             <h2>About Me</h2>
-            <p>Hello! I'm Umakant Kunal, a passionate and creative web developer. I specialize in crafting beautiful and
-                user-friendly websites. With a keen eye for design and a love for coding, I bring projects to life.
+            <p>Hello! I'm Umakant Kunal, a passionate and creative web developer.
+                I specialize in crafting beautiful and user-friendly websites. 
+                With a keen eye for design and a love for coding, I bring projects to life.
                 Let's work together and create something amazing!</p>
 
             <h3>Skills</h3>
-            <p>HTML | CSS | JavaScript | Bootstrap | React | Git</p>
+            <p>HTML | CSS | JavaScript | C | C++ | Git | DBMS</p>
 
             <h3>Education</h3>
-            <p>Bachelor's Degree in Computer Science<br>Central University of Rajasthan, 2020-present</p>
+            <p>Master's Degree in Computer Science<br>Central University of Rajasthan, 2020-present</p>
         </div>
-
         <footer class="footer" id="contact">
             <div>
-                <p>Contact me at: kunalumakant07@gmail.com</p>
-                <a href="https://github.com/your-github" target="_blank" class="social-icons"><i
+                <p>Contact me at: <a href="mailto:kunalumakant07@gmail.com">kunalumakant07@gmail.com</a></p>
+                <p>Call me at:+91-9887855972</p>
+                <a href="https://github.com/Kunalumakant07" target="_blank" class="social-icons"><i
                         class="fab fa-github"></i></a>
-                <a href="https://www.linkedin.com/in/your-linkedin" target="_blank" class="social-icons"><i
+                <a href="https://www.linkedin.com/in/umakant-kunal-6b321b204" target="_blank" class="social-icons"><i
                         class="fab fa-linkedin"></i></a>
-                <a href="https://www.instagram.com/your-instagram" target="_blank" class="social-icons"><i
+                <a href="https://www.instagram.com/umakant_kunal" target="_blank" class="social-icons"><i
                         class="fab fa-instagram"></i></a>
             </div>
         </footer>
 
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.1/dist/umd/popper.min.js" async></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" async></script>
+    <script src="script.js" async></script>
+    <script type="application/ld+json">
+        {
+          "@context": "http://schema.org",
+          "@type": "Person",
+          "name": "Umakant Kunal",
+          "jobTitle": "Web Developer",
+          "url": "URL_TO_YOUR_WEBSITE",
+          "sameAs": [
+            "https://github.com/your-github",
+            "https://www.linkedin.com/in/umakant-kunal-6b321b204",
+            "https://www.instagram.com/your-instagram"
+          ]
+        }
+    </script>
+
 </body>
 
 </html>
+ 
