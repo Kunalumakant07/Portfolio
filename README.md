@@ -1,2 +1,2 @@
 # Portfolio
-Simple minimal looking asthetic Portfolio website using html,css,javascript,fontawesome,bootstrap.
+Simple minimal looking Portfolio website using html,css,javascript,fontawesome,bootstrap.
