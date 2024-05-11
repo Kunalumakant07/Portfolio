@@ -1,0 +1,124 @@
+body {
+    font-family: "Arial", sans-serif;
+    margin-top: 0.9vw;
+    margin-bottom: 0.9vw;
+    padding: 0px;
+    box-sizing: border-box;
+    color: #000000;
+    overflow-x: hidden;
+    transition: background 0.5s ease;
+    background-color: #ffffff;
+  }
+  
+  header {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    color: #000000;
+    background-color: #fffffff1;
+    padding: 1em;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  
+  .navbar {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    background-color: #141414;
+    padding-left: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+  
+  nav a {
+    text-decoration: none;
+    margin: 0 1em;
+    font-weight: bold;
+    transition: color 0.3s ease;
+  }
+  
+  .footer {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: #343a40;
+    color: #fff;
+    text-align: center;
+    padding: 1em;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .social-icons {
+    margin-right: 20px;
+    font-size: 30px;
+    color: #fff;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+  
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+  
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  body.dark-mode {
+    background-color: #000000;
+    color: #ffffff;
+  }
+  
+  nav.dark-mode-nav {
+    background-color: #000000;
+  }
+  
+  .blog-posts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+  
+  .blog-post {
+    width: 30%;
+    margin: 1em;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .blog-post img {
+    width: 100%;
+    height: auto;
+  }
+  
+  .blog-post h3,
+  .blog-post p {
+    padding: 0.5em;
+    margin: 0;
+  }
+  
+  .publication-date {
+    display: block;
+    padding: 0.5em;
+    margin-top: auto;
+  }
+  
