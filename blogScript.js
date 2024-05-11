@@ -1,6 +1,6 @@
 
 document.addEventListener('DOMContentLoaded', async function () {
-    const markdownFiles = ['blogs/blog000/research.md', 'blogs/blog000/research.md']; // Replace with your Markdown file paths
+    const markdownFiles = ['blogs/blog000/research.md']; // Replace with your Markdown file paths
     const container = document.querySelector('.blog-posts');
 
     for (const file of markdownFiles) {
