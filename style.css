@@ -6,8 +6,7 @@ body {
   box-sizing: border-box;
   color: #000000;
   overflow-x: hidden;
-  transition: background 0.5s ease;
-  background-color: #ffffff;
+  background-color: #cecece;
 }
 
 header {
@@ -16,10 +15,10 @@ header {
   color: #000000;
   background-color: #fffffff1;
   padding: 1em;
+  font-family:Arial, Helvetica, sans-serif;
   text-align: center;
   position: relative;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.5s ease-in-out 0.3s, color 0.5s ease-in-out 0.3s;
 }
 
 body.dark-mode header {
@@ -33,7 +32,7 @@ body.dark-mode header {
   position: sticky;
   top: 0;
   width: 100%;
-  background-color: #141414;
+  background-color: #006eff;
   padding-left: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
@@ -43,8 +42,27 @@ nav a {
   text-decoration: none;
   margin: 0 1em;
   font-weight: bold;
-  transition: color 0.3s ease;
+
 }
+.navbar-nav .nav-item .nav-link {
+  color: #ffffff !important; /* Blue for normal mode */
+}
+
+body.dark-mode .navbar-nav .nav-item .nav-link {
+  color: #ffffff !important; /* White for dark mode */
+}
+
+
+/* Default moon icon color */
+.fas.fa-moon {
+  color: #ffffff; /* White color for light mode */
+}
+
+/* Moon icon color in dark mode */
+body.dark-mode .fas.fa-moon {
+  color: #FFD700; /* Yellow color for dark mode */
+}
+
 
 .hero {
   border-bottom-left-radius: 10px;
@@ -54,7 +72,6 @@ nav a {
   position: relative;
   color: #000000;
   background-color: #fffffff1;
-  transition: background-color 0.5s ease-in-out 0.3s, color 0.5s ease-in-out 0.3s;
 }
 
 body.dark-mode .hero {
@@ -64,11 +81,11 @@ body.dark-mode .hero {
 
 
 .hero img {
-  max-width: 260px;
-  height: auto;
-  border-radius: 50%;
+  max-width: 250px;
+  height: 210px;
+  border-radius: 100%;
   margin-bottom: 1em;
-  animation: bounce 1s infinite alternate;
+  /* animation: bounce 1s infinite alternate; */
 
   
 }
@@ -103,8 +120,8 @@ body.dark-mode .hero {
   .project {
     width: 30%;
     margin: 1em;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    border: 3px solid #9900ff;
+    border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
@@ -140,7 +157,7 @@ body.dark-mode .hero {
   background-color: #fffffff1;
   padding: 4em 2em;
   text-align: center;
-  transition: background-color 0.5s ease-in-out 0.3s, color 0.5s ease-in-out 0.3s;
+  
 }
 
 body.dark-mode .about {
