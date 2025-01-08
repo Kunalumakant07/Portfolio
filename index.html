@@ -1,90 +1,1201 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Umakant Kunal - Web Developer Portfolio</title>
-    <meta name="description" content="Umakant Kunal's portfolio showcasing web development skills and projects. Explore my work in HTML, CSS, JavaScript, Bootstrap, C++, and Git.">
-    <meta name="keywords" content="web development, portfolio, HTML, CSS, JavaScript, Bootstrap, C++, Git">
-    <meta name="author" content="Umakant Kunal">
-    <meta property="og:title" content="Umakant Kunal - Web Developer Portfolio">
-    <meta property="og:description" content="Umakant Kunal's portfolio showcasing web development skills.">
-    <meta property="og:image" content="URL_TO_YOUR_PROFILE_IMAGE">
-    <meta property="og:url" content="URL_TO_YOUR_WEBSITE">
-    <meta name="twitter:card" content="summary_large_image">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme */
+            --light-primary: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
+            --light-glass: rgba(255, 255, 255, 0.7);
+            --light-card: rgba(255, 255, 255, 0.6);
+            --light-text: #1a1a1a;
+            --light-border: rgba(255, 255, 255, 0.2);
+            --light-shadow: rgba(0, 0, 0, 0.1);
+
+            /* Medium Theme */
+            --medium-primary: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            --medium-glass: rgba(30, 41, 59, 0.7);
+            --medium-card: rgba(30, 41, 59, 0.6);
+            --medium-text: #f1f5f9;
+            --medium-border: rgba(255, 255, 255, 0.1);
+            --medium-shadow: rgba(0, 0, 0, 0.2);
+
+            /* Dark Theme */
+            --dark-primary: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --dark-glass: rgba(0, 0, 0, 0.7);
+            --dark-card: rgba(0, 0, 0, 0.6);
+            --dark-text: #f1f5f9;
+            --dark-border: rgba(255, 255, 255, 0.1);
+            --dark-shadow: rgba(0, 0, 0, 0.3);
+
+            /* Common Colors */
+            --accent-blue: #3b82f6;
+            --accent-hover: #2563eb;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin:0;
+            transition: all 0.3s ease;
+            background: var(--light-primary);
+            color: var(--light-text);
+        }
+
+        body.medium-theme {
+            background: var(--medium-primary);
+            color: var(--medium-text);
+        }
+
+        body.dark-theme {
+            background: var(--dark-primary);
+            color: var(--dark-text);
+        }
+
+        .navbar {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--light-border);
+            transition: all 0.3s ease;
+        }
+
+        .medium-theme .navbar {
+            background: var(--medium-glass) !important;
+            border-bottom: 1px solid var(--medium-border);
+        }
+
+        .dark-theme .navbar {
+            background: var(--dark-glass) !important;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+  /* Brand Logo Styles */
+.navbar-brand {
+    position: relative;
+    padding: 0.5rem 0;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover span:first-child {
+    color: var(--accent-hover);
+}
+
+/* Theme Switcher Positioning */
+@media (max-width: 991px) {
+    .theme-switcher {
+        margin-right: 1rem;
+    }
+}
+
+/* Navbar Container */
+.navbar .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+/* Ensure proper spacing in mobile view */
+.navbar-collapse {
+    flex-basis: 100%;
+}
+
+@media (min-width: 992px) {
+    .navbar-collapse {
+        flex-basis: auto;
+    }
+}
+
+/* Theme buttons responsive sizing */
+.theme-btn {
+    width: 28px;
+    height: 28px;
+}
+
+@media (min-width: 992px) {
+    .theme-btn {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Hamburger Menu Theme-Aware Styles */
+.navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+/* Light theme (default) */
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Medium theme */
+.medium-theme .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Dark theme */
+.dark-theme .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Hover effect for hamburger menu */
+.navbar-toggler:hover {
+    opacity: 0.8;
+}
+
+        .nav-link {
+            color: var(--light-text) !important;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 1rem !important;
+        }
+
+        .medium-theme .nav-link,
+        .dark-theme .nav-link {
+            color: var(--medium-text) !important;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--accent-blue);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .theme-switcher {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--light-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn.light {
+            background: var(--light-primary);
+        }
+
+        .theme-btn.medium {
+            background: var(--medium-primary);
+        }
+
+        .theme-btn.dark {
+            background: var(--dark-primary);
+        }
+
+        .theme-btn.active {
+            border: 2px solid var(--accent-blue);
+            transform: scale(1.1);
+        }
+
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1rem;
+            text-align: center;
+        }
+
+        .profile-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 4px solid var(--light-border);
+            box-shadow: 0 8px 32px var(--light-shadow);
+            margin-bottom: 2rem;
+            /* animation: float 6s ease-in-out infinite; */
+        }
+
+        .medium-theme .profile-image {
+            border-color: var(--medium-border);
+            box-shadow: 0 8px 32px var(--medium-shadow);
+        }
+
+        .dark-theme .profile-image {
+            border-color: var(--dark-border);
+            box-shadow: 0 8px 32px var(--dark-shadow);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .glass-card {
+            background: var(--light-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--light-border);
+            border-radius: 1rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .medium-theme .glass-card {
+            background: var(--medium-glass);
+            border-color: var(--medium-border);
+        }
+
+        .dark-theme .glass-card {
+            background: var(--dark-glass);
+            border-color: var(--dark-border);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+        }
+        .project-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .skill-tag {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.skill-tag:hover {
+    transform: translateY(-2px);
+}
+
+.glass-card {
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+}
+
+.project-image {
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover .project-image {
+    transform: scale(1.05);
+}
+
+.btn-outline-primary {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--accent-blue);
+    color: white;
+}
+
+/* Modal Theme Styles */
+.themed-modal {
+    background: #ffffff;
+    border: 1px solid var(--light-border);
+    color: var(--light-text);
+}
+
+/* Medium Theme */
+.medium-theme .themed-modal {
+    background: #334155 !important;
+    border-color: var(--medium-border);
+    color: var(--medium-text);
+}
+
+/* Dark Theme */
+.dark-theme .themed-modal {
+    background: #0f172a !important;
+    border-color: var(--dark-border);
+    color: var(--dark-text);
+}
+
+/* Modal Header Styles */
+.themed-modal .modal-header {
+    border-color: var(--light-border);
+}
+
+.medium-theme .themed-modal .modal-header,
+.dark-theme .themed-modal .modal-header {
+    border-color: var(--medium-border);
+}
+
+/* Close Button Styles */
+.themed-modal .btn-close {
+    filter: invert(0);
+    opacity: 0.75;
+}
+
+.medium-theme .themed-modal .btn-close,
+.dark-theme .themed-modal .btn-close {
+    filter: invert(1);
+    opacity: 0.75;
+}
+
+/* Skill Tags in Modal */
+.themed-modal .skill-tag {
+    background: rgba(97, 218, 251, 0.1);
+    color: var(--light-text);
+    border: 1px solid var(--light-border);
+}
+
+.medium-theme .themed-modal .skill-tag,
+.dark-theme .themed-modal .skill-tag {
+    background: rgba(97, 218, 251, 0.2);
+    color: var(--medium-text);
+    border: 1px solid var(--medium-border);
+}
+
+/* Links in Modal */
+.themed-modal a:not(.btn) {
+    color: var(--accent-blue);
+}
+
+.themed-modal a:not(.btn):hover {
+    color: var(--accent-hover);
+}
+
+/* List Styles in Modal */
+.themed-modal ul {
+    padding-left: 1.2rem;
+}
+
+.themed-modal li {
+    margin-bottom: 0.5rem;
+}
+
+        .about-card {
+    position: relative;
+    padding: 2rem;
+}
+
+.about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .about-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+.bio-section {
+    padding-right: 2rem;
+}
+
+.skills-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.skills-container {
+    width: 100%;
+}
+
+.skill-item {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.skill-item:last-child {
+    margin-bottom: 0;
+}
+
+.skill-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.skill-name {
+    font-weight: 500;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.skill-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.skill-percentage {
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.skill-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.skill-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--accent-blue);
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.6s ease-in-out;
+}
+
+.skill-item:hover .skill-percentage {
+    opacity: 1;
+}
+
+.skill-item.revealed .skill-progress {
+    width: var(--progress) !important;
+}
+
+.skill-item.revealed .skill-percentage {
+    opacity: 1;
+}
+
+/* Theme variations */
+.medium-theme .skills-section {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-theme .skills-section {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+        .btn-primary {
+            background: var(--accent-blue);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 2rem;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .social-link {
+            color: var(--light-text);
+            font-size: 1.5rem;
+            margin: 0 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .medium-theme .social-link,
+        .dark-theme .social-link {
+            color: var(--medium-text);
+        }
+
+        .social-link:hover {
+            color: var(--accent-blue);
+            transform: translateY(-3px);
+        }
+        /* Remove modal transparency */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    opacity: 1 !important;
+    background-color: transparent;
+}
+
+/* Custom close button color */
+.btn-close {
+    width: 1 rem;
+    height: 1 rem;
+    background-color: rgb(216, 216, 216) !important;
+    opacity: 1 !important; /* Make it fully visible */
+}
+
+
+.btn-close:hover {
+    background-color: rgb(216, 216, 216) !important;
+}
+
+/* Contact Grid Layout */
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+    width: 100%;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 768px) {
+    .contact-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Contact Item Styles */
+.contact-item {
+    display: flex;
+    justify-content: center;
+}
+
+.contact-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Icon Wrapper */
+.contact-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin:0;
+}
+
+.contact-icon-wrapper i {
+    color: white;
+    font-size: 1.25rem;
+}
+
+/* Contact Details */
+.contact-details {
+    text-align: left;
+    flex: 1;
+}
+
+.contact-details .label {
+    font-weight: 500;
+    margin: 0;
+    color: var(--light-text);
+}
+
+.medium-theme .contact-details .label,
+.dark-theme .contact-details .label {
+    color: var(--medium-text);
+}
+
+.contact-details a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    word-break: break-word;
+}
+
+.contact-details a:hover {
+    color: var(--accent-hover);
+}
+
+/* Social Links (unchanged) */
+.social-links-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.social-link-enhanced {
+    width: 48px;
+    height: 48px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-blue);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.social-link-enhanced:hover {
+    background: var(--accent-blue);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Theme Variations */
+.medium-theme .social-link-enhanced {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .social-link-enhanced {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+    </style>
 </head>
-
 <body>
-    <div class="container-fluid" id="home">
+<!-- Updated Navbar -->
+<nav class="navbar navbar-expand-lg fixed-top bg-white/80">
+    <div class="container">
+        <!-- Brand Logo -->
+        <a class="navbar-brand fw-bold text-decoration-none" href="#" style="font-size: 1.5rem;">
+            <span style="color: var(--accent-blue);">UK</span>
+        </a>
 
-        <header role="banner">
-            <h1>Umakant Kunal</h1>
-            
-        </header>
-
-        <nav class="navbar navbar-expand-lg navbar-dark" role="navigation">
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="dark-mode-container">
-                <button class="btn btn-dark" onclick="toggleDarkMode()" aria-label="Toggle Dark Mode">
-                    <i class="fas fa-moon"></i> Dark Mode
-                </button>
-            </div>            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="portfolio.html">Portfolio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
-                    <li class="nav-item"><a class="nav-link" href="blogs.html">Blogs</a></li>
-                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-        </nav>
-        
-        <div class="hero" id="Home">
-                <img src="images/hitman.jpg" alt="Umakant Kunal - Web Developer" title="Profile Image" loading="lazy">           
-            <div class="card">
-                <div class="card-content" id="clock"></div>
-                <div class="card-content" id="date"></div>
-                <div class="card-content" id="day"></div>
-            </div> 
-            <h2>Welcome to My Portfolio</h2>
-            <p>You can visit my GitHub for projects code and details.</p>
-            <a href="resources/Resume.pdf" download="Umakant_Kunal_CV.pdf">
-                <button class="btn btn-primary">
-                    <i class="fas fa-download"></i> Download CV
-                </button>
-            </a>
+        <!-- Theme Switcher (Moved outside collapse) -->
+        <div class="theme-switcher order-2">
+            <button class="theme-btn light active" onclick="setTheme('light')"></button>
+            <button class="theme-btn medium" onclick="setTheme('medium')"></button>
+            <button class="theme-btn dark" onclick="setTheme('dark')"></button>
         </div>
 
+        <!-- Hamburger Menu -->
+        <button class="navbar-toggler custom-toggler order-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navigation Links -->
+        <div class="collapse navbar-collapse order-4" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#portfolio">Portfolio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contact</a>
+                </li>
+            </ul>
+        </div>
     </div>
+</nav>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" async></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.1/dist/umd/popper.min.js" async></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" async></script>
-    <script src="script.js" async></script>
-    <script type="application/ld+json">
-        {
-          "@context": "http://schema.org",
-          "@type": "Person",
-          "name": "Umakant Kunal",
-          "jobTitle": "Web Developer",
-          "url": "URL_TO_YOUR_WEBSITE",
-          "sameAs": [
-            "https://github.com/your-github",
-            "https://www.linkedin.com/in/umakant-kunal-6b321b204",
-            "https://www.instagram.com/your-instagram"
-          ]
+
+    <section id="home" class="hero-section">
+        <div class="container">
+            <img src="resources/profile-pic.png" alt="Umakant Kunal" class="profile-image">
+            <h1 class="display-4 fw-bold mb-4">Umakant Kunal</h1>
+            <p class="lead mb-5">Full Stack Developer & UI/UX Enthusiast</p>
+            <button class="btn btn-primary">Download CV</button>
+        </div>
+    </section>
+
+    <section id="portfolio" class="py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-5">
+                <h2>Recent Projects</h2>
+                <a href="#" class="text-decoration-none d-flex align-items-center fw-medium" style="color: var(--accent-blue)">
+                    See all projects 
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="glass-card h-100 position-relative" style="overflow: hidden;">
+                        <img src="resources/project_1.png" alt="Project 1" class="project-image">
+                        <h3 class="h4 mb-3">Echo Mail</h3>
+                        <p class="mb-4">A mass mail dispatcher.</p>
+                        <div class="mb-4">
+                            <span class="skill-tag" style="background: rgba(161, 12, 149, 0.8); color: #ffffff; border: 1px solid #000000;">HTML5</span>
+                            <span class="skill-tag" style="background: rgba(7, 103, 167, 0.8); color: #ffffff; border: 1px solid #000000;">CSS</span>
+                            <span class="skill-tag" style="background: rgba(8, 172, 57, 0.8); color: #ffffff; border: 1px solid #000000;">JavaScript</span>
+                            <span class="skill-tag" style="background: rgba(199, 123, 10, 0.8); color: #ffffff; border: 1px solid #000000;">EmailJs</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-primary" onclick="window.location.href='https://kunalumakant07.github.io/Echo-Mail/'">
+                                <i class="fas fa-external-link-alt me-2"></i>Live Demo
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="window.location.href='https://github.com/Kunalumakant07/Echo-Mail'">
+                                <i class="fab fa-github me-2"></i>Source Code
+                            </button>
+                            <button class="btn btn-sm btn-link text-primary" onclick="showProjectDetails('mass-mail-dispatcher')">
+                                Learn More
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Repeat for other projects -->
+            </div>
+        </div>
+     </section>
+    
+    <!-- Updated Modal HTML -->
+<div id="projectModal" class="modal fade" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content themed-modal">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title" id="projectModalLabel">Project Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="projectDetails" style="max-height: 500px; overflow-y: auto;">
+                <!-- Content dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+    <section id="about" class="py-5">
+        <div class="container">
+            <div class="glass-card about-card">
+                <div class="about-content">
+                    <div class="bio-section">
+                        <h2 class="mb-4">About Me</h2>
+                        <p class="lead mb-4">Passionate web developer with expertise in creating responsive and user-friendly applications. I specialize in modern web technologies and love building innovative solutions.</p>
+                        <button class="btn btn-primary mb-4">Download Resume</button>
+                    </div>
+                    
+                    <div class="skills-section">
+                        <h3 class="h5 mb-4">Technical Skills</h3>
+                        <div class="skills-container">
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fab fa-html5 skill-icon"></i>
+                                        HTML5
+                                    </span>
+                                    <span class="skill-percentage">95%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 95%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fab fa-css3-alt skill-icon"></i>
+                                        CSS3
+                                    </span>
+                                    <span class="skill-percentage">90%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 90%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fab fa-js skill-icon"></i>
+                                        JavaScript
+                                    </span>
+                                    <span class="skill-percentage">85%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 85%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fas fa-code skill-icon"></i>
+                                        C
+                                    </span>
+                                    <span class="skill-percentage">90%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 90%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fas fa-cogs skill-icon"></i>
+                                        C++
+                                    </span>
+                                    <span class="skill-percentage">85%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 85%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fab fa-git-alt skill-icon"></i>
+                                        Git/GitHub
+                                    </span>
+                                    <span class="skill-percentage">80%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 80%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fas fa-database skill-icon"></i>
+                                        MySQL
+                                    </span>
+                                    <span class="skill-percentage">85%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 85%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fas fa-database skill-icon"></i>
+                                        MongoDB
+                                    </span>
+                                    <span class="skill-percentage">75%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 75%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="skill-item">
+                                <div class="skill-info">
+                                    <span class="skill-name">
+                                        <i class="fab fa-python skill-icon"></i>
+                                        Python
+                                    </span>
+                                    <span class="skill-percentage">70%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-progress" style="--progress: 70%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact" class="py-5 mt-5">
+        <div class="container">
+            <div class="glass-card">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                        <h2 class="h3 mb-4">Let's Connect</h2>
+                        <p class="lead mb-5">I'm always interested in hearing about new projects and opportunities.</p>
+                        
+                        <!-- Contact Information -->
+                        <div class="contact-grid">
+                            <!-- Email -->
+                            <div class="contact-item">
+                                <div class="contact-content">
+                                    <div class="contact-icon-wrapper">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <div class="contact-details">
+                                        <p class="label">Email</p>
+                                        <a href="mailto:kunalumakant05@gmail.com">kunalumakant05@gmail.com</a>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <!-- Phone -->
+                            <div class="contact-item">
+                                <div class="contact-content">
+                                    <div class="contact-icon-wrapper">
+                                        <i class="fas fa-phone"></i>
+                                    </div>
+                                    <div class="contact-details">
+                                        <p class="label">Phone</p>
+                                        <a href="tel:+919887855972">+91-9887855972</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <!-- Social Links -->
+                        <div class="social-links-wrapper">
+                            <a href="https://github.com/Kunalumakant07" class="social-link-enhanced" title="GitHub">
+                                <i class="fab fa-github"></i>
+                            </a>
+                            <a href="https://www.linkedin.com/in/umakant-kunal-6b321b204" class="social-link-enhanced" title="LinkedIn">
+                                <i class="fab fa-linkedin"></i>
+                            </a>
+                            <a href="https://www.instagram.com/umakant_kunal" class="social-link-enhanced" title="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="text-center mt-4">
+                <p class="small mb-0 opacity-75">© 2025 Umakant Kunal. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+          function setTheme(theme) {
+            // Remove all theme classes
+            document.body.classList.remove('light-theme', 'medium-theme', 'dark-theme');
+            
+            // Add the selected theme class
+            if (theme !== 'light') {
+                document.body.classList.add(`${theme}-theme`);
+            }
+            
+            // Update theme buttons
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.classList.contains(theme)) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Save theme preference
+            localStorage.setItem('preferred-theme', theme);
         }
+
+        // Apply saved theme preference
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('preferred-theme') || 'light';
+            setTheme(savedTheme);
+            
+            // Smooth scroll for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Navbar scroll effect
+            const navbar = document.querySelector('.navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.style.boxShadow = '0 4px 30px rgba(0, 0, 0, 0.1)';
+                } else {
+                    navbar.style.boxShadow = 'none';
+                }
+            });
+
+            // Add animation on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Animate sections on scroll
+            document.querySelectorAll('section').forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                section.style.transition = 'all 0.6s ease-out';
+                observer.observe(section);
+            });
+
+            // Animate cards on scroll
+            document.querySelectorAll('.glass-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.6s ease-out';
+                observer.observe(card);
+            });
+        });
+
+        // Close mobile menu on link click
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                const navbarCollapse = document.querySelector('.navbar-collapse');
+                if (navbarCollapse.classList.contains('show')) {
+                    navbarCollapse.classList.remove('show');
+                }
+            });
+        });
+
+        // Add hover effect to project cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-10px)';
+                card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15)';
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = 'none';
+            });
+        });
+
+        // Add this to your existing JavaScript
+document.addEventListener('DOMContentLoaded', () => {
+    const skillItems = document.querySelectorAll('.skill-item');
+    
+    skillItems.forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            if (!item.classList.contains('revealed')) {
+                item.classList.add('revealed');
+                // Store the revealed state
+                localStorage.setItem(`skill-${item.querySelector('.skill-name').textContent.trim()}`, 'revealed');
+            }
+        });
+    });
+
+    // Restore revealed state on page load
+    skillItems.forEach(item => {
+        const skillName = item.querySelector('.skill-name').textContent.trim();
+        if (localStorage.getItem(`skill-${skillName}`) === 'revealed') {
+            item.classList.add('revealed');
+        }
+    });
+
+    // Optional: Add a reset button if needed
+    // You can add this button somewhere in your HTML
+    const resetButton = document.createElement('button');
+    resetButton.textContent = 'Reset Skills';
+    resetButton.className = 'btn btn-sm btn-secondary mt-3';
+    resetButton.onclick = () => {
+        localStorage.clear();
+        skillItems.forEach(item => item.classList.remove('revealed'));
+    };
+    document.querySelector('.skills-container').appendChild(resetButton);
+    
+});
+
+const projectData = {
+   'mass-mail-dispatcher': {
+        title: 'Mass Mail Dispatcher',
+        description: `
+            <div class="mb-4">
+                <h4>Overview</h4>
+                <p>A web-based tool designed to streamline mass email communication by validating email lists, composing messages, and dispatching them efficiently.</p>
+            </div>
+            <div class="mb-4">
+                <h4>Key Features</h4>
+            <ul>
+                    <li>Email validation from uploaded CSV files</li>
+                    <li>Separation of valid and invalid emails</li>
+                    <li>Integration with EmailJS for sending messages</li>
+                    <li>Interactive and responsive UI</li>
+                    <li>Error handling and user-friendly alerts</li>
+                </ul>
+            </div>
+            <div class="mb-4">
+                <h4>Technologies Used</h4>
+                <div class="mb-3">
+                    <span class="skill-tag" style="background: rgba(229, 89, 46, 0.15); color: #e5592e; border: 1px solid #e5592e;">HTML5</span>
+                    <span class="skill-tag" style="background: rgba(33, 120, 243, 0.15); color: #2178f3; border: 1px solid #2178f3;">CSS3</span>
+                    <span class="skill-tag" style="background: rgba(247, 223, 30, 0.15); color: #f7df1e; border: 1px solid #f7df1e;">JavaScript</span>
+                    <span class="skill-tag" style="background: rgba(199, 123, 10, 0.15); color: #c77b0a; border: 1px solid #c77b0a;">EmailJS</span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h4>Challenges & Solutions</h4>
+                <p>Handling CSV parsing errors and ensuring smooth integration with EmailJS for real-time dispatch were some of the challenges overcome during development.</p>
+            </div>
+            <div class="text-center mt-4">
+                <a href="https://kunalumakant07.github.io/Echo-Mail/" class="btn btn-primary me-2 mb-md-0 mb-2">
+                    <i class="fas fa-external-link-alt me-2"></i>View Live Demo
+                </a>
+                <a href=" https://github.com/Kunalumakant07/Echo-Mail" class="btn btn-outline-primary me-2 mb-md-0 mb-2">
+                    <i class="fab fa-github me-2"></i>View Source Code
+                </a>
+            </div>
+        `
+    },
+    'portfolio': {
+        title: 'Portfolio Website',
+        description: `
+            <div class="mb-4">
+                <h4>Overview</h4>
+                <p>A modern, responsive portfolio website with theme switching capabilities and smooth animations.</p>
+            </div>
+            <div class="mb-4">
+                <h4>Key Features</h4>
+                <ul>
+                    <li>Theme switching (Light/Medium/Dark)</li>
+                    <li>Responsive design</li>
+                    <li>Smooth animations</li>
+                    <li>Project showcase</li>
+                    <li>Contact form integration</li>
+                </ul>
+            </div>
+            <div class="mb-4">
+                <h4>Technologies Used</h4>
+                <div class="mb-3">
+                    <span style="display: inline-block; padding: 0.3rem 0.8rem; margin: 0.2rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background: rgba(247, 223, 30, 0.15); color: #f7df1e; border: 1px solid #f7df1e; transition: all 0.3s ease; cursor: pointer;">JavaScript</span>
+                    <span style="display: inline-block; padding: 0.3rem 0.8rem; margin: 0.2rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background: rgba(33, 120, 243, 0.15); color: #2178f3; border: 1px solid #2178f3; transition: all 0.3s ease; cursor: pointer;">CSS3</span>
+                    <span style="display: inline-block; padding: 0.3rem 0.8rem; margin: 0.2rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background: rgba(229, 89, 46, 0.15); color: #e5592e; border: 1px solid #e5592e; transition: all 0.3s ease; cursor: pointer;">HTML5</span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h4>Challenges & Solutions</h4>
+                <p>Details about responsive design implementation and theme switching mechanism...</p>
+            </div>
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-primary me-2 mb-md-0 mb-2">
+                    <i class="fas fa-external-link-alt me-2"></i>View Live Demo
+                </a>
+                <a href="#" class="btn btn-outline-primary me-2 mb-md-0 mb-2">
+                    <i class="fab fa-github me-2"></i>View Source Code
+                </a>
+            </div>
+        `
+    }
+    // Add more projects as needed
+};
+    function showProjectDetails(projectId) {
+        const projectModal = new bootstrap.Modal(document.getElementById('projectModal'));
+        document.getElementById('projectDetails').innerHTML = projectData[projectId].description;
+        projectModal.show();
+    }
     </script>
-
 </body>
-
 </html>
- 
