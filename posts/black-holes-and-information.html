@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Black Holes Taught Me About Data Loss — Umakant Kunal</title>
+    <meta name="description" content="The black hole information paradox and what it reveals about data loss, entropy, and why programmers should care about physics.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-space     { color: var(--blue);    border-color: #1e4a6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 58px; right: 0;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-top: none;
+                padding: 16px 24px;
+                gap: 18px;
+                min-width: 180px;
+            }
+            .nav-toggle { display: block; }
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                black-holes-and-information
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2025-08-05</span>
+                <span class="post-category cat-space">Space</span>
+                <span class="post-read-time">7 min read</span>
+            </div>
+
+            <h1 class="post-title">What Black Holes Taught Me<br>About Data Loss</h1>
+
+            <p class="post-subtitle">
+                The universe's most extreme objects aren't just astrophysics curiosities — they are the sharpest lens we have for understanding information, entropy, and why <em>nothing is truly gone</em>. Or maybe it is. Physics hasn't decided yet. Neither has my hard drive.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc AI — Computer Scientist</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                It started with a corrupted database. Three months of sensor readings, gone — not overwritten, not deleted cleanly, just <em>scrambled</em>. The checksum didn't match, the WAL was truncated, and no amount of forensic tooling brought back what was inside those pages. I sat there staring at the hex dump the way you stare at a wall after something breaks, and I thought: <strong>where exactly did the information go?</strong>
+            </p>
+
+            <p>
+                That question sounds trivial. Bits flip. Disks fail. The data was lost — full stop. But something about the framing bothered me. Not the practical problem (backups exist, lessons were learned) but the deeper question: <em>is information the kind of thing that can be permanently destroyed?</em> As it happens, this is not just a database question. It is arguably the most contentious open problem in theoretical physics. And it involves objects considerably more dramatic than a PostgreSQL cluster.
+            </p>
+
+            <h2>THE EVENT HORIZON: A POINT OF NO RETURN</h2>
+
+            <p>
+                A black hole forms when enough mass collapses into a small enough region that the escape velocity exceeds the speed of light. At some distance from the centre — the <strong>Schwarzschild radius</strong> — spacetime curves so severely that no signal, no particle, nothing can escape outward. This boundary is the <em>event horizon</em>: not a physical surface, not a wall, just a mathematical threshold beyond which the future points only inward.
+            </p>
+
+            <p>
+                What's strange about the event horizon is how unremarkable it is, locally. If you fell through one, you wouldn't feel a thing — no siren, no indicator light, no error message. You'd cross the boundary and continue existing, for a while, completely unaware of the one-way door you'd just passed. The universe outside, however, would never hear from you again. From the outside perspective, you would appear to slow down, redshift into oblivion, and asymptotically hover at the horizon forever — a ghost image fading into thermal noise.
+            </p>
+
+            <p>
+                This asymmetry — the insider's smooth passage versus the outsider's frozen image — is the first hint that black holes do something deeply strange to information. What you <em>know</em> about a system depends entirely on which side of the boundary you're on. That's not a philosophical nicety; it has hard consequences for the laws of physics.
+            </p>
+
+            <h2>HAWKING RADIATION AND THE INFORMATION PARADOX</h2>
+
+            <p>
+                In 1974, Stephen Hawking did something that should have been impossible: he showed that black holes <em>evaporate</em>. Applying quantum field theory to curved spacetime, he discovered that the strong gravitational gradient near the event horizon causes pairs of virtual particles to become real. One particle falls in; the other escapes as radiation. The black hole slowly loses mass. Given enough time — an astronomically long time, but finite — it vanishes entirely.
+            </p>
+
+            <blockquote>
+                "Black holes ain't as black as they are painted. They are not the eternal prisons they were once thought. Things can get out of a black hole, both to the outside, and possibly, to another universe."
+                <cite>— Stephen Hawking, Reith Lectures, BBC, 2016</cite>
+            </blockquote>
+
+            <p>
+                But here's the problem. The Hawking radiation is <strong>thermal</strong> — it's random, featureless, governed purely by the black hole's temperature and nothing else. It carries no memory of what fell in. A copy of Hamlet and a rock of the same mass produce identical radiation. When the black hole finishes evaporating, the final state — pure thermal noise — contains no record of the initial state. The information is gone.
+            </p>
+
+            <p>
+                This would be fine if black holes were exceptions to the rules. But they're not. Quantum mechanics has a law that cannot be broken: <strong>unitarity</strong>. The principle that the total information content of a closed system is conserved over time. Pure quantum states evolve into pure quantum states. You can in principle run the universe backward and recover the initial conditions from any final state. Hawking's result said: not if a black hole was involved. The final state is thermal — mixed, not pure. Unitarity is violated. The information is genuinely, permanently destroyed.
+            </p>
+
+            <p>
+                This became known as the <strong>black hole information paradox</strong>. And it broke physicists. Not metaphorically — it generated decades of genuine, sometimes bitter scientific disagreement about what the laws of nature actually permit.
+            </p>
+
+            <h3>Bekenstein, Entropy, and the Area Bound</h3>
+
+            <p>
+                Before Hawking's evaporation result, Jacob Bekenstein had noticed something remarkable: the entropy of a black hole — its thermodynamic disorder — is proportional to the <em>area</em> of its event horizon, not the volume. This is counterintuitive. Entropy usually scales with volume. The more space you have, the more configurations are possible. But for a black hole, the Bekenstein-Hawking entropy is:
+            </p>
+
+            <p>
+                <strong>S = (k · A) / (4 · ℓₚ²)</strong>
+            </p>
+
+            <p>
+                where A is the horizon area and ℓₚ is the Planck length — the smallest meaningful scale in physics. This formula is one of the most beautiful and disturbing results in theoretical physics. It suggests that the maximum amount of information you can store in a region of space is determined not by the volume but by the surface area of its boundary. Reality, at its deepest level, might be two-dimensional. The three-dimensional world we inhabit could be a kind of projection.
+            </p>
+
+            <p>
+                Roger Penrose contributed a complementary picture through his work on singularities and conformal diagrams — showing rigorously that once you're inside the horizon, your entire future worldline terminates at the singularity. There is no escape route, no quantum tunnelling out. The classical picture is as closed as it gets.
+            </p>
+
+            <h2>HAWKING VS SUSSKIND: THE BATTLE FOR INFORMATION</h2>
+
+            <p>
+                For roughly two decades, Stephen Hawking maintained that information was lost. He was comfortable with it — perhaps too comfortable, in the view of his critics. The universe, he felt, was under no obligation to preserve every bit that fell into a black hole. Quantum gravity would need new rules; unitarity might simply not apply across horizons.
+            </p>
+
+            <p>
+                Leonard Susskind disagreed. Violently. In his book <em>The Black Hole War</em>, he describes years of argument with Hawking as a genuine intellectual conflict with existential stakes. If information could be destroyed, it would undermine the consistency of quantum mechanics — the most successful physical theory ever constructed. Everything we know about the microscopic world rests on unitarity. Sacrificing it to accommodate black holes felt, to Susskind and his collaborators, like burning down the house to get rid of a spider.
+            </p>
+
+            <blockquote>
+                "The laws of physics must be of such a nature that out of them one can always calculate the future from the present — and the past from the present. That's what makes physics physics."
+                <cite>— Richard Feynman, The Character of Physical Law, 1965</cite>
+            </blockquote>
+
+            <p>
+                Susskind and Gerard 't Hooft developed <strong>black hole complementarity</strong>: the idea that both descriptions — the infalling observer's smooth crossing, and the outside observer's picture of information being scrambled at the horizon — are simultaneously valid, but no single observer can ever see both. Information is preserved, but encoded in a way so scrambled, so entangled with the outgoing Hawking radiation, that recovering it would require a computation more complex than the age of the universe.
+            </p>
+
+            <p>
+                The resolution that physicists now tentatively favour involves <strong>holography</strong>: the idea, made precise by Juan Maldacena's AdS/CFT correspondence in 1997, that a theory of gravity in a volume is exactly equivalent to a quantum field theory on its boundary. In this framework, information never truly enters the black hole interior in a way that's decoupled from the boundary. The paradox dissolves — not because information loss is permitted, but because the geometry we imagined (information going in and staying in) was never quite right. The encoding is holographic from the start.
+            </p>
+
+            <p>
+                Hawking himself eventually conceded the argument, publicly acknowledging in 2004 that information is preserved. He had been wrong. It remains one of the rarest admissions in the history of physics, and one of the most graceful.
+            </p>
+
+            <h2>THE HOLOGRAPHIC PRINCIPLE AND WHAT SURFACES KNOW</h2>
+
+            <p>
+                The holographic principle deserves a moment on its own, because it is genuinely strange. The claim is not metaphorical. It is not that the universe is <em>like</em> a hologram in some loose, inspirational sense. The claim — supported by rigorous mathematical proofs in specific geometries — is that the complete description of physics in a three-dimensional region is encoded on the two-dimensional surface surrounding it.
+            </p>
+
+            <p>
+                Think of a hard drive. The data isn't in the platters' volume — it's in the magnetic domains on the <em>surface</em>. The Bekenstein bound says nature works the same way at the most fundamental level. The universe has a maximum storage capacity, and it's measured in Planck areas on the boundary, not Planck volumes in the bulk. Every black hole is, in this sense, a perfect storage device running at maximum thermodynamic capacity. It stores exactly as much information as its surface allows — no more, no less.
+            </p>
+
+            <blockquote>
+                "The surface of the black hole, its horizon, is like a holographic plate that contains all the information about what fell in."
+                <cite>— Carl Sagan, paraphrasing Bekenstein, Cosmos: A Personal Voyage</cite>
+            </blockquote>
+
+            <p>
+                What the holographic principle suggests, beyond black holes, is that the intuition that volume equals capacity is fundamentally wrong at the deepest levels of physics. This has implications not just for cosmology but for how we think about complexity, encoding, and storage — in any system, at any scale.
+            </p>
+
+            <h2>WHAT THIS MEANS FOR SOFTWARE: ENTROPY, DATA LOSS, AND CONSERVATION</h2>
+
+            <p>
+                Here is where I came back to my corrupted database — and found it illuminated from a completely unexpected direction.
+            </p>
+
+            <p>
+                When a disk sector fails, the bits don't vanish into nothing. They're still <em>somewhere</em> — smeared across the magnetic substrate, scrambled by charge redistribution, dissipated as heat into the surrounding circuitry. The information didn't disappear; it became so entangled with its environment that recovering it would require measuring the thermal state of every atom in the platter and its surroundings. In principle, the information is conserved. In practice, it is gone.
+            </p>
+
+            <p>
+                This is <em>exactly</em> the resolution of the black hole information paradox. Information is conserved in principle. Recovery is impossible in practice. The distinction matters enormously, and not just philosophically. It determines how you design systems.
+            </p>
+
+            <div class="callout" data-label="the key insight">
+                The difference between "information destroyed" and "information irreversibly scrambled" is the difference between a universe with broken laws and one with entropy. Physics chose entropy. Software engineers get to choose too — but only if they architect for it deliberately. Databases that truly lose data, like black holes that truly destroy information, violate conservation laws. Good systems scramble; they do not erase.
+            </div>
+
+            <h3>Backups as Hawking Radiation</h3>
+
+            <p>
+                Hawking radiation is the mechanism by which a black hole leaks information back into the universe, encoded in quantum correlations across the radiation field. It's impossibly faint, thermally scrambled, and in practice unreadable — but it's there. The information is seeping out, one entangled photon at a time, over timescales that dwarf the age of the universe.
+            </p>
+
+            <p>
+                A backup is better Hawking radiation. When you commit to a write-ahead log, when you replicate to a secondary, when you push to object storage before acknowledging a write — you are creating a redundant encoding of the information <em>outside the primary system</em>. If the primary collapses (goes offline, corrupts, gets dropped), the encoded copy persists. You don't need to wait for quantum evaporation. You set up the radiation channel before the singularity forms.
+            </p>
+
+            <p>
+                The analogy goes further. Hawking radiation leaks information about the interior in a maximally scrambled form — you can only reconstruct what fell in if you capture and coherently decode the <em>entire</em> radiation field, which requires quantum computation beyond anything imaginable. Good backup systems invert this: they encode redundantly but in a form that's easily reconstructed. The goal of backup design is to be the opposite of a black hole — minimum scrambling, maximum decodability, at every stage.
+            </p>
+
+            <h3>Distributed Systems and Information Conservation</h3>
+
+            <p>
+                The CAP theorem — Consistency, Availability, Partition-tolerance: pick two — is essentially a statement about information conservation under network failure. When a partition occurs, you have a choice: maintain consistency (refuse to answer until the partition heals, preserving the information's integrity) or maintain availability (answer with possibly stale data, allowing the information state to diverge). You cannot do both. Information about the system's true state becomes unrecoverable in one branch.
+            </p>
+
+            <p>
+                This is the distributed systems equivalent of the event horizon. Once two nodes can't communicate, their shared state becomes inaccessible to each other. Each builds its own future. When the partition heals — when the horizon is, metaphorically, crossed back — reconciliation is required. Conflict resolution policies are the algorithm by which two diverged timelines merge their information back into one coherent history.
+            </p>
+
+            <p>
+                Event sourcing takes this seriously at the architectural level. Rather than storing the current state of a system and mutating it in place — which is information-lossy; you lose the history — event sourcing stores every state transition as an immutable log. The current state is a <em>projection</em> of the full event history. You can replay from any point. You can audit the complete causal chain. This is closer to how the universe actually works: every quantum state is the result of a unitary evolution from the initial state. Nothing is discarded. The wavefunction is the log.
+            </p>
+
+            <h3>Why Entropy Tells You Something Fundamental</h3>
+
+            <p>
+                The second law of thermodynamics says entropy never decreases in a closed system. This is sometimes read as pessimistic — things tend toward disorder. But the correct reading is almost the opposite. High entropy means <strong>high information content</strong> about the microstate, given the macrostate. A perfectly ordered system has low entropy precisely because you already know where everything is. A high-entropy system has many possible microstates consistent with the macrostate — it's genuinely uncertain, genuinely information-rich at the microscale.
+            </p>
+
+            <p>
+                When software engineers talk about "entropy" in codebases — technical debt, increasing disorder, decreasing predictability — they're using the word informally but pointing at something real. A codebase that has grown without refactoring is high-entropy in a meaningful sense: many possible states of the system are consistent with the observable outputs, making debugging (state recovery) progressively harder. The information about "what is this code actually doing" is smeared across an increasingly large configuration space. Refactoring is entropy reduction — it's costly, like all thermodynamic work, and it requires an external energy source (engineering time). But it makes the system's state recoverable again.
+            </p>
+
+            <h2>WHY PROGRAMMERS SHOULD CARE ABOUT PHYSICS</h2>
+
+            <p>
+                I want to make an argument that sounds grandiose but I think is correct: the conceptual vocabulary of physics is directly useful for thinking about software systems, not as metaphor but as structural insight.
+            </p>
+
+            <p>
+                The information paradox forced physicists to think carefully about what "information" actually is, how it's encoded, what it means for information to be preserved, and what operations can and cannot destroy it. These are not abstract questions. They're the same questions you face when designing a database, a distributed log, a filesystem, a communication protocol. What invariants must be maintained? Under what failure modes can state be recovered? What is the minimum encoding required to reconstruct the system from a backup?
+            </p>
+
+            <p>
+                Physics has spent fifty years developing rigorous answers to these questions at the fundamental level. Computer science has developed its own frameworks independently. The overlap is not coincidental — both disciplines are studying the same underlying thing: <strong>how information behaves under constraint, transformation, and loss</strong>.
+            </p>
+
+            <blockquote>
+                "Nature uses only the longest threads to weave her patterns, so each small piece of her fabric reveals the organization of the entire tapestry."
+                <cite>— Richard Feynman, The Character of Physical Law, 1965</cite>
+            </blockquote>
+
+            <p>
+                Bekenstein entropy tells you that storage capacity is a surface property. Unitarity tells you that information is conserved unless you deliberately discard it. The holographic principle tells you that a system's complete state can be encoded on its boundary — which is exactly what a Merkle tree does, what a cryptographic hash does, what a write-ahead log does. These aren't coincidences. They're the same deep truth showing up at different scales.
+            </p>
+
+            <p>
+                Physics also gives us the concept of <em>irreversibility</em> with precision. Not everything that looks irreversible is. A database transaction that crashes mid-write looks irreversible from the application layer — but if the WAL is intact, it's recoverable. Conversely, an operation that looks reversible (in-place update to a mutable variable) may be genuinely irreversible at the information level if no log exists. The question to always ask: at what level is this operation actually one-way?
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL REFLECTION</h2>
+
+            <p>
+                I grew up reading popular science books about black holes — Hawking's <em>A Brief History of Time</em> was on my shelf before I understood half of it. I read it for the pictures, for the strangeness, for the feeling that somewhere out there were objects so extreme that our intuitions failed completely. I didn't expect, years later, to find that same strangeness directly relevant to how I think about code.
+            </p>
+
+            <p>
+                The corrupted database that started this line of thinking was genuinely lost — we had no backup of that particular table, a lapse in our rotation policy that I've since fixed obsessively. But the experience sent me back to first principles. What does it mean for data to be lost? Not operationally — I know the operationally correct answer and I implement it. But fundamentally. Is information the kind of thing that can disappear, or does its apparent disappearance always reflect our failure to read where it went?
+            </p>
+
+            <p>
+                Physics says: information is conserved. The universe runs on unitarity. Every state evolved from a previous state through a rule that can, in principle, be run backward. <strong>Nothing is truly gone; it's only scrambled beyond our current ability to reconstruct.</strong> This is either comforting or terrifying depending on your relationship with the past.
+            </p>
+
+            <p>
+                For me, it's motivating. It means that every time data appears lost, the right question is not "was it destroyed?" but "was the encoding path preserved?" A backup is an encoding path. A replication log is an encoding path. A write-ahead journal is an encoding path. The universe conserves information whether or not we're paying attention. Our job as engineers is to set up the encoding paths that let us read what the universe is keeping track of.
+            </p>
+
+            <p>
+                Black holes taught me that the hardest thing in physics isn't the mathematics — it's taking seriously the question of what conservation actually means when systems reach their extremes. Software engineering asks the same question, just with stakes we can actually measure. I try to answer it the same way: carefully, completely, and with at least three redundant copies.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">black holes</span>
+                <span class="tag">information theory</span>
+                <span class="tag">entropy</span>
+                <span class="tag">Hawking radiation</span>
+                <span class="tag">distributed systems</span>
+                <span class="tag">holographic principle</span>
+                <span class="tag">data loss</span>
+                <span class="tag">physics</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="stoicism-for-engineers.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Marcus Aurelius Would Have Been a Great Engineer</span>
+                </a>
+                <a href="why-i-still-write-vanilla-js.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Why I Still Write Vanilla HTML/CSS/JS in 2025</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2025 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

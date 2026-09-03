@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why I Still Write Vanilla HTML/CSS/JS in 2025 — Umakant Kunal</title>
+    <meta name="description" content="A case for fundamentals: why understanding the DOM, CSS cascade, and plain JavaScript still matters in an age of React and Next.js.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-code      { color: var(--blue);    border-color: #1e3a50; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 58px; right: 0;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-top: none;
+                padding: 16px 24px;
+                gap: 18px;
+                min-width: 180px;
+            }
+            .nav-toggle { display: block; }
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                why-i-still-write-vanilla-js
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2025-07-22</span>
+                <span class="post-category cat-code">Code</span>
+                <span class="post-read-time">4 min read</span>
+            </div>
+
+            <h1 class="post-title">Why I Still Write Vanilla<br>HTML/CSS/JS in 2025</h1>
+
+            <p class="post-subtitle">
+                Every new project spawns a new framework. npm install gets heavier. The web gets slower. I keep asking: <em>what exactly are we abstracting away, and at what cost?</em>
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc AI — Computer Scientist</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                The first time I opened a freshly scaffolded Next.js project, I stared at the directory tree for a good five minutes trying to locate where the actual HTML was. It was not there — not in any form I recognised. There was a <code>_document.tsx</code>, a <code>_app.tsx</code>, a <code>pages</code> folder, a <code>public</code> folder, a <code>styles</code> folder, and 847 packages already sitting in <code>node_modules</code> before I had written a single line of my own code. <strong>847 packages.</strong> For a web page.
+            </p>
+
+            <p>
+                I am not here to tell you React is bad. It is not. I use it when it makes sense. But there is a version of this story — and I think it is the dominant version right now — where developers reach for a framework not because the problem demands it, but because reaching for a framework is simply what you do. It is the default reflex. The path of least resistance. And that reflex is quietly eroding something important.
+            </p>
+
+            <h2>THE FRAMEWORK MONOCULTURE</h2>
+
+            <p>
+                Walk into any web development job interview in 2025 and the first technical question is almost certainly about React hooks, the Vue reactivity system, or how Next.js handles server-side rendering. Rarely will you be asked how the browser's event loop works. Almost never will you be asked to explain the CSS cascade from first principles, or to describe what actually happens when you call <code>document.createElement</code>. The industry has quietly decided that these things are implementation details — below the abstraction layer, therefore not worth your mental overhead.
+            </p>
+
+            <p>
+                This is a problem. Not because frameworks are wrong, but because the abstraction has become so thick that many working developers cannot see through it anymore. They know how to wire up a <code>useState</code> hook but cannot explain what triggers a reflow in the DOM. They know how to configure Tailwind but have never thought carefully about the specificity rules that Tailwind is working around. The foundation has been obscured by the scaffolding placed on top of it.
+            </p>
+
+            <blockquote>
+                "Simplicity is a great virtue but it requires hard work to achieve it and education to appreciate it. And to make matters worse: complexity sells better."
+                <cite>— Edsger W. Dijkstra</cite>
+            </blockquote>
+
+            <p>
+                Dijkstra wrote this in 1984. He was talking about software engineering in general, but the sentence lands with particular force when you look at the modern JavaScript ecosystem. Complexity sells better. A framework with a thousand features, a CLI that generates boilerplate, a plugin system for the plugin system — these things look impressive. They look like productivity. Sometimes they are. But often they are complexity renting itself out as convenience.
+            </p>
+
+            <h2>WHAT ABSTRACTIONS HIDE</h2>
+
+            <p>
+                Here is a concrete example. In React, you manage side effects with <code>useEffect</code>. You pass a dependency array and React calls your function when those dependencies change. This is a genuinely useful pattern. But lurking beneath it is a mechanism that many React developers have never confronted directly: the browser's own event-driven architecture, the microtask queue, the distinction between painting a frame and committing to the DOM. When your <code>useEffect</code> produces a flicker or runs one time too many, you are not debugging React — you are debugging timing in the browser's rendering pipeline, whether you know it or not. If you do not know it, you are flying blind.
+            </p>
+
+            <p>
+                In vanilla JS, you cannot avoid these things. When you attach a <code>scroll</code> listener to <code>window</code> and notice your page stuttering, you are forced to learn about passive event listeners and compositor threads. When your CSS animation jitters, you end up reading about <code>will-change</code> and GPU layer promotion. When you try to measure an element before the browser has painted, you learn about layout thrashing and <code>requestAnimationFrame</code>. None of this knowledge is optional. It is right there, in your face, demanding to be understood.
+            </p>
+
+            <div class="callout" data-label="perspective">
+                The DOM API is not pretty. It is verbose, inconsistent in places, and carries thirty years of backward-compatibility baggage. But it is also the actual interface between your code and the pixels on screen. Every framework is just a translation layer sitting on top of it. Understanding the translation target makes you better at using the translator.
+            </div>
+
+            <h2>PERFORMANCE IS NOT FREE</h2>
+
+            <p>
+                There is a persistent myth in web development that modern frameworks are fast by default — that the optimisation work has been done for you, and you simply reap the benefits. This was never entirely true, and it becomes less true as applications grow. Virtual DOM diffing is not free. JavaScript bundle parsing is not free. Server components, hydration, concurrent rendering — these are solutions to performance problems that, in many cases, would not exist if the application had been built more simply in the first place.
+            </p>
+
+            <p>
+                Consider what is trivial in vanilla JS but routinely over-engineered in framework-land. You want to toggle a class on a button click: two lines of vanilla JS, or a state variable, a re-render cycle, and a conditional class binding in React. You want to animate an element in and out of view: a CSS transition and a class toggle, or an animation library with its own virtual DOM, its own reconciler, its own bundle weight. You want to lazy-load an image: the <code>loading="lazy"</code> attribute, or a third-party component that wraps the native browser behaviour and adds 12KB to your bundle.
+            </p>
+
+            <blockquote>
+                "Premature optimization is the root of all evil (or at least most of it) in programming."
+                <cite>— Donald Knuth, Computer Programming as an Art (1974)</cite>
+            </blockquote>
+
+            <p>
+                Knuth's point is usually invoked to argue against micro-optimising too early. But the flip side is also true: <strong>premature abstraction is a form of premature optimisation for developer experience</strong> — and it has the same failure mode. You pay the complexity cost upfront, before you know whether the abstraction was the right one. A page that ships 400KB of JavaScript to render a blog post is not fast. No amount of code-splitting will make it as fast as a page that ships 8KB of semantic HTML.
+            </p>
+
+            <h2>DEPENDENCY HELL AND THE ILLUSION OF LEVERAGE</h2>
+
+            <p>
+                In early 2022, a package called <code>colors.js</code> was deliberately corrupted by its maintainer, breaking thousands of downstream projects. In 2016, the removal of a package called <code>left-pad</code> — eleven lines of code — took down Babel, React, and dozens of major applications. These are not edge cases. They are symptoms of an ecosystem that has mistaken dependency depth for engineering maturity.
+            </p>
+
+            <p>
+                The Unix philosophy, articulated by Doug McIlroy in the early days of Bell Labs, offered a different vision: <em>write programs that do one thing and do it well; write programs that work together; write programs that handle text streams, because that is a universal interface</em>. The spirit of this philosophy is not minimalism for its own sake. It is about keeping the surface area of your system small enough to reason about. A <code>node_modules</code> folder with 900 transitive dependencies is not small enough to reason about. It is a cathedral built on sand, with each grain held in place by a package maintainer who might wake up tomorrow and decide they are done.
+            </p>
+
+            <p>
+                A vanilla HTML/CSS/JS project has no transitive dependencies. It has no build step, no bundler configuration, no version conflicts, no CVE alerts for packages three layers deep that you have never heard of. It boots in a browser. It will boot in a browser in ten years. It ran in Netscape and it will run in whatever comes after Chrome. <strong>That is durability.</strong> That is leverage that compounds over time instead of decaying.
+            </p>
+
+            <h2>WHAT YOU LEARN WITHOUT TRAINING WHEELS</h2>
+
+            <p>
+                Alan Kay, one of the architects of modern object-oriented programming, once said that the real computer revolution has not happened yet — that we are still largely thinking in terms of the old tools when fundamentally new ways of thinking are available to us. I take a narrower version of that point: the real web development revolution that <em>has</em> happened — the standardisation of HTML5, the maturity of CSS, the ES6+ language features that made JavaScript genuinely pleasant to write — is underappreciated because it happened underneath the framework layer, where most working developers no longer look.
+            </p>
+
+            <blockquote>
+                "The computer revolution hasn't happened yet."
+                <cite>— Alan Kay</cite>
+            </blockquote>
+
+            <p>
+                CSS Grid and Flexbox are extraordinary layout systems. They make things possible in fifteen lines of CSS that would have required JavaScript hacks and absolute positioning ten years ago. CSS custom properties are a proper variable system. <code>IntersectionObserver</code>, <code>ResizeObserver</code>, <code>MutationObserver</code> — these are powerful, efficient browser APIs that solve real problems without a dependency in sight. <code>fetch</code>, <code>async/await</code>, the <code>module</code> system, <code>localStorage</code>, the History API, Web Workers — the platform has grown up, quietly, while the ecosystem was busy building tools to abstract it away.
+            </p>
+
+            <p>
+                When you build without a framework, you have no choice but to learn these things. You write a toggle and you learn event delegation. You build a scroll animation and you learn about viewport coordinates and <code>getBoundingClientRect</code>. You add a theme switcher and you learn about CSS custom properties and <code>localStorage</code>. Every problem you solve deposits knowledge directly into your understanding of how the web actually works — not how one framework's model of the web works, but the real thing.
+            </p>
+
+            <h2>FUNDAMENTALS AS THE FOUNDATION OF EXPERTISE</h2>
+
+            <p>
+                I have noticed a pattern in the developers I find most impressive. They are fluent in frameworks — they can pick up a new one in days, not weeks. They do this not because they keep up with every release, but because they understand what every framework is fundamentally trying to do. They understand reactivity, so they understand Vue. They understand the reconciliation problem, so they understand why React's virtual DOM exists. They understand the server/client boundary, so Next.js's mental model clicks immediately. <strong>Frameworks become easy when you understand the problems they were built to solve.</strong>
+            </p>
+
+            <p>
+                The developers I find least impressive are sometimes very fast in their chosen framework — but helpless outside it. Ask them to debug a layout without DevTools. Ask them to write a debounce function without lodash. Ask them why a particular element is not getting the CSS property they set. Watch the framework's abstraction dissolve, and see what is left underneath. Often: not much. This is not a character flaw. It is what happens when you learn tooling before you learn craft.
+            </p>
+
+            <p>
+                The best analogy I know is mathematics education. You can teach a student to use a calculator from day one and they will be able to produce correct numerical outputs very quickly. Or you can teach them arithmetic, algebra, and the underlying structure of numbers, and they will eventually be able to do things with mathematics that the calculator-first student never will — because they understand what the calculator is doing. Frameworks are calculators. HTML, CSS, and JavaScript are arithmetic. You need both, but in that order.
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL STATEMENT</h2>
+
+            <p>
+                This portfolio — the one you are reading right now — is built entirely in vanilla HTML, CSS, and JavaScript. No React. No build step. No bundler. No dependencies at all. Every animation, every layout, every interaction is hand-written using nothing but the web platform itself.
+            </p>
+
+            <p>
+                I made this choice deliberately, as a statement. Not because I am opposed to frameworks — I use React professionally and I have genuine respect for what the teams behind Next.js, Vue, and Svelte have built. But I wanted to prove something to myself: that I understand the substrate, not just the abstraction. That I can reason about the browser directly. That I do not need a compiler between me and my work.
+            </p>
+
+            <p>
+                There is something clarifying about that constraint. When there is no framework to reach for, you think harder about what you actually need. You write less code. You make fewer assumptions. You end up with a codebase that loads in a single HTTP request, runs on any device with a browser, and has exactly zero vulnerability surface from transitive dependencies. The starfield behind this text? A hundred lines of vanilla canvas API. The read progress bar at the top of the page? Six lines. The whole site: under 1,500 lines of code total, zero build steps, zero dependencies.
+            </p>
+
+            <p>
+                I am an MSc AI student. I spend most of my days thinking about neural architectures, loss landscapes, and the mathematics of learning. But when I sit down to build something for the web, I find myself returning to the same instinct: <strong>understand the system you are working with, all the way down.</strong> Not because it is efficient — sometimes it is slower. But because the knowledge compounds. Because the next time I pick up a framework, I will know what it is doing and why. Because the difference between a craftsman and a tool operator is not which tools they use — it is whether they understand the tools, or are merely used by them.
+            </p>
+
+            <p>
+                Write vanilla once. Really write it. Fight with the DOM, figure out the event bubbling, wrestle with CSS specificity until you understand why it works the way it does. Then use whatever framework makes you productive. You will be better at it. I promise.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">vanilla js</span>
+                <span class="tag">html</span>
+                <span class="tag">css</span>
+                <span class="tag">web platform</span>
+                <span class="tag">fundamentals</span>
+                <span class="tag">react</span>
+                <span class="tag">frameworks</span>
+                <span class="tag">performance</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="black-holes-and-information.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">What Black Holes Taught Me About Data Loss</span>
+                </a>
+                <a href="../blog.html" class="next">
+                    <span class="nav-dir">↑ back to</span>
+                    <span class="nav-title">All Posts</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2025 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

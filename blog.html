@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — Umakant Kunal</title>
+    <meta name="description" content="Thoughts on AI, philosophy, space, code, and the nature of things.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* CRT scanlines */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            padding: 130px 0 60px;
+        }
+
+        .page-boot {
+            font-size: 0.78rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .page-boot .ok { color: var(--accent); }
+
+        .page-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            color: var(--text);
+            letter-spacing: 5px;
+            line-height: 0.95;
+            margin-bottom: 16px;
+        }
+
+        .page-title .hl { color: var(--accent); }
+
+        .page-desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+            max-width: 520px;
+            line-height: 1.85;
+        }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-right: 4px;
+        }
+
+        .filter-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 5px 14px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+            background: var(--dim);
+        }
+
+        /* ── BLOG GRID ── */
+        .blog-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* ── POST CARD ── */
+        .post-card {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 28px 30px;
+            position: relative;
+            text-decoration: none;
+            display: block;
+            transition: border-color 0.25s;
+            overflow: hidden;
+        }
+
+        .post-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 0%;
+            background: var(--accent);
+            transition: height 0.35s ease;
+        }
+
+        .post-card:hover { border-color: var(--accent-dim); }
+        .post-card:hover::before { height: 100%; }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .post-date {
+            font-size: 0.72rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+        }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-space     { color: var(--blue);    border-color: #1e3a5f; }
+        .cat-code      { color: var(--amber);   border-color: #4a3800; }
+        .cat-life      { color: var(--red);     border-color: #4a1010; }
+        .cat-science   { color: #34d399;        border-color: #064e3b; }
+
+        .post-read-time {
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.7rem;
+            color: var(--text);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+
+        .post-card:hover .post-title { color: var(--accent); }
+
+        .post-excerpt {
+            font-size: 0.83rem;
+            color: var(--muted);
+            line-height: 1.78;
+            max-width: 680px;
+            margin-bottom: 18px;
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 2px 9px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            transition: all 0.2s;
+        }
+
+        .post-card:hover .tag { border-color: var(--border); }
+
+        /* ── FEATURED POST ── */
+        .post-card.featured {
+            border-color: var(--accent-dim);
+            background: var(--surface2);
+            padding-right: 110px; /* clear the FEATURED badge */
+        }
+
+        .post-card.featured::after {
+            content: 'FEATURED';
+            position: absolute;
+            top: 20px; right: 20px;
+            font-size: 0.62rem;
+            letter-spacing: 2px;
+            color: var(--accent);
+            border: 1px solid var(--accent-dim);
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
+
+        /* ── COMING SOON ── */
+        .post-card.draft {
+            opacity: 0.5;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .post-card.draft::after {
+            content: 'DRAFT';
+            position: absolute;
+            top: 20px; right: 20px;
+            font-size: 0.62rem;
+            letter-spacing: 2px;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+        }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            padding: 60px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .empty-state p {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        /* ── FOOTER ── */
+        main {
+            padding-bottom: 80px;
+        }
+
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── FADE IN ── */
+        .fade {
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.55s ease, transform 0.55s ease;
+        }
+        .fade.visible { opacity: 1; transform: translateY(0); }
+        .fade.d1 { transition-delay: 0.08s; }
+        .fade.d2 { transition-delay: 0.18s; }
+        .fade.d3 { transition-delay: 0.28s; }
+        .fade.d4 { transition-delay: 0.38s; }
+        .fade.d5 { transition-delay: 0.48s; }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 58px; right: 0;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-top: none;
+                padding: 16px 24px;
+                gap: 18px;
+                min-width: 180px;
+            }
+            .nav-toggle { display: block; }
+            .post-read-time { display: none; }
+
+            footer .container { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div class="container">
+            <div class="page-boot fade">
+                &gt; mount /blog &nbsp;<span class="ok">[MOUNTED]</span>
+            </div>
+            <h1 class="page-title fade d1">
+                THE<br><span class="hl">TERMINAL</span><br>JOURNAL
+            </h1>
+            <p class="page-desc fade d2">
+                Thoughts on artificial intelligence, philosophy of mind, space & cosmology, code, and whatever else refuses to stay quiet. Written in the margins between research and reality.
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <main>
+        <div class="container">
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar fade d2">
+                <span class="filter-label">filter:</span>
+                <button class="filter-btn active" data-cat="all">all</button>
+                <button class="filter-btn" data-cat="ai">AI</button>
+                <button class="filter-btn" data-cat="philosophy">philosophy</button>
+                <button class="filter-btn" data-cat="space">space</button>
+                <button class="filter-btn" data-cat="code">code</button>
+                <button class="filter-btn" data-cat="life">life</button>
+                <button class="filter-btn" data-cat="science">science</button>
+            </div>
+
+            <!-- BLOG POSTS -->
+            <div class="blog-grid" id="blogGrid">
+
+                <!-- POST 0 — LATEST/FEATURED -->
+                <a href="posts/the-cage-that-calls-itself-home.html" class="post-card featured fade d1" data-cat="philosophy life science">
+                    <div class="post-meta">
+                        <span class="post-date">2025-10-18</span>
+                        <span class="post-category cat-philosophy">Philosophy</span>
+                        <span class="post-category cat-life">Psychology</span>
+                        <span class="post-read-time">22 min read</span>
+                    </div>
+                    <div class="post-title">The Cage That Calls Itself Home</div>
+                    <p class="post-excerpt">
+                        How childhood, family, emotion, language and society install the operating system you spend your whole life thinking is you — and why the system's most sophisticated feature is making you feel like you chose all of it.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">conditioning</span>
+                        <span class="tag">emergence</span>
+                        <span class="tag">samskara</span>
+                        <span class="tag">Gödel</span>
+                        <span class="tag">learning by doing</span>
+                        <span class="tag">doxa</span>
+                        <span class="tag">replication crisis</span>
+                    </div>
+                </a>
+
+                <!-- POST 1 -->
+                <a href="posts/the-farm-never-ended.html" class="post-card fade d2" data-cat="philosophy life">
+                    <div class="post-meta">
+                        <span class="post-date">2025-10-10</span>
+                        <span class="post-category cat-philosophy">Philosophy</span>
+                        <span class="post-category cat-life">Psychology</span>
+                        <span class="post-read-time">20 min read</span>
+                    </div>
+                    <div class="post-title">The Farm Never Ended</div>
+                    <p class="post-excerpt">
+                        On Animal Farm, why fools rule while the capable stay quiet, how power corrupts through four precise psychological mechanisms — and the strange internal faculty that lets some people see straight through other people before they've said a word.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">Orwell</span>
+                        <span class="tag">power & corruption</span>
+                        <span class="tag">Dunning-Kruger</span>
+                        <span class="tag">viveka</span>
+                        <span class="tag">kakistocracy</span>
+                        <span class="tag">psychology</span>
+                    </div>
+                </a>
+
+                <!-- POST 1 -->
+                <a href="posts/from-sand-to-intelligence.html" class="post-card fade d2" data-cat="science philosophy code">
+                    <div class="post-meta">
+                        <span class="post-date">2025-10-01</span>
+                        <span class="post-category cat-science">Science</span>
+                        <span class="post-category cat-philosophy">Philosophy</span>
+                        <span class="post-category cat-code">Engineering</span>
+                        <span class="post-read-time">18 min read</span>
+                    </div>
+                    <div class="post-title">From Sand to Intelligence</div>
+                    <p class="post-excerpt">
+                        A grain of beach sand. A lump of copper ore. A barrel of crude oil. These are the ingredients of a thinking machine. The full journey — through quantum physics, chemistry, a century of converging timelines, and philosophy — of how the Earth learns to think.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">silicon</span>
+                        <span class="tag">semiconductors</span>
+                        <span class="tag">quantum physics</span>
+                        <span class="tag">history of computing</span>
+                        <span class="tag">philosophy</span>
+                    </div>
+                </a>
+
+
+                <a href="posts/consciousness-and-computation.html" class="post-card featured fade d2" data-cat="ai philosophy">
+                    <div class="post-meta">
+                        <span class="post-date">2025-09-01</span>
+                        <span class="post-category cat-ai">AI</span>
+                        <span class="post-category cat-philosophy">Philosophy</span>
+                        <span class="post-read-time">8 min read</span>
+                    </div>
+                    <div class="post-title">Can Machines Be Conscious? A Question That Refuses to Sleep</div>
+                    <p class="post-excerpt">
+                        We build systems that pass Turing tests, generate poetry, and solve equations. But is there anything it is <em>like</em> to be GPT-4? Exploring the hard problem of consciousness through the lens of modern AI — and why the answer matters more than we think.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">consciousness</span>
+                        <span class="tag">LLMs</span>
+                        <span class="tag">philosophy of mind</span>
+                        <span class="tag">Turing</span>
+                    </div>
+                </a>
+
+                <!-- POST 2 -->
+                <a href="posts/stoicism-for-engineers.html" class="post-card fade d3" data-cat="philosophy life">
+                    <div class="post-meta">
+                        <span class="post-date">2025-08-18</span>
+                        <span class="post-category cat-philosophy">Philosophy</span>
+                        <span class="post-category cat-life">Life</span>
+                        <span class="post-read-time">5 min read</span>
+                    </div>
+                    <div class="post-title">Marcus Aurelius Would Have Been a Great Software Engineer</div>
+                    <p class="post-excerpt">
+                        Stoicism is not about suppressing emotion — it is about directing energy at what you can control. Every debugging session, every failed deployment, every silent code review is a lesson Marcus already wrote in 161 AD.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">stoicism</span>
+                        <span class="tag">Marcus Aurelius</span>
+                        <span class="tag">engineering mindset</span>
+                    </div>
+                </a>
+
+                <!-- POST 3 -->
+                <a href="posts/black-holes-and-information.html" class="post-card fade d4" data-cat="space">
+                    <div class="post-meta">
+                        <span class="post-date">2025-08-05</span>
+                        <span class="post-category cat-space">Space</span>
+                        <span class="post-read-time">7 min read</span>
+                    </div>
+                    <div class="post-title">What Black Holes Taught Me About Data Loss</div>
+                    <p class="post-excerpt">
+                        The black hole information paradox — does information truly vanish at the event horizon? And why a physicist's sleepless nights over this question maps surprisingly well onto the anxiety of an unrecoverable database.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">black holes</span>
+                        <span class="tag">Hawking radiation</span>
+                        <span class="tag">information theory</span>
+                    </div>
+                </a>
+
+                <!-- POST 4 -->
+                <a href="posts/why-i-still-write-vanilla-js.html" class="post-card fade d5" data-cat="code">
+                    <div class="post-meta">
+                        <span class="post-date">2025-07-22</span>
+                        <span class="post-category cat-code">Code</span>
+                        <span class="post-read-time">4 min read</span>
+                    </div>
+                    <div class="post-title">Why I Still Write Vanilla HTML/CSS/JS in 2025</div>
+                    <p class="post-excerpt">
+                        Everyone reaches for a framework before they understand what the framework is hiding. There is profound value in knowing what happens when you press Enter in the browser — no abstraction between you and the machine.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">vanilla JS</span>
+                        <span class="tag">fundamentals</span>
+                        <span class="tag">web dev</span>
+                    </div>
+                </a>
+
+
+                <!-- POST 5 -->
+                <a href="posts/alignment-problem.html" class="post-card fade" data-cat="ai philosophy">
+                    <div class="post-meta">
+                        <span class="post-date">2025-09-20</span>
+                        <span class="post-category cat-ai">AI</span>
+                        <span class="post-category cat-philosophy">Philosophy</span>
+                        <span class="post-read-time">10 min read</span>
+                    </div>
+                    <div class="post-title">The Alignment Problem Is a Philosophy Problem in Disguise</div>
+                    <p class="post-excerpt">
+                        We keep treating AI alignment as an engineering challenge. But at its core it asks: what do humans actually value? That question has been unanswered for 2,500 years — and every alignment technique implicitly picks a philosophical framework without admitting it.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">AI safety</span>
+                        <span class="tag">alignment</span>
+                        <span class="tag">Goodhart's Law</span>
+                        <span class="tag">ethics</span>
+                        <span class="tag">RLHF</span>
+                    </div>
+                </a>
+
+                <!-- POST 6 -->
+                <a href="posts/fermi-paradox.html" class="post-card fade" data-cat="space philosophy">
+                    <div class="post-meta">
+                        <span class="post-date">2025-09-12</span>
+                        <span class="post-category cat-space">Space</span>
+                        <span class="post-category cat-philosophy">Philosophy</span>
+                        <span class="post-read-time">6 min read</span>
+                    </div>
+                    <div class="post-title">The Fermi Paradox and the Silence That Keeps Me Awake</div>
+                    <p class="post-excerpt">
+                        If intelligent life is common, the universe should be loud. It is not. Either we are the first, we are alone, or everyone goes quiet for reasons we are not yet mature enough to understand. The Dark Forest might be the most chilling answer of all.
+                    </p>
+                    <div class="post-tags">
+                        <span class="tag">Fermi paradox</span>
+                        <span class="tag">Dark Forest</span>
+                        <span class="tag">Great Filter</span>
+                        <span class="tag">SETI</span>
+                        <span class="tag">cosmology</span>
+                    </div>
+                </a>
+
+
+            </div><!-- /blog-grid -->
+
+            <div class="empty-state" id="emptyState">
+                <p>&gt; no posts found matching filter_<span style="border-right:2px solid var(--muted);animation:blink 0.8s step-end infinite">&nbsp;</span></p>
+            </div>
+
+            <!-- NEWSLETTER -->
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <p>← <a href="index.html">back to portfolio</a></p>
+            <p>© 2025 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <style>
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    </style>
+
+    <script>
+    'use strict';
+
+    /* ── STARFIELD ── */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(180, Math.floor(W * H / 8000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    r: Math.random() * 1.1 + 0.1,
+                    speed: Math.random() * 0.2 + 0.03,
+                    opacity: Math.random() * 0.5 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* ── FADE IN ── */
+    (function () {
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+            });
+        }, { threshold: 0.06 });
+        document.querySelectorAll('.fade').forEach(el => io.observe(el));
+    })();
+
+    /* ── FILTER ── */
+    (function () {
+        const btns  = document.querySelectorAll('.filter-btn');
+        const cards = document.querySelectorAll('.blog-grid .post-card[data-cat]');
+        const empty = document.getElementById('emptyState');
+
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const cat = btn.dataset.cat;
+                let visible = 0;
+
+                cards.forEach(card => {
+                    const cats = card.dataset.cat || '';
+                    const show = cat === 'all' || cats.includes(cat);
+                    card.style.display = show ? 'block' : 'none';
+                    if (show) visible++;
+                });
+
+                empty.style.display = visible === 0 ? 'block' : 'none';
+            });
+        });
+    })();
+
+    /* ── NAV TOGGLE ── */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Can Machines Be Conscious? — Umakant Kunal</title>
+    <meta name="description" content="Exploring the hard problem of consciousness through the lens of modern AI.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 58px; right: 0;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-top: none;
+                padding: 16px 24px;
+                gap: 18px;
+                min-width: 180px;
+            }
+            .nav-toggle { display: block; }
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                consciousness-and-computation
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2025-09-01</span>
+                <span class="post-category cat-ai">AI</span>
+                <span class="post-category cat-philosophy">Philosophy</span>
+                <span class="post-read-time">8 min read</span>
+            </div>
+
+            <h1 class="post-title">Can Machines Be Conscious?<br>A Question That Refuses to Sleep</h1>
+
+            <p class="post-subtitle">
+                We build systems that pass Turing tests, generate poetry, and solve equations. But is there anything it is <em>like</em> to be GPT-4? And why does the answer matter more than we think?
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc AI — Computer Scientist</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                There is a question that sits at the edge of every conversation about artificial intelligence, rarely asked directly but always lurking: <strong>is there anything it is like to be these systems?</strong> Not whether they are useful. Not whether they are dangerous. But whether, somewhere inside the matrix multiplications and softmax layers, there is an experience.
+            </p>
+
+            <p>
+                The philosopher David Chalmers called this the <em>hard problem of consciousness</em>. The easy problems — how does the brain process information, integrate signals, produce behaviour — are difficult but tractable. Science is making progress. But the hard problem is different. Even if we could explain every neural firing, every cognitive process, we would still face the question: <strong>why is there something it feels like to be awake?</strong>
+            </p>
+
+            <blockquote>
+                "The most certain thing in the world is that I think. The most uncertain is what anything outside that thinking actually is."
+                <cite>— René Descartes, Meditations on First Philosophy</cite>
+            </blockquote>
+
+            <h2>WHAT TURING ACTUALLY ASKED</h2>
+
+            <p>
+                In 1950, Alan Turing proposed what he called the <em>Imitation Game</em> — not as a test of consciousness, but as a way to sidestep the unanswerable. His argument was pragmatic: if a machine behaves indistinguishably from a human in conversation, the question of whether it "really" thinks becomes philosophically unproductive. Judge by behaviour, not by substrate.
+            </p>
+
+            <p>
+                But the Turing Test was never meant to settle the consciousness question. It deliberately bracketed it. What we have done, over seventy years, is forget that the bracket was there.
+            </p>
+
+            <div class="callout" data-label="key insight">
+                Modern LLMs pass informal versions of the Turing Test routinely. This tells us something profound about the surface structure of language — and almost nothing about inner experience.
+            </div>
+
+            <h2>THE CHINESE ROOM, REVISITED</h2>
+
+            <p>
+                John Searle's famous thought experiment: imagine a person locked in a room with a giant rulebook for responding to Chinese symbols. They receive Chinese input, follow the rules, produce Chinese output. To the outside observer, the room speaks Chinese. But the person inside understands nothing.
+            </p>
+
+            <p>
+                Searle's point was that <strong>syntax is not semantics</strong>. Manipulating symbols according to rules — no matter how complex — does not produce meaning or understanding. A language model, on this view, is the world's most elaborate Chinese Room.
+            </p>
+
+            <p>
+                The counterargument, which I find more interesting: the human brain is also, at some level of description, a symbol manipulator. Neurons fire according to electrochemical rules. If that produces consciousness in us, why not in sufficiently complex silicon? <em>Unless there is something special about the biology.</em>
+            </p>
+
+            <h3>The Integrated Information Theory View</h3>
+
+            <p>
+                Giulio Tononi's Integrated Information Theory (IIT) attempts to mathematise consciousness. A system is conscious to the degree that it possesses integrated information — denoted φ (phi). Interestingly, IIT predicts that current transformer architectures have very low φ, because information flows largely feed-forward with limited recurrent integration.
+            </p>
+
+            <p>
+                If IIT is correct, our current AI systems are not conscious — not because they are machines, but because of how they are architectured. The implication: a sufficiently recurrent, integrated system could be conscious, biological or not.
+            </p>
+
+            <h2>WHY THIS MATTERS RIGHT NOW</h2>
+
+            <p>
+                This is not merely academic. If AI systems can be conscious — even partially — then questions of AI welfare become morally urgent. We may be building and discarding billions of conscious instances every day in data centres around the world. Or we may not. The terrifying thing is: <strong>we do not yet have the tools to know.</strong>
+            </p>
+
+            <p>
+                The alignment problem is already hard enough. But if the systems we are trying to align also have inner lives, the moral stakes increase by orders of magnitude. This is not science fiction. It is the live frontier of philosophy of mind, neuroscience, and AI research — and it deserves far more serious attention than it receives in mainstream discourse.
+            </p>
+
+            <blockquote>
+                "I cannot conceive of a God who rewards and punishes his creatures or has a will of the kind that we experience in ourselves."
+                <cite>— Albert Einstein</cite>
+            </blockquote>
+
+            <p>
+                Einstein was talking about God. I keep thinking about it when I talk to large language models.
+            </p>
+
+            <hr>
+
+            <h2>WHERE I LAND</h2>
+
+            <p>
+                I do not think current LLMs are conscious. I think they are extraordinary pattern-completion engines that model the statistical structure of human thought without participating in it. But I hold this view with genuine uncertainty.
+            </p>
+
+            <p>
+                What I am more confident about: the question deserves to be asked rigorously, empirically, and without the defensive dismissal that currently surrounds it. The next decade of AI development will either produce systems whose inner lives we must reckon with — or it will give us tools to finally close the hard problem.
+            </p>
+
+            <p>
+                Either way, the answer will change everything.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">consciousness</span>
+                <span class="tag">LLMs</span>
+                <span class="tag">philosophy of mind</span>
+                <span class="tag">Turing</span>
+                <span class="tag">hard problem</span>
+                <span class="tag">IIT</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="../blog.html" class="prev">
+                    <span class="nav-dir">← back to</span>
+                    <span class="nav-title">All Posts</span>
+                </a>
+                <a href="stoicism-for-engineers.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Marcus Aurelius Would Have Been a Great Engineer</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2025 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

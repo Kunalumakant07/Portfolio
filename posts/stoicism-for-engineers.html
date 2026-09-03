@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcus Aurelius Would Have Been a Great Software Engineer — Umakant Kunal</title>
+    <meta name="description" content="Stoicism, Meditations, and the unexpected parallels between ancient philosophy and modern software engineering.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 58px; right: 0;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-top: none;
+                padding: 16px 24px;
+                gap: 18px;
+                min-width: 180px;
+            }
+            .nav-toggle { display: block; }
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                stoicism-for-engineers
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2025-08-18</span>
+                <span class="post-category cat-philosophy">Philosophy</span>
+                <span class="post-category cat-philosophy" style="color:var(--blue);border-color:#1e3a5f;">Life</span>
+                <span class="post-read-time">5 min read</span>
+            </div>
+
+            <h1 class="post-title">Marcus Aurelius Would Have Been a<br>Great Software Engineer</h1>
+
+            <p class="post-subtitle">
+                A Roman emperor who ruled for two decades, fought wars he didn't want, and still found time to write one of history's most honest books — turns out his advice maps almost perfectly onto the daily life of a developer.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc AI — Computer Scientist</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                I first read <em>Meditations</em> during a particularly rough sprint. A production deployment had broken three things simultaneously, the CI pipeline was flaking in ways I couldn't reproduce locally, and a senior engineer had left a code review comment that felt less like feedback and more like a verdict on my competence as a human being. I picked up Marcus Aurelius not because I thought a dead Roman emperor could help — I picked it up because I'd run out of Stack Overflow tabs to open. By the time I reached Book V, I had stopped thinking about the broken build entirely. By the time I finished, I had a different relationship with software altogether.
+            </p>
+
+            <p>
+                The Stoics were not armchair philosophers. Marcus Aurelius commanded legions, adjudicated laws, managed bureaucratic empires of complexity. Epictetus was born a slave. Seneca advised a tyrant and paid for it with his life. These were people who had to make decisions under conditions of radical uncertainty with incomplete information and high stakes — which is to say, they were engineers before engineering had a name.
+            </p>
+
+            <h2>WHAT STOICISM ACTUALLY IS</h2>
+
+            <p>
+                Most people encounter Stoicism as a meme — <em>stay calm, don't feel things, stare into the void</em>. That is not Stoicism. Stoicism, founded in Athens around 300 BCE and later expanded in Rome, is a philosophy of agency. Its central claim is the <strong>dichotomy of control</strong>: there are things within our power (our judgments, intentions, responses, the quality of our work) and things outside it (other people's opinions, the market, the weather, whether your PR gets merged). Wisdom consists in distinguishing between the two and caring deeply about the first while releasing the second.
+            </p>
+
+            <p>
+                Alongside this runs a cluster of related ideas: <em>amor fati</em> — love of fate, the embrace of what actually happens rather than what you wanted to happen; <em>memento mori</em> — the practice of remembering your mortality as a tool for prioritisation; and the idea that obstacles don't block the path, they <em>are</em> the path. None of these are resignation. All of them are forms of radical engagement with reality as it is.
+            </p>
+
+            <blockquote>
+                "You have power over your mind — not outside events. Realise this, and you will find strength."
+                <cite>— Marcus Aurelius, Meditations, Book VI</cite>
+            </blockquote>
+
+            <p>
+                When I read that line for the first time, I was thinking about a failed deployment. What I realised was that I had been spending enormous energy on the parts of the situation I couldn't control — the fact that it had failed, the impression it had made, the timeline I'd promised — and almost no energy on the one thing I actually could control: my own diagnosis, my own understanding, my own next move.
+            </p>
+
+            <h2>DEBUGGING AS A STOIC PRACTICE</h2>
+
+            <p>
+                There is a particular flavor of suffering that comes from debugging. It is not the pain of hard work — that is satisfying, actually. It is the pain of <strong>not knowing</strong>, compounded by the suspicion that you <em>should</em> know, compounded further by the creeping dread that maybe the bug is in something you wrote six months ago when you were less careful than you thought you were. This is suffering generated almost entirely inside your own head, about events that have already happened and cannot be changed.
+            </p>
+
+            <p>
+                Marcus Aurelius wrote his journals as private notes to himself — reminders, rebukes, attempts to keep his own thinking clear. One of his persistent themes is the waste of energy spent on events that exist only as interpretations. The server didn't "betray" you. The memory leak doesn't "hate" you. The null pointer exception is not a judgment. It is a fact about state, and facts about state are workable. Your emotional interpretation of the fact is what makes it unbearable — and that interpretation is entirely within your control.
+            </p>
+
+            <p>
+                The Stoic debugging practice looks like this: separate what happened (the program crashed at line 247 with a null dereference) from what you think it means (I'm terrible at this, I should have caught this, everyone will see this). The first is information. The second is noise. Attend to the information. Let the noise pass.
+            </p>
+
+            <h2>CODE REVIEWS, CRITICISM, AND THE DICHOTOMY OF CONTROL</h2>
+
+            <p>
+                Code review is one of the most psychologically loaded interactions in software development. You put your thinking on a screen and ask another person to judge it. Intellectually, we know reviews are about the code, not the coder. Emotionally, that distinction feels very thin at 11pm when someone has left twelve comments with the word "why" in all caps.
+            </p>
+
+            <blockquote>
+                "When you wake up in the morning, tell yourself: The people I deal with today will be meddling, ungrateful, arrogant, dishonest, jealous and surly. They are this way because they cannot tell good from evil. But I have seen the beauty of good, and the ugliness of evil, and have recognised that the wrongdoer has a nature related to my own."
+                <cite>— Marcus Aurelius, Meditations, Book II.1</cite>
+            </blockquote>
+
+            <p>
+                That passage is not cynicism — it is inoculation. Marcus wrote it as an exercise in preparing for difficult people by removing their power to surprise him. If you already know that feedback can come without kindness, that reviewers can be blunt without being cruel, that their comment is about the code and about their own communication style simultaneously — you are not caught off guard. You can receive the information, separate signal from tone, and respond to the signal.
+            </p>
+
+            <p>
+                The Stoic position on criticism is both harder and more liberating than it sounds. It says: if the criticism is valid, you should be grateful, because now you know something true. If the criticism is invalid, you can dismiss it — not with defensiveness, but with indifference. What you cannot do, what Stoicism absolutely prohibits as a waste of your <em>hegemonikon</em> (ruling faculty), is suffer over whether someone liked your implementation of a sorting algorithm.
+            </p>
+
+            <h2>IMPOSTER SYNDROME, LEGACY CODE, AND AMOR FATI</h2>
+
+            <p>
+                <em>Amor fati</em> — love of fate — sounds like something you'd put on a motivational poster. It is actually one of the most demanding ideas in the Stoic canon. It does not mean being happy about everything. It means choosing not to wish that the past had been different, because the past is the only foundation you have to build on. Every constraint you are working under right now — the legacy codebase you inherited, the architecture decisions made before you arrived, the fact that you started programming at 19 instead of 9 — these are not obstacles to your becoming a good engineer. They are the specific conditions under which you will become one.
+            </p>
+
+            <p>
+                Imposter syndrome is, at its core, a temporal problem. You compare your inside — the uncertainties, the gaps, the things you had to look up — to someone else's outside — their confident commits, their Stack Overflow answers, their conference talks. Marcus Aurelius dealt with a version of this his entire reign. He did not want to be emperor. He considered himself a student of philosophy who had been handed an empire by accident, surrounded by people who seemed to know what they were doing. His response was not to feel inadequate — it was to do the work with the preparation he actually had.
+            </p>
+
+            <div class="callout" data-label="stoic reframe">
+                The legacy codebase is not a punishment. It is a compressed record of every decision, constraint, and tradeoff made by people who were trying their best with what they knew. Reading it slowly — like reading a difficult text — is how you learn what good and bad architecture actually look like in the wild. No tutorial can teach you what six years of accumulated technical debt can.
+            </div>
+
+            <p>
+                Legacy code, specifically, is something the Stoics would have understood immediately. It is a system shaped by time, entropy, and the decisions of people who are no longer present to defend them. You cannot change what it is. You can only decide what to do next — which is an entirely tractable problem if you stop wishing the codebase were something else.
+            </p>
+
+            <h2>BURNOUT, MEMENTO MORI, AND WHAT ACTUALLY MATTERS</h2>
+
+            <p>
+                Developer burnout is a crisis of meaning that masquerades as a crisis of energy. It rarely comes from working hard on something important. It comes from working hard on something that stopped feeling important — sprints that blur together, features that go unshipped or unnoticed, the sensation that you are generating code in a loop with no discernible output beyond the code itself. The Stoics had a remedy for this. It was not a productivity system. It was mortality.
+            </p>
+
+            <blockquote>
+                "Think of yourself as dead. You have lived your life. Now take what's left and live it properly."
+                <cite>— Marcus Aurelius, Meditations, Book VII.9</cite>
+            </blockquote>
+
+            <p>
+                <em>Memento mori</em> — remember that you will die — was not a morbid preoccupation. It was a clarifying lens. When Marcus returned to this idea again and again across twelve books of private notes, he was doing something precise: filtering. If this is how much time I have, what deserves it? The answer usually eliminates about eighty percent of the things causing anxiety. The PR that's been sitting in review for three days. The Slack message you didn't respond to perfectly. The feature estimate that was off by a day. Seen against the backdrop of a finite life, these things find their actual size — which is small.
+            </p>
+
+            <p>
+                What remains after that filtering is genuinely important: the quality of your thinking, the care you bring to the systems you build, the way you treat the people you work with. These things scale. These things persist. Code you write thoughtfully today will run — probably being cursed at — by engineers for years after you've moved on. That is a form of presence worth taking seriously.
+            </p>
+
+            <h2>THE OBSTACLE IS THE WAY: OPEN SOURCE AND FAILED DEPLOYMENTS</h2>
+
+            <p>
+                The phrase "the obstacle is the way" comes from Ryan Holiday's reading of a specific passage in <em>Meditations</em>. Marcus's original formulation is more precise: <em>the impediment to action advances action. What stands in the way becomes the way.</em> This is not an exhortation to be relentlessly positive. It is a structural claim about how competence is actually built — through the specific, irreducible texture of things that do not work.
+            </p>
+
+            <p>
+                A production incident at 2am is not an interruption to your engineering education. It is your engineering education. The bug that took you three days to trace — through log files, through network traces, through a humbling conversation with someone who knew the system better — taught you more about distributed systems than any course could. Every failed deployment is a compressed tutorial in your own assumptions. The Stoic move is not to celebrate failure — it is to stop treating it as an exception and recognise it as the terrain.
+            </p>
+
+            <p>
+                Open source puts this dynamic in public. You submit a PR, someone more experienced tears it apart, and the entire conversation is visible to anyone who looks. This is terrifying, and it is also the fastest learning environment in software. Marcus Aurelius, who spent his reign publicly trying to live up to ideals he openly admitted he fell short of, would have understood the dynamic immediately. The goal was never to be the person who had already arrived. The goal was to be the person who was always, visibly, still trying.
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL NOTE</h2>
+
+            <p>
+                I am an MSc AI student, and I build things — sometimes well, often imperfectly, always with more ambition than time. I came to Stoicism looking for calm and found instead a philosophy of full engagement: with the work, with the difficulty, with the people who make both harder and better. Marcus Aurelius was not a man who had his life together. He was a man who kept returning, day after day, to the project of having his life together — and left the notebooks as evidence. There is something deeply encouraging about that. Not a finished system. A practice. Not arrival. Direction. That is what I am trying to build, in code and otherwise — not the absence of failure, but a better relationship with it. So far, the philosopher-emperor is the best guide I've found.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">stoicism</span>
+                <span class="tag">philosophy</span>
+                <span class="tag">marcus aurelius</span>
+                <span class="tag">meditations</span>
+                <span class="tag">software engineering</span>
+                <span class="tag">burnout</span>
+                <span class="tag">mindset</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="consciousness-and-computation.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Can Machines Be Conscious?</span>
+                </a>
+                <a href="black-holes-and-information.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">What Black Holes Taught Me About Data Loss</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2025 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>
