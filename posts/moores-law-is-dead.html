@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moore's Law Is Dead — What Comes After — Umakant Kunal</title>
+    <meta name="description" content="For 60 years, Gordon Moore's 1965 observation drove the digital revolution. It is ending. Here is what comes after — 3D stacking, chiplets, specialisation, and new materials.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-systems   { color: #fbbf24;        border-color: #78350f; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                moores-law-is-dead
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-04-05</span>
+                <span class="post-category cat-systems">Computer Architecture</span>
+                <span class="post-read-time">10 min read</span>
+            </div>
+
+            <h1 class="post-title">Moore's Law Is Dead —<br>What Comes After</h1>
+
+            <p class="post-subtitle">
+                For 60 years, Gordon Moore's 1965 observation held with eerie precision: the number of transistors on a chip doubles roughly every two years. This is not a business forecast. It is the engine that made the digital revolution. And it is ending. Not slowly declining — ending. What we do next will define the next 50 years of computing.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                For 60 years, one equation quietly governed the entire information technology industry. Every two years, the number of transistors you could pack onto a chip at the same cost would double. This meant that without paying more, you got twice the computing power. Twice the memory. Twice the speed. Compounded across six decades, that is a factor of roughly a billion. The laptop on your desk today is a billion times more capable per dollar than the computers that landed men on the moon. That is not a metaphor — it is arithmetic. And the arithmetic is stopping.
+            </p>
+
+            <p>
+                We are not approaching a gentle plateau. We are hitting three simultaneous walls — physical, thermal, and economic — each one severe enough on its own to end the era of predictable exponential progress. Together, they represent the closing of the most reliable growth story in the history of technology. What comes after is not obvious, not guaranteed, and not uniform. The next era of computing will be <strong>heterogeneous, specialised, and architecturally diverse</strong> in ways that will reshape how software is written, how hardware is designed, and which companies win.
+            </p>
+
+            <h2>MOORE'S LAW EXPLAINED</h2>
+
+            <p>
+                In April 1965, Gordon Moore — then director of R&amp;D at Fairchild Semiconductor, later co-founder of Intel — published a short paper in <em>Electronics</em> magazine. He had plotted the number of components per integrated circuit against year and noticed a doubling roughly every year. He revised his estimate to every two years in 1975. The observation became known as Moore's Law, though Moore himself always insisted it was an observation and a business forecast, not a law of nature.
+            </p>
+
+            <p>
+                What made Moore's Law economically extraordinary was not just the doubling of transistor count — it was <strong>Dennard scaling</strong>, the complementary observation made by Robert Dennard at IBM in 1974. Dennard's paper showed that as transistors shrank, if you scaled voltage and current proportionally, power density stayed roughly constant. Shrink a transistor by half: it uses half the area, switches twice as fast, and consumes a quarter of the power. You got smaller, faster, and cheaper all at once, and the heat generated per unit area stayed manageable. The combination was extraordinary: the same silicon budget bought you twice the performance every two years, at roughly the same power envelope.
+            </p>
+
+            <p>
+                The numbers make this concrete. The Intel 4004, the world's first commercial microprocessor, launched in 1971 with <strong>2,300 transistors</strong> on a 10-micron process. The Apple M3 Ultra, released in 2023, contains approximately <strong>50 billion transistors</strong> on a 3-nanometre process. That is an increase of roughly 22 million times in just over 50 years — almost exactly what Moore's Law predicts. This relentless compounding is the engine behind everything from the internet to smartphones to large language models.
+            </p>
+
+            <blockquote>
+                "Moore's Law is really about people's ability to innovate. It's not a law of physics. It's about the pace of innovation, and innovation requires hard work."
+                <cite>— Gordon Moore, co-founder of Intel, in an interview with the Computer History Museum</cite>
+            </blockquote>
+
+            <h2>WHY IT'S ENDING</h2>
+
+            <p>
+                Three distinct limits are converging simultaneously. Each one alone would slow progress significantly. Together, they are effectively ending the Moore's Law era as we understood it.
+            </p>
+
+            <p>
+                <strong>First: quantum mechanical limits at sub-5nm.</strong> A silicon transistor is, at its core, a gate that controls the flow of electrons through a channel. At the 5nm node and below, gate oxide layers are just a few atomic layers thick — literally as thin as 1–2 nanometres. At these dimensions, quantum tunnelling becomes unavoidable. Electrons no longer behave as classical particles that obey the on/off logic of the gate; they tunnel through barriers probabilistically. Leakage current — current that flows even when the transistor is nominally "off" — dominates power consumption. You cannot simply engineer your way around quantum mechanics. The atoms are doing what atoms do.
+            </p>
+
+            <p>
+                <strong>Second: Dennard scaling broke around 2004.</strong> As transistors shrank below the 90nm node, it became impossible to scale voltages proportionally without sacrificing reliability. The result: power density per unit area began to rise with transistor density rather than staying constant. Clock speeds, which had been climbing reliably from 1MHz to 3GHz, flatlined almost overnight between 2003 and 2005. The "power wall" is why modern processors have many cores rather than one very fast core — at some point, it is more efficient to add parallel execution units than to push a single core faster and watch it melt.
+            </p>
+
+            <p>
+                <strong>Third: economic limits.</strong> The cost of building a leading-edge semiconductor fabrication plant has grown at a rate that makes Moore's Law look modest in comparison. In 2000, a state-of-the-art fab cost roughly $1 billion to construct. By 2010, that figure had risen to $5 billion. TSMC's newest facilities in Arizona and Taiwan cost an estimated <strong>$20 billion or more per fab</strong> as of 2025. The extreme ultraviolet (EUV) lithography machines required for sub-7nm production cost $200 million each; a single fab requires dozens. The economic consequence is brutal: only three companies in the world — TSMC, Samsung, and Intel — can afford to compete at the leading edge. And even among those three, only TSMC and Samsung are reliably shipping at the frontier.
+            </p>
+
+            <div class="callout" data-label="The Economic Consequence">
+                TSMC alone manufactures chips for Apple, NVIDIA, AMD, Qualcomm, and hundreds of other fabless semiconductor companies. This concentration of production at a single company on a single island creates a geopolitical risk that has no precedent in the history of industrial infrastructure. The semiconductor supply chain is the most fragile critical dependency in the modern economy.
+            </div>
+
+            <h2>WHERE WE ARE NOW</h2>
+
+            <p>
+                TSMC shipped its N3 ("3nm") process in volume in late 2022, powering Apple's A17 Pro chip. Its N2 ("2nm") process entered production in 2025. These are extraordinary engineering achievements — but the naming convention has become almost entirely divorced from physical reality.
+            </p>
+
+            <p>
+                When Intel introduced the 10-micron process in 1971, the number described actual transistor gate lengths. That correspondence broke down around the 28nm node in the early 2010s. Today, TSMC's "3nm" node does not have 3nm gate lengths. The actual gate pitch is closer to 45–50nm; the number is a <strong>marketing designator</strong> for competitive positioning rather than a physical measurement. This makes cross-company comparisons almost meaningless without detailed technical analysis. An Intel "7nm" chip and a TSMC "7nm" chip are not comparable on node name alone.
+            </p>
+
+            <p>
+                The most significant structural change at the leading edge is the replacement of FinFET transistors — which have dominated since Intel's 22nm node in 2012 — with <strong>Gate All-Around Field-Effect Transistors (GAAFETs)</strong>. In a FinFET, the gate wraps around three sides of the silicon fin. In a GAAFET, the gate wraps entirely around a nano-sheet or nano-wire channel, giving superior electrostatic control and reducing leakage. Samsung introduced GAA in production at 3nm in 2022; TSMC and Intel are adopting it at their upcoming nodes. TSMC has publicly roadmapped a 1.4nm node (designated N14A) for around 2027, which will push GAAFETs to their own physical limits. Beyond that, the roadmap is genuinely unclear.
+            </p>
+
+            <h2>3D STACKING</h2>
+
+            <p>
+                If you cannot shrink transistors further, the next obvious question is: what if you stack chips on top of each other? 3D stacking is currently the most productive direction in semiconductor packaging, and it represents a genuine architectural shift — not just a manufacturing improvement.
+            </p>
+
+            <p>
+                The basic idea is straightforward: instead of placing all components on a single flat die, build vertically. Multiple chip layers are connected by <strong>Through-Silicon Vias (TSVs)</strong> — tiny vertical electrical connections drilled or etched through the silicon — or by <strong>hybrid bonding</strong>, a newer technique that bonds chips face-to-face with copper-to-copper connections at sub-micron pitch, achieving connection densities orders of magnitude higher than TSVs.
+            </p>
+
+            <p>
+                AMD's <strong>3D V-Cache</strong> technology, introduced on its Ryzen 7 5800X3D in 2022, stacks additional L3 cache directly on top of the processor die using TSVs. The result: gaming and simulation workloads that are bottlenecked by cache size see 10–30% performance improvements with no change to the core design. Intel's <strong>Foveros</strong> technology takes a more general approach, enabling heterogeneous die stacking — placing different dies (processing, memory, I/O) in a 3D arrangement. TSMC's <strong>SoIC</strong> (System on Integrated Chips) platform uses hybrid bonding for the highest-density stacking currently available in production.
+            </p>
+
+            <p>
+                Memory stacking is perhaps the most commercially mature form of 3D integration. <strong>High Bandwidth Memory (HBM)</strong> — used in NVIDIA's A100, H100, and B100 AI accelerators, as well as AMD's Instinct GPUs — stacks multiple DRAM dies vertically and connects them via a high-density silicon interposer to the processor. HBM3e, shipping in 2024, delivers over 1 TB/s of memory bandwidth per stack — roughly ten times the bandwidth of conventional GDDR6. For AI training workloads that are memory-bandwidth-bound, this is transformative.
+            </p>
+
+            <p>
+                The central challenge in 3D stacking is <strong>heat</strong>. Heat flows outward through silicon; stacking chips creates layers that trap heat between them. The bottom die may run hot enough to throttle performance long before the silicon itself fails. Solving the thermal challenge requires novel cooling approaches — integrated microfluidic channels, vapour chambers, and advanced thermal interface materials — that add cost and complexity. This is an engineering problem, not a fundamental limit, but it is a hard one.
+            </p>
+
+            <blockquote>
+                "The last 10 years of Moore's Law, we solved with software — compilers, microarchitecture, parallelism. The next 10 years, we solve with packaging. The die is the new transistor."
+                <cite>— Jim Keller, semiconductor architect (Apple A4, AMD Zen, Tesla Autopilot, Intel), interview with MIT Technology Review</cite>
+            </blockquote>
+
+            <h2>CHIPLETS AND DISAGGREGATION</h2>
+
+            <p>
+                A complementary approach to 3D stacking is chiplet disaggregation — breaking what was once a single monolithic die into multiple smaller dies (chiplets) connected by a high-speed die-to-die interconnect. The economic logic is compelling: as die size grows, yield falls exponentially. A defect that would ruin a 600mm² monolithic die might fall on only one of six 100mm² chiplets, allowing the other five to be salvaged. Smaller dies also allow different manufacturing processes to be used for different functions — you can fabricate a compute chiplet on TSMC's most expensive 3nm process while fabricating I/O and memory controller chiplets on a cheaper, older node that does not benefit from cutting-edge lithography.
+            </p>
+
+            <p>
+                AMD's <strong>EPYC server processors</strong> are the canonical example of chiplet design done right. Starting with the Rome generation in 2019, AMD split their processors into compute chiplets (CCDs) and a separate I/O die. Each CCD is a relatively small, high-yield 7nm die containing 8 CPU cores; multiple CCDs are connected via AMD's Infinity Fabric interconnect. An EPYC Milan processor with 64 cores is eight chiplets — a configuration that would have been economically impossible as a single die. This architecture allowed AMD to ship competitive server CPUs years before they could have afforded monolithic silicon at the same core count.
+            </p>
+
+            <p>
+                Intel's <strong>Agilex FPGAs</strong> use a similar disaggregated approach, allowing customers to mix different FPGA fabric tiles, memory tiles, and I/O tiles on a common silicon interposer. The result: faster time-to-market for customised FPGA configurations without requiring entirely new monolithic tape-outs.
+            </p>
+
+            <p>
+                The main technical challenge is the interconnect. Moving data between chiplets on a package is slower and less energy-efficient than moving data within a single die. For latency-sensitive workloads — particularly those that require frequent communication between cores — this inter-chiplet latency can become a bottleneck. The industry response is the <strong>UCIe (Universal Chiplet Interconnect Express)</strong> standard, announced in 2022 by Intel, AMD, ARM, TSMC, and others. UCIe defines a common physical and protocol interface that allows chiplets from different manufacturers and foundries to interoperate, potentially creating an ecosystem of standardised chiplet components — much as PCIe enabled an ecosystem of standardised expansion cards.
+            </p>
+
+            <div class="callout" data-label="Why This Matters">
+                Chiplets effectively decouple the performance scaling of compute from the economic constraints of leading-edge lithography. You can build a 128-core processor without needing to put 128 cores on a single cutting-edge die. The implication: fabless companies can design more ambitious processors, and the market for leading-edge silicon becomes more accessible to those who cannot afford massive monolithic die tape-outs.
+            </div>
+
+            <h2>NEW MATERIALS AND APPROACHES</h2>
+
+            <p>
+                Beyond packaging innovation, a longer-term bet is that entirely new materials and computing paradigms could sidestep silicon's fundamental limitations. The realistic assessment of each is mixed — some are closer than they appear, some are further.
+            </p>
+
+            <p>
+                <strong>Gallium nitride (GaN) and gallium arsenide (GaAs)</strong> are already in production for power electronics and radio-frequency applications. GaN transistors can switch at higher voltages and frequencies than silicon with lower losses, making them dominant in power supplies, EV chargers, and 5G base stations. They are not a replacement for silicon logic — the manufacturing ecosystem is immature for high-density digital logic — but they represent a genuine materials win in specific domains.
+            </p>
+
+            <p>
+                <strong>Carbon nanotube transistors</strong> are theoretically superior to silicon on almost every metric: faster switching, lower power, better current density. In 2019, MIT demonstrated a simple 16-bit processor built from carbon nanotube transistors — a landmark proof of concept. The challenge is manufacturing at scale: carbon nanotubes are difficult to grow with consistent chirality, alignment, and purity. Industrial production of carbon nanotube logic chips remains a decade or more away.
+            </p>
+
+            <p>
+                <strong>2D materials</strong> — particularly graphene and molybdenum disulphide (MoS₂) — offer atomic-thickness channels that could extend transistor scaling beyond silicon's limits. MoS₂ transistors with gate lengths below 1nm have been demonstrated in research. The obstacle is the same as carbon nanotubes: producing these materials with sufficient purity and uniformity at wafer scale is an unsolved manufacturing problem.
+            </p>
+
+            <p>
+                <strong>Photonic computing</strong> uses light rather than electrons to transmit data. Optical interconnects between chips are already commercially deployed — they use far less energy per bit than copper and can carry data at terabit speeds over metres or kilometres. Photonic computing within a chip — performing computations in the optical domain — is more speculative. Startup Lightmatter is building photonic matrix multiplication units for AI inference; the approach is real but not yet cost-competitive with silicon at scale.
+            </p>
+
+            <p>
+                <strong>In-memory computing</strong> addresses the memory wall directly by performing computation inside the memory array rather than shuttling data to a separate processor. Resistive RAM (ReRAM) and phase-change memory (PCM) devices can perform multiply-accumulate operations — the core operation in neural networks — in the analog domain without reading data out. The efficiency gains are theoretically large; the practical challenges of noise, device variation, and reliability are substantial.
+            </p>
+
+            <p>
+                <strong>Analog computing for neural networks</strong> is a related idea that has attracted serious investment from companies including Mythic and Analog Devices. An analog accelerator stores neural network weights as physical conductances in memory cells and performs matrix multiplication in the analog domain using Ohm's law and Kirchhoff's current law — the physics of the circuit computes the answer. Efficiency gains of 10–100× over digital inference are plausible. The challenge is that analog circuits are sensitive to noise, temperature, and manufacturing variation in ways that digital circuits are not, and neural networks that are retrained specifically for analog deployment currently show accuracy degradation on complex tasks.
+            </p>
+
+            <h2>SPECIALISATION</h2>
+
+            <p>
+                The most immediate and commercially proven answer to the end of Moore's Law is specialisation. If you cannot make a general-purpose processor faster, build a processor that does one thing extraordinarily well. The performance gains from application-specific silicon compared to general-purpose hardware are not modest — they are <strong>orders of magnitude</strong>.
+            </p>
+
+            <p>
+                NVIDIA's <strong>H100 GPU</strong>, the dominant chip for AI training as of 2024, contains 80 billion transistors and delivers roughly 4 petaflops of FP8 (8-bit floating point) matrix multiply throughput — a precision chosen specifically because neural network training tolerates quantisation. A general-purpose CPU performing the same workload would be perhaps 100–1,000× slower per watt. The H100 is not a general CPU; it is a matrix multiplication engine with general-purpose compute grafted on. The specificity is the source of the performance.
+            </p>
+
+            <p>
+                Google's <strong>TPUs (Tensor Processing Units)</strong> go further. The TPU v4 is a custom ASIC designed entirely around the systolic array architecture — a 2D grid of multiply-accumulate units optimised for the specific matrix operations that dominate transformer model training and inference. By removing all the general-purpose complexity of a CPU or GPU — branch prediction, out-of-order execution, caching hierarchies — Google achieves training throughput per dollar that its internal estimates suggest is 1.2–1.7× better than comparable GPU clusters for its workloads. The TPU does fewer things, and because it does fewer things, it does them better.
+            </p>
+
+            <p>
+                At the device level, <strong>Apple's Neural Engine</strong> — the dedicated neural processing unit (NPU) integrated into every A-series and M-series chip since 2017 — performs up to 38 trillion operations per second on the M3 family while consuming a fraction of a watt. It handles face recognition, Siri processing, photography computational pipeline, and on-device LLM inference for Apple Intelligence. A general-purpose CPU core doing the same work would be slower and draw orders of magnitude more power. The Neural Engine is why Apple Silicon can run 7B parameter language models locally without draining a laptop battery in an hour.
+            </p>
+
+            <blockquote>
+                "The chip industry has gone from one architecture feeding everyone — the x86 monoculture — to an explosion of diversity. Every major workload is getting its own silicon. We are in the most exciting era of chip design in 40 years, precisely because Moore's Law is ending."
+                <cite>— Jensen Huang, CEO of NVIDIA, keynote address at GTC 2024</cite>
+            </blockquote>
+
+            <p>
+                The implications of this shift are profound and underappreciated. For most of the computing era, software developers could write general-purpose code and trust that the hardware would get faster over time — Moore's Law made performance someone else's problem. That contract has expired. The performance gains now come from matching workloads to the right specialised hardware: NPUs for inference, GPUs for training, custom ASICs for specific algorithms, FPGAs for reconfigurable acceleration. Writing software that exploits specialised hardware requires understanding the hardware — a skill that was largely unnecessary for two decades and is now essential. The monoculture of the x86 era is giving way to a diverse ecosystem of architectures, and the developers who adapt earliest will build the fastest software.
+            </p>
+
+            <hr>
+
+            <p>
+                <strong>A personal note:</strong> I came into computer science at the tail end of the Moore's Law era — late enough to take exponential performance gains as a background assumption, early enough to watch them decelerate in real time. There is something disorienting about the end of a phenomenon that has been true for longer than most living humans. We built entire industries, entire mental models of what computing means, on the assumption of predictable exponential improvement. That assumption is no longer safe.
+            </p>
+
+            <p>
+                But what I find genuinely exciting is that the end of the easy path — faster transistors, automatic performance improvements, general-purpose hardware that gets better while you sleep — forces a return to first principles. What problem are you actually solving? What are the computational primitives that matter? Where does the data live relative to the computation? These questions were suppressed for 60 years by the fact that it often did not matter — wait two years and the hardware would solve your problem for you. Now they matter again. The next generation of systems builders will need to think carefully about architecture in a way that the previous generation largely did not. That is more demanding. It is also, I think, more interesting.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">Moore's Law</span>
+                <span class="tag">computer architecture</span>
+                <span class="tag">semiconductors</span>
+                <span class="tag">TSMC</span>
+                <span class="tag">chiplets</span>
+                <span class="tag">3D stacking</span>
+                <span class="tag">specialisation</span>
+                <span class="tag">GPU</span>
+                <span class="tag">hardware</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="how-internet-works.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">How the Internet Actually Works</span>
+                </a>
+                <a href="simulation-hypothesis.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">The Simulation Hypothesis</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

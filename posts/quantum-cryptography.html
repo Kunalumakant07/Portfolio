@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Cryptography — The Unbreakable Lock — Umakant Kunal</title>
+    <meta name="description" content="How quantum mechanics turns the laws of physics into a security guarantee — BB84, the no-cloning theorem, E91, and the honest limits of real-world QKD.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-quantum    { color: #c084fc; border-color: #4c1d95; }
+        .cat-ai         { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy { color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── PROTOCOL / FORMULA BLOCK ── */
+        .protocol-block {
+            margin: 28px 0;
+            padding: 20px 22px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-left: 3px solid #c084fc;
+            font-size: 0.82rem;
+            color: var(--text);
+            line-height: 2;
+            overflow-x: auto;
+        }
+
+        .protocol-block .proto-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: #c084fc;
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .protocol-block .step {
+            color: var(--muted);
+        }
+
+        .protocol-block .step strong {
+            color: var(--text);
+        }
+
+        .protocol-block .step em {
+            color: var(--blue);
+            font-style: normal;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: #c084fc;
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: #c084fc; color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+            .protocol-block { padding: 14px 16px; font-size: 0.78rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                quantum-cryptography
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-01-25</span>
+                <span class="post-category cat-quantum">Quantum Computing</span>
+                <span class="post-category cat-quantum">Security</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">Quantum Cryptography —<br>The Unbreakable Lock</h1>
+
+            <p class="post-subtitle">
+                For all of human history, security meant making codes harder to break. Quantum cryptography does something fundamentally different — it makes eavesdropping <em>physically detectable</em>. The laws of physics become the security guarantee, not mathematical hardness.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Every lock ever built worked on the same principle: make the problem of breaking it computationally infeasible. A Caesar cipher requires trying 25 rotations. RSA-2048 requires factoring a number so large that a classical computer would need longer than the age of the universe. The assumption is always the same — the adversary lacks the computational power to brute-force the solution.
+            </p>
+
+            <p>
+                Quantum computing breaks that assumption. Shor's algorithm can factor large integers in polynomial time. The mathematical hardness that underpins most of modern cryptography — RSA, Diffie-Hellman, elliptic curve — dissolves. We need a new foundation.
+            </p>
+
+            <p>
+                Quantum cryptography offers one. Not by finding harder mathematics, but by changing the game entirely. Instead of a lock that is hard to pick, it builds a lock that <strong>tells you when someone has tried to pick it</strong>. The security guarantee does not come from computational complexity. It comes from the structure of quantum mechanics itself.
+            </p>
+
+            <h2>CLASSICAL KEY EXCHANGE PROBLEM</h2>
+
+            <p>
+                Before we can understand quantum key distribution, we need to understand what problem it solves. Imagine Alice and Bob want to communicate securely over a public channel that Eve can monitor freely. They want to share a secret key — a string of random bits that only they know — so they can encrypt their messages symmetrically.
+            </p>
+
+            <p>
+                The problem is fundamental: <strong>how do you share a secret over a channel with no secrets?</strong> If they send the key directly, Eve intercepts it. If they encrypt the key, they need another key to do that. It seems circular.
+            </p>
+
+            <p>
+                In 1976, Whitfield Diffie and Martin Hellman found an elegant answer. Their protocol exploits the mathematical asymmetry of modular exponentiation. Alice and Bob agree publicly on a prime <strong>p</strong> and a generator <strong>g</strong>. Alice picks a secret <strong>a</strong> and sends g<sup>a</sup> mod p. Bob picks a secret <strong>b</strong> and sends g<sup>b</sup> mod p. Both compute (g<sup>b</sup>)<sup>a</sup> = (g<sup>a</sup>)<sup>b</sup> = g<sup>ab</sup> mod p — the shared secret. Eve, watching the channel, sees g<sup>a</sup> and g<sup>b</sup> but cannot recover <strong>a</strong> or <strong>b</strong> without solving the discrete logarithm problem, which is believed to be hard.
+            </p>
+
+            <p>
+                Shor's algorithm, running on a sufficiently powerful quantum computer, solves the discrete logarithm problem efficiently. The same algorithm breaks RSA by factoring the public modulus. <em>The mathematical foundation of internet security, as currently deployed, becomes insecure the moment a large-scale fault-tolerant quantum computer exists.</em>
+            </p>
+
+            <div class="callout" data-label="threat timeline">
+                NIST estimates a cryptographically-relevant quantum computer (CRQC) capable of breaking RSA-2048 requires roughly 4,000 logical qubits and millions of physical qubits due to error correction overhead. Current leading systems have hundreds of noisy physical qubits. The threat is real, but not immediate — which is why the transition window is now.
+            </div>
+
+            <h2>QUANTUM KEY DISTRIBUTION — BB84 PROTOCOL</h2>
+
+            <p>
+                In 1984, Charles Bennett and Gilles Brassard published a paper that quietly changed what security means. Their protocol — BB84 — allows Alice and Bob to establish a shared secret key over a quantum channel in a way that is information-theoretically secure: no amount of computational power, quantum or classical, can break it.
+            </p>
+
+            <blockquote>
+                "The security of BB84 does not rest on any unproven computational assumption. It rests on the laws of quantum mechanics. Those are not going to be broken by a faster computer."
+                <cite>— Charles Bennett, IBM Research</cite>
+            </blockquote>
+
+            <p>
+                The protocol exploits two features of quantum mechanics: the no-cloning theorem (more on this shortly) and the fact that measuring a quantum state disturbs it. Here is how it works, step by step.
+            </p>
+
+            <div class="protocol-block">
+                <span class="proto-title">BB84 PROTOCOL — STEP BY STEP</span>
+                <div class="step"><strong>Step 1 — Alice prepares qubits:</strong> Alice generates a random bit string and a random basis string. For each bit, she encodes it as a photon polarisation using one of two conjugate bases: the <em>rectilinear basis</em> {↑, →} or the <em>diagonal basis</em> {↗, ↘}. Bit 0 in rectilinear = ↑ (vertical). Bit 1 in rectilinear = → (horizontal). Bit 0 in diagonal = ↗. Bit 1 in diagonal = ↘.</div>
+                <div class="step"><strong>Step 2 — Alice sends qubits:</strong> She sends the sequence of polarised photons to Bob over the quantum channel.</div>
+                <div class="step"><strong>Step 3 — Bob measures:</strong> For each photon, Bob independently and randomly chooses a basis to measure in — rectilinear or diagonal. If he chooses the same basis Alice used, he gets the correct bit with certainty. If he chooses the wrong basis, he gets a random result (50/50).</div>
+                <div class="step"><strong>Step 4 — Basis reconciliation:</strong> Alice and Bob compare their basis choices over a classical public channel. They do NOT reveal their bit values. They only announce which basis they used for each position.</div>
+                <div class="step"><strong>Step 5 — Sifting:</strong> They discard all positions where they used different bases. The remaining bits — roughly 50% of the original — form the raw key, because Bob's measurement was in the correct basis and is guaranteed to match Alice's prepared bit.</div>
+                <div class="step"><strong>Step 6 — Eavesdrop detection:</strong> They publicly compare a random subset of the sifted bits. If Eve intercepted and re-sent photons, her measurements would have disturbed ~25% of the key bits, producing a detectable error rate. If the error rate exceeds a threshold (~11%), they abort and try again. If it is low, they proceed.</div>
+                <div class="step"><strong>Step 7 — Privacy amplification:</strong> They apply error correction and privacy amplification — hashing the raw key down to a shorter string that Eve has negligible information about. What remains is the final shared secret key.</div>
+            </div>
+
+            <h3>A Concrete Example</h3>
+
+            <p>
+                Alice sends 8 photons. Her bits: <strong>1 0 1 1 0 0 1 0</strong>. Her bases: <strong>R D R D D R D R</strong> (R = rectilinear, D = diagonal). Bob's measurement bases: <strong>R R R D D R R R</strong>. After basis reconciliation, positions 1, 3, 5, 6, 8 match (R-R or D-D). The bits at those positions — 1, 1, 0, 0, 0 — become the raw key. Bob's measurements at these positions are guaranteed correct. On a sample check of position 1, Bob announces "1". Alice confirms. No eavesdropper detected. The protocol proceeds.
+            </p>
+
+            <p>
+                If Eve had intercepted position 3, she would have had to guess a basis. If she guessed wrong (diagonal instead of rectilinear), her re-sent photon would have been in the diagonal basis. Bob, measuring in rectilinear, would get a random result — introducing an error with 50% probability for that bit. Over many bits, the error rate climbs measurably. <strong>Eve cannot eavesdrop silently. She leaves a physical trace.</strong>
+            </p>
+
+            <h2>THE NO-CLONING THEOREM</h2>
+
+            <p>
+                The entire security of BB84 rests on a fundamental theorem of quantum mechanics: <strong>you cannot create a perfect copy of an unknown quantum state.</strong> This is not a limitation of current technology. It is a mathematical impossibility.
+            </p>
+
+            <p>
+                The proof sketch is clean. Suppose a unitary operator U could clone any state: U|ψ⟩|0⟩ = |ψ⟩|ψ⟩. Apply this to a superposition |ψ⟩ = α|0⟩ + β|1⟩. Linearity of quantum mechanics requires:
+            </p>
+
+            <div class="protocol-block">
+                <span class="proto-title">NO-CLONING THEOREM — PROOF SKETCH</span>
+                <div class="step">Suppose cloner U exists such that U|ψ⟩|0⟩ = |ψ⟩|ψ⟩ for all |ψ⟩.</div>
+                <div class="step">For |0⟩: U|0⟩|0⟩ = |0⟩|0⟩</div>
+                <div class="step">For |1⟩: U|1⟩|0⟩ = |1⟩|1⟩</div>
+                <div class="step">By linearity, for |ψ⟩ = α|0⟩ + β|1⟩:</div>
+                <div class="step">U|ψ⟩|0⟩ = α|0⟩|0⟩ + β|1⟩|1⟩</div>
+                <div class="step">But |ψ⟩|ψ⟩ = (α|0⟩ + β|1⟩)(α|0⟩ + β|1⟩) = α²|00⟩ + αβ|01⟩ + αβ|10⟩ + β²|11⟩</div>
+                <div class="step">These are equal only if αβ = 0 — meaning |ψ⟩ is a basis state, not a general superposition.</div>
+                <div class="step">∴ No universal quantum cloner exists. <em>QED.</em></div>
+            </div>
+
+            <p>
+                Why does this matter for cryptography? Because it means Eve cannot intercept Alice's photons, copy them perfectly, forward the originals to Bob, and measure the copies at leisure. Any attempt to measure the quantum channel disturbs the states. The disturbance is detectable. <strong>The no-cloning theorem transforms eavesdropping from an information operation into a physical event with observable consequences.</strong>
+            </p>
+
+            <p>
+                This is the deep shift. Classical cryptography assumes the adversary can freely copy and store any transmitted bit — they can, because bits are classical information. Quantum cryptography transmits information that cannot be copied. The physics of information itself becomes the security primitive.
+            </p>
+
+            <h2>E91 PROTOCOL</h2>
+
+            <p>
+                In 1991, Artur Ekert proposed an alternative QKD protocol that many consider even more elegant than BB84. Where BB84 uses prepared single photon states, E91 uses <em>entanglement</em> — specifically, pairs of photons in the Bell state |Φ⁺⟩ = (|00⟩ + |11⟩)/√2.
+            </p>
+
+            <blockquote>
+                "Quantum entanglement can be used to establish a cryptographic key with security guaranteed by the violation of Bell's inequality. Any eavesdropper inevitably destroys the correlations, and their presence can be detected."
+                <cite>— Artur Ekert, Nature, 1991</cite>
+            </blockquote>
+
+            <p>
+                The protocol works as follows. A source — which need not be trusted and can even be controlled by Eve — emits entangled photon pairs. One photon goes to Alice, one to Bob. Alice and Bob each measure their photon in one of three randomly chosen bases. They then perform two checks:
+            </p>
+
+            <ul>
+                <li><strong>Key generation:</strong> When Alice and Bob happen to choose the same basis (roughly a third of measurements), their results are perfectly anti-correlated (or correlated, depending on the Bell state). These matching measurements form the raw key, just as in BB84.</li>
+                <li><strong>Bell inequality test:</strong> For the measurements in non-matching bases, Alice and Bob compute the CHSH correlation parameter S = |E(a,b) − E(a,b') + E(a',b) + E(a',b')|, where E(x,y) is the correlation coefficient for measurement settings x and y. Quantum mechanics predicts S = 2√2 ≈ 2.83. Classical local-realist correlations obey S ≤ 2. If Eve has intercepted and re-sent classical photons to mimic entanglement, the correlations become classical and S drops toward 2.</li>
+            </ul>
+
+            <p>
+                The beauty of E91 is that eavesdrop detection is not statistical sampling of key bits — it is a <em>fundamental test of quantum non-locality</em>. If the Bell inequality is violated, the correlations are genuinely quantum and cannot have been tampered with by any local realistic attack. The security proof is rooted in the foundations of quantum mechanics in a way that feels almost philosophical. <em>Device-independent QKD</em>, the most rigorous form of quantum cryptography, is a direct descendant of Ekert's approach.
+            </p>
+
+            <h2>REAL-WORLD QUANTUM NETWORKS</h2>
+
+            <p>
+                QKD is not purely theoretical. Real networks carrying quantum keys are operating today — though at a scale far more limited than the classical internet.
+            </p>
+
+            <p>
+                The most dramatic demonstration came in 2017, when China's Micius satellite achieved QKD over 1,200 kilometres of space. The satellite distributed entangled photon pairs between ground stations in Xinglong and Nanshan, establishing a shared key at a rate of kilobits per second over a distance that would make fibre-optic QKD essentially impossible due to photon loss. The team then used the satellite as a trusted relay to hold a quantum-secured video call between Beijing and Vienna — the first intercontinental QKD-secured communication.
+            </p>
+
+            <p>
+                On the ground, the Vienna quantum network, established in 2008 by a consortium of European universities, demonstrated QKD over metropolitan-scale fibre links, eventually connecting six nodes including the Vienna City Hall and the headquarters of a major bank. Toshiba's commercial QKD systems now achieve key rates exceeding 10 Mbps over 10-kilometre fibre links, suitable for data centre interconnects.
+            </p>
+
+            <div class="callout" data-label="the repeater problem">
+                Photons in fibre decohere and are absorbed with distance. Quantum repeaters — devices that extend range without violating the no-cloning theorem by using entanglement swapping and quantum memory — are still largely experimental. The current record for QKD over standard fibre (without satellite) is roughly 500 km, achieved in 2023 by combining ultra-low-loss fibre with single-photon detectors cooled to millikelvin temperatures. For intercontinental distances, trusted satellite relays or true quantum repeaters remain the unsolved challenge.
+            </div>
+
+            <p>
+                The EU's Quantum Internet Alliance is funding a ten-year roadmap toward a pan-European quantum network, with milestones ranging from trusted-node QKD (deployable now) through entanglement-based networks (2030s) to a full quantum internet capable of distributed quantum computing (2040s). The ambition is considerable. The engineering obstacles are formidable.
+            </p>
+
+            <h2>IS IT ACTUALLY UNBREAKABLE?</h2>
+
+            <p>
+                Here is where we need to be honest. The protocols themselves — BB84 as a mathematical object, E91 as a physical principle — are provably information-theoretically secure. Not computationally hard to break. <em>Provably impossible to break</em>, given the correctness of quantum mechanics. No adversary, regardless of computational power, can recover the key if the protocol is executed correctly on ideal devices.
+            </p>
+
+            <p>
+                Real devices are not ideal. And this is where things get complicated.
+            </p>
+
+            <p>
+                In 2010, a team led by Vadim Makarov demonstrated a devastating attack against commercial QKD systems: the <em>detector blinding attack</em>. Single-photon detectors work by registering individual photons as avalanche current pulses. By illuminating the detector with a continuous bright light beam, Eve can force it into a linear mode where it only registers clicks when illuminated above a threshold — effectively remote-controlling the detector. She can then intercept all photons, measure them, and re-send bright pulses that arrive at Bob's detector only when they encode the same bit value she measured. Bob's detector clicks as expected. Alice's statistics look normal. Eve has broken the system completely — not by defeating the quantum protocol, but by defeating the implementation.
+            </p>
+
+            <blockquote>
+                "We've shown that there is a gap between the theoretical security proof and what real devices do. You can have an unbreakable protocol running on breakable hardware. The security proof needs to extend all the way down to the physics of each component."
+                <cite>— Vadim Makarov, University of Waterloo (Institute for Quantum Computing)</cite>
+            </blockquote>
+
+            <p>
+                Other side-channel vulnerabilities include timing attacks on photon detectors, photon-number-splitting attacks against weak coherent pulse sources (where Alice's laser occasionally emits two photons instead of one, letting Eve siphon one without detection), and Trojan horse attacks where Eve probes Alice's hardware with bright pulses and analyses the back-reflection.
+            </p>
+
+            <p>
+                Device-independent QKD — based on Ekert's entanglement approach — closes many of these loopholes by guaranteeing security even if the hardware was built by an adversary, as long as the Bell inequality is violated. But device-independent protocols require near-perfect detection efficiencies that are extremely difficult to achieve in practice, and current key rates are far too low for practical use.
+            </p>
+
+            <p>
+                The honest answer: <strong>the theory is unbreakable; the practice is a moving frontier</strong>. Each side-channel that is discovered and patched brings real-world security closer to theoretical security, but the gap has not closed completely.
+            </p>
+
+            <h2>POST-QUANTUM CRYPTOGRAPHY VS QKD</h2>
+
+            <p>
+                There are two distinct responses to the quantum threat, and they are often confused. <strong>Post-quantum cryptography (PQC)</strong> and <strong>quantum key distribution (QKD)</strong> are not the same thing, and they are not competing approaches so much as answers to different questions.
+            </p>
+
+            <p>
+                PQC — standardised by NIST in 2024 through algorithms like ML-KEM (CRYSTALS-Kyber) and ML-DSA (CRYSTALS-Dilithium) — takes a classical computing approach. These are new mathematical problems believed to be hard for quantum computers: lattice problems, hash-based signatures, code-based cryptography. They run on existing hardware. They integrate into existing protocols like TLS with minimal overhead. They can be deployed as a software update. The security is computational — believed to be hard, not proven impossible — but the history of lattice cryptography is decades old and has survived sustained cryptanalysis.
+            </p>
+
+            <p>
+                QKD takes a fundamentally different approach. It does not find harder mathematics; it removes mathematical hardness as the foundation entirely. Security is physical and information-theoretic. But QKD requires dedicated quantum hardware, quantum channels (either fibre or free-space optical), trusted nodes for long-distance use, and ongoing engineering effort to close the gap between theoretical and practical security. It cannot be deployed as a software update.
+            </p>
+
+            <p>
+                In terms of near-term practicality, PQC wins. The NIST algorithms are being rolled out across TLS, SSH, and software ecosystems right now. Billions of devices will be post-quantum secure within the decade through ordinary software updates. QKD, at scale, requires infrastructure investment comparable to building a parallel physical network.
+            </p>
+
+            <p>
+                In terms of long-term fundamentality, QKD offers something PQC cannot: a security guarantee that does not depend on any computational assumption. If someone finds an efficient classical algorithm for lattice problems — which has happened to cryptographic assumptions before — PQC becomes insecure overnight. QKD's security, in the device-independent limit, does not have this vulnerability. <em>The laws of quantum mechanics would have to be wrong.</em>
+            </p>
+
+            <p>
+                The likely answer is not either/or. Hybrid approaches — combining PQC algorithms with QKD for high-security links — are already being explored by governments and financial institutions. PQC for broad deployment; QKD for the highest-value communications that justify the infrastructure.
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL NOTE</h2>
+
+            <p>
+                What strikes me most about quantum cryptography is not the mathematics — elegant as it is — but the conceptual shift. We have always thought of security as a computational problem. Given enough time and computing power, any lock can be broken. That framing is so deeply embedded in how we think about information security that it feels like a law of nature.
+            </p>
+
+            <p>
+                Quantum cryptography breaks that intuition. There exist locks that are not just computationally hard to break but physically impossible to break silently. Eavesdropping becomes a detectable physical act. The information-theoretic security of BB84 is not a very-hard bound that might someday be beaten by a clever algorithm. It is a theorem derived from the same axioms that explain atomic spectra and the behaviour of semiconductors. Those axioms are extremely well-tested.
+            </p>
+
+            <p>
+                Of course, the gap between theorem and implementation is real and matters enormously. But watching that gap close — through device-independent protocols, better single-photon sources, quantum repeaters — feels like watching a genuinely new kind of security being built from the ground up. Not faster locks. A different category of lock entirely.
+            </p>
+
+            <p>
+                The physics of information was always there. We are only now learning how to use it.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">quantum cryptography</span>
+                <span class="tag">QKD</span>
+                <span class="tag">BB84</span>
+                <span class="tag">no-cloning theorem</span>
+                <span class="tag">E91</span>
+                <span class="tag">post-quantum</span>
+                <span class="tag">Bell inequality</span>
+                <span class="tag">security</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="quantum-complexity-theory.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Quantum Complexity Theory</span>
+                </a>
+                <a href="how-transformers-work.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">How Transformers Work</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

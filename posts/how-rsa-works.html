@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How RSA Encryption Works — And Why 2048 Bits Keeps Your Data Safe (For Now) — Umakant Kunal</title>
+    <meta name="description" content="RSA is one of the most elegant mathematical constructions in computer science — a lock that anyone can close but only one person can open. Here's how it works, step by step.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --orange:    #fb923c;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-quantum    { color: #c084fc; border-color: #4c1d95; }
+        .cat-ai         { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy { color: var(--purple);  border-color: #3d2d6e; }
+        .cat-security   { color: #fb923c; border-color: #7c2d12; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid #7c2d12;
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid #fb923c;
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #7c2d12;
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: #fb923c; }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid #7c2d12;
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #fb923c;
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── MATH / FORMULA BLOCK ── */
+        .math-block {
+            margin: 28px 0;
+            padding: 20px 22px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-left: 3px solid #fb923c;
+            font-size: 0.82rem;
+            color: var(--text);
+            line-height: 2.2;
+            overflow-x: auto;
+        }
+
+        .math-block .math-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: #fb923c;
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 14px;
+        }
+
+        .math-block .math-row {
+            display: flex;
+            gap: 16px;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .math-block .math-label {
+            color: var(--muted);
+            min-width: 180px;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+        }
+
+        .math-block .math-expr {
+            color: var(--text);
+            font-size: 0.88rem;
+        }
+
+        .math-block .math-expr .hl { color: #fb923c; }
+        .math-block .math-expr .hl2 { color: var(--blue); }
+        .math-block .math-expr .result { color: var(--accent); }
+
+        .math-block .math-sep {
+            border-top: 1px solid var(--border);
+            margin: 10px 0;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: #7c2d12; }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: #fb923c;
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #7c2d12; border-radius: 2px; }
+        ::selection { background: #fb923c; color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+            .math-block { padding: 14px 16px; font-size: 0.78rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                how-rsa-works
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-22</span>
+                <span class="post-category cat-security">Cryptography</span>
+                <span class="post-category cat-security">Security</span>
+                <span class="post-read-time">10 min read</span>
+            </div>
+
+            <h1 class="post-title">How RSA Encryption Works —<br>And Why 2048 Bits Keeps<br>Your Data Safe (For Now)</h1>
+
+            <p class="post-subtitle">
+                RSA is one of the most elegant mathematical constructions in computer science — a lock that anyone can close but only one person can open. Understanding it requires only basic arithmetic, and it is worth the effort.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Every time you see a padlock icon in your browser's address bar, something remarkable is happening beneath the surface. A mathematical protocol — invented in 1977, named after Rivest, Shamir, and Adleman — is silently negotiating the security of your connection. RSA, or its modern successors, underpins HTTPS, SSH, digital signatures, and certificate authorities. It is the reason you can enter your credit card number on a website without the coffee shop's WiFi router reading it.
+            </p>
+
+            <p>
+                What makes RSA beautiful is its simplicity. There is no secret algorithm, no hidden complexity only specialists can grasp. The entire scheme rests on a single asymmetry in arithmetic, a mathematical fact so elementary that you already know it intuitively — even if you have never thought about it as a security primitive. Understanding RSA requires no calculus, no abstract algebra beyond high school, and no prior cryptography knowledge. It requires patience, and the willingness to follow a chain of reasoning to its conclusion.
+            </p>
+
+            <p>
+                This post will build RSA from first principles, with real numbers at every step. By the end, you will not just know <em>that</em> it works — you will know <em>why</em>.
+            </p>
+
+            <h2>THE KEY INSIGHT — ONE-WAY FUNCTIONS</h2>
+
+            <p>
+                The foundation of asymmetric cryptography is the concept of a <strong>one-way function</strong>: a computation that is easy to perform in one direction, but computationally hard to reverse. Not hard in the sense of inconvenient — hard in the sense that no known algorithm can do it efficiently, even with the most powerful computers on the planet working in parallel for longer than the age of the universe.
+            </p>
+
+            <p>
+                The candidate one-way function at the heart of RSA is <strong>integer factorisation</strong>. Here is the asymmetry in plain arithmetic:
+            </p>
+
+            <ul>
+                <li><strong>Multiplication:</strong> Given two primes, compute their product. 17 × 19 = 323. That took you less than a second. A computer does billions of such operations per second.</li>
+                <li><strong>Factorisation:</strong> Given the product, recover the primes. What are the prime factors of 437? You have to try: 2? No. 3? No. 7? No. 11? No. 19? Yes — 437 = 19 × 23. That required effort. Now try 15,637. Then 104,729.</li>
+            </ul>
+
+            <p>
+                The asymmetry is real but modest at small scales. At the scale RSA actually operates — numbers 2,048 bits long, roughly 617 decimal digits — the asymmetry becomes <em>astronomical</em>. Multiplying two 1,024-bit primes together takes microseconds. Factoring the result is a problem that the best classical algorithm known (the General Number Field Sieve, or GNFS) would take longer than the estimated age of the universe to solve on any classical hardware.
+            </p>
+
+            <blockquote>
+                "The security of RSA is based on the practical difficulty of factoring the product of two large prime numbers. Factoring is considered a hard problem. There is no known polynomial-time algorithm for it. We believe — though we cannot prove — that no such algorithm exists."
+                <cite>— Ron Rivest, co-inventor of RSA, MIT</cite>
+            </blockquote>
+
+            <p>
+                Notice that caveat: <em>we believe, but cannot prove</em>. RSA's security is not mathematically proven the way a theorem is proven — it rests on a conjecture about the hardness of factoring that has held up for over four decades of sustained cryptanalytic attack. That is strong empirical evidence, even in the absence of a formal proof. The practical implication: break RSA, win a million dollars and a Fields Medal. The attack has not come. Yet.
+            </p>
+
+            <h2>MODULAR ARITHMETIC — THE MATHEMATICS OF CLOCKS</h2>
+
+            <p>
+                Before we can build RSA, we need one more mathematical tool: <strong>modular arithmetic</strong>. It sounds technical, but you use it every day without thinking about it. It is the arithmetic of clocks.
+            </p>
+
+            <p>
+                When you add 5 hours to 10 o'clock, you do not get 15 o'clock — you get 3 o'clock, because the clock wraps around at 12. Formally: (10 + 5) mod 12 = 3. The expression "<strong>a mod n</strong>" means: divide a by n and take the remainder. Some examples:
+            </p>
+
+            <ul>
+                <li>17 mod 5 = 2 (because 17 = 3 × 5 + 2)</li>
+                <li>23 mod 7 = 2 (because 23 = 3 × 7 + 2)</li>
+                <li>100 mod 13 = 9 (because 100 = 7 × 13 + 9)</li>
+                <li>7 mod 7 = 0 (because 7 = 1 × 7 + 0)</li>
+            </ul>
+
+            <p>
+                Modular arithmetic supports the usual operations — addition, subtraction, multiplication — and crucially, <strong>exponentiation</strong>. You can raise a number to a large power and take the result mod n, and the answer is always a number between 0 and n−1. This bounded, cyclical behaviour is what makes RSA possible.
+            </p>
+
+            <h3>Euler's Totient Function φ(n)</h3>
+
+            <p>
+                For a positive integer n, <strong>Euler's totient function φ(n)</strong> counts how many integers between 1 and n are coprime to n — that is, share no common factor with n other than 1. For a prime p, every number from 1 to p−1 is coprime to p, so φ(p) = p − 1.
+            </p>
+
+            <p>
+                For the product of two distinct primes n = p × q, a beautiful formula follows: <strong>φ(n) = (p − 1)(q − 1)</strong>. This is because out of n integers, exactly n − φ(n) = p + q − 1 of them share a factor with n (namely, the p multiples of q and the q multiples of p, minus n itself which is counted twice). This formula is the engine that drives RSA key generation.
+            </p>
+
+            <h3>Euler's Theorem</h3>
+
+            <p>
+                The result that makes RSA work is <strong>Euler's theorem</strong>: if a and n are coprime, then a<sup>φ(n)</sup> ≡ 1 (mod n). In plain language: raise any coprime a to the power of φ(n) modulo n, and you always get 1. This is the mathematical miracle that RSA exploits. It means that exponentiation in modular arithmetic is <em>periodic</em> — raising a to powers cycles through values and eventually wraps back to a itself.
+            </p>
+
+            <p>
+                From Euler's theorem, a key corollary follows: a<sup>k·φ(n)+1</sup> ≡ a (mod n). That is, if you raise a to any multiple of φ(n) plus one, you get a back. RSA is built on choosing exponents e and d such that e·d ≡ 1 (mod φ(n)) — ensuring that encrypting and then decrypting is equivalent to raising to the power e·d, which is exactly of the form k·φ(n)+1, and therefore returns the original message.
+            </p>
+
+            <div class="callout" data-label="intuition check">
+                Think of it this way: in the modular world defined by n, raising to the φ(n)-th power is like multiplying by 1 — it does nothing. So raising to the power e and then to the power d is raising to the power e·d. If e·d is a multiple of φ(n) plus 1, the net effect is raising to the power 1 — the identity. You get your original number back. That is the entire trick.
+            </div>
+
+            <h2>RSA KEY GENERATION — STEP BY STEP</h2>
+
+            <p>
+                Let us build an actual RSA key pair. For pedagogical clarity we will use tiny primes — p = 61, q = 53. Real RSA uses primes hundreds of digits long, but the algorithm is identical.
+            </p>
+
+            <div class="math-block">
+                <span class="math-title">RSA KEY GENERATION — WORKED EXAMPLE</span>
+
+                <div class="math-row">
+                    <span class="math-label">Step 1 — Choose primes:</span>
+                    <span class="math-expr"><span class="hl">p = 61</span>, &nbsp;<span class="hl">q = 53</span></span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">Step 2 — Compute modulus:</span>
+                    <span class="math-expr">n = p × q = 61 × 53 = <span class="result">3233</span></span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">Step 3 — Compute φ(n):</span>
+                    <span class="math-expr">φ(n) = (p−1)(q−1) = 60 × 52 = <span class="result">3120</span></span>
+                </div>
+
+                <div class="math-sep"></div>
+
+                <div class="math-row">
+                    <span class="math-label">Step 4 — Choose public exponent:</span>
+                    <span class="math-expr"><span class="hl2">e = 17</span> &nbsp;(must be coprime to φ(n); gcd(17, 3120) = 1 ✓)</span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">Step 5 — Compute private exponent:</span>
+                    <span class="math-expr"><span class="hl2">d = 2753</span> &nbsp;(modular inverse of e: 17 × 2753 mod 3120 = 1 ✓)</span>
+                </div>
+
+                <div class="math-sep"></div>
+
+                <div class="math-row">
+                    <span class="math-label">Public key:</span>
+                    <span class="math-expr"><span class="result">(n = 3233, e = 17)</span> &nbsp;← share freely</span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">Private key:</span>
+                    <span class="math-expr"><span class="hl">(n = 3233, d = 2753)</span> &nbsp;← keep secret</span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">Discard:</span>
+                    <span class="math-expr">p, q, and φ(n) — never needed again, dangerous to keep</span>
+                </div>
+            </div>
+
+            <p>
+                The private exponent d is computed using the <strong>Extended Euclidean Algorithm</strong>, which finds integers satisfying Bézout's identity. Given e = 17 and φ(n) = 3120, we need d such that 17d ≡ 1 (mod 3120). Working through the algorithm: 17 × 2753 = 46,801 = 15 × 3120 + 1. So 17 × 2753 mod 3120 = 1. Done — d = 2753.
+            </p>
+
+            <p>
+                The public key (n, e) is published to the world. Anyone can encrypt a message to you using it. The private key (n, d) stays secret. Only you can decrypt. The security guarantee: knowing n and e, you cannot derive d without factoring n to recover p and q — and for large n, that factoring problem is computationally intractable.
+            </p>
+
+            <h2>ENCRYPTION AND DECRYPTION</h2>
+
+            <p>
+                With keys in hand, the cryptographic operations are surprisingly simple. To encrypt a message m (an integer between 0 and n−1), compute:
+            </p>
+
+            <div class="math-block">
+                <span class="math-title">ENCRYPTION AND DECRYPTION — FULL EXAMPLE</span>
+
+                <div class="math-row">
+                    <span class="math-label">Message (plaintext):</span>
+                    <span class="math-expr"><span class="hl2">m = 65</span> &nbsp;(e.g., the ASCII code for 'A')</span>
+                </div>
+
+                <div class="math-sep"></div>
+
+                <div class="math-row">
+                    <span class="math-label">Encryption formula:</span>
+                    <span class="math-expr">c = m<sup>e</sup> mod n</span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">With our keys:</span>
+                    <span class="math-expr">c = 65<sup>17</sup> mod 3233 = <span class="result">2790</span></span>
+                </div>
+
+                <div class="math-sep"></div>
+
+                <div class="math-row">
+                    <span class="math-label">Decryption formula:</span>
+                    <span class="math-expr">m = c<sup>d</sup> mod n</span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">With our keys:</span>
+                    <span class="math-expr">m = 2790<sup>2753</sup> mod 3233 = <span class="result">65</span> ✓</span>
+                </div>
+
+                <div class="math-sep"></div>
+
+                <div class="math-row">
+                    <span class="math-label">Why it works:</span>
+                    <span class="math-expr">c<sup>d</sup> = (m<sup>e</sup>)<sup>d</sup> = m<sup>e·d</sup> mod n</span>
+                </div>
+
+                <div class="math-row">
+                    <span class="math-label">e·d ≡ 1 (mod φ(n)), so:</span>
+                    <span class="math-expr">m<sup>e·d</sup> = m<sup>k·φ(n)+1</sup> = (m<sup>φ(n)</sup>)<sup>k</sup> · m ≡ 1<sup>k</sup> · m = <span class="result">m</span> (mod n)</span>
+                </div>
+            </div>
+
+            <p>
+                The last line is the payoff: <strong>Euler's theorem guarantees that m<sup>φ(n)</sup> ≡ 1 (mod n)</strong> (when m and n are coprime), so any multiple of φ(n) in the exponent collapses to 1, and you are left with m. The encryption and decryption operations are mutual inverses — not by design, but because of a deep property of modular arithmetic that Euler proved in 1763, two centuries before RSA was invented.
+            </p>
+
+            <p>
+                Computing 65<sup>17</sup> mod 3233 directly would overflow any standard integer. In practice this uses <strong>fast modular exponentiation</strong> (repeated squaring): decompose the exponent in binary, square and reduce modulo n at each step. This keeps intermediate values bounded by n² and runs in O(log e) multiplications — efficient even for 2,048-bit exponents.
+            </p>
+
+            <blockquote>
+                "The elegance of RSA is that three distinct fields of mathematics — number theory, modular arithmetic, and computational complexity — come together in a construction so clean you can explain it on a napkin. The fact that it is also practically secure is almost an accident of arithmetic."
+                <cite>— Adi Shamir, co-inventor of RSA, Weizmann Institute of Science</cite>
+            </blockquote>
+
+            <h2>WHY IT'S SECURE</h2>
+
+            <p>
+                An attacker who intercepts your ciphertext c knows your public key (n, e). To decrypt, they need d. To compute d, they need φ(n). To compute φ(n) = (p−1)(q−1), they need p and q. To get p and q, they need to <strong>factorise n</strong>. That is the hard step — the entire security of RSA reduces to one problem.
+            </p>
+
+            <p>
+                For our toy example, n = 3233 is trivially factorable. A human can do it by trial division in a minute. For real RSA-2048, n is a 617-digit number — the product of two 1,024-bit primes chosen at random. The best known classical algorithm for factoring numbers of this size is the <strong>General Number Field Sieve (GNFS)</strong>.
+            </p>
+
+            <div class="callout" data-label="computational reality">
+                RSA-2048 has never been factored. The largest RSA modulus ever factored (RSA-250, a 250-digit number) took approximately 2,700 CPU-years spread across modern hardware. RSA-2048 is estimated to require roughly 10¹⁵ times more work than RSA-250. At current computing speeds, factoring RSA-2048 classically would take longer than the current age of the universe — approximately 13.8 billion years. The security is not physical. It is mathematical. It requires no secret, no hidden energy cost, no locked vault. The number is public. It just cannot be factored.
+            </div>
+
+            <p>
+                The GNFS has a sub-exponential runtime: approximately exp(c · (log n)<sup>1/3</sup> · (log log n)<sup>2/3</sup>) operations. This is better than fully exponential brute force, but still completely impractical for 2,048-bit moduli on classical hardware. Improving hardware by a factor of a million — building a computer a million times faster than anything that exists — would reduce the effective security of RSA-2048 by only about 20 bits. The asymmetry is that robust.
+            </p>
+
+            <p>
+                One important caveat: the hardness of integer factorisation is <em>not proven</em>. It is possible — though considered extremely unlikely by number theorists — that a polynomial-time classical algorithm for factorisation exists and simply has not been found yet. The security of RSA rests on this open conjecture in computational complexity. If the conjecture falls, RSA falls. It has not fallen in 47 years of active research, but intellectual honesty requires acknowledging the gap between "believed hard" and "proven hard."
+            </p>
+
+            <blockquote>
+                "Security is always a trade-off. RSA-2048 is not absolutely secure — it is secure against all known attacks with all known hardware for the foreseeable future. Those qualifiers matter. Never confuse 'computationally infeasible today' with 'impossible'."
+                <cite>— Bruce Schneier, security technologist and author</cite>
+            </blockquote>
+
+            <h2>RSA IN PRACTICE</h2>
+
+            <p>
+                Real-world RSA differs from the textbook version in several important ways. The most fundamental: <strong>RSA is never used to encrypt bulk data</strong>. It is far too slow. RSA-2048 encryption involves modular exponentiation with 2,048-bit numbers — computationally expensive compared to a symmetric cipher like AES, which can process gigabytes per second with hardware acceleration.
+            </p>
+
+            <p>
+                Instead, RSA is used for <strong>key exchange</strong>. Here is the pattern, simplified:
+            </p>
+
+            <ul>
+                <li>Your browser and a web server want to establish an encrypted channel.</li>
+                <li>The server sends its RSA public key (embedded in its TLS certificate).</li>
+                <li>Your browser generates a random 256-bit AES session key.</li>
+                <li>Your browser encrypts that AES key using the server's RSA public key and sends it.</li>
+                <li>The server decrypts it with its RSA private key — now both sides have the AES key.</li>
+                <li>All subsequent communication uses AES, which is orders of magnitude faster.</li>
+            </ul>
+
+            <p>
+                This hybrid scheme — asymmetric crypto for key exchange, symmetric crypto for bulk data — is the architecture of TLS (Transport Layer Security), which underlies all HTTPS traffic. In modern TLS 1.3, RSA has largely been replaced for key exchange by <strong>Elliptic Curve Diffie-Hellman (ECDH)</strong>, which provides equivalent security with shorter keys and better forward secrecy. But RSA remains heavily used for <strong>digital signatures and certificates</strong>.
+            </p>
+
+            <h3>Digital Signatures</h3>
+
+            <p>
+                RSA works in both directions: you can also sign with the private key and verify with the public key. To sign a document, compute s = hash(document)<sup>d</sup> mod n using your private key. Anyone with your public key can verify: hash(document) ≡ s<sup>e</sup> (mod n). If it checks out, the signature could only have been produced by someone with your private key — mathematical proof of authorship. This is how code signing, email authentication (S/MIME), and TLS certificate signatures work.
+            </p>
+
+            <p>
+                Certificate Authorities (CAs) are organisations whose RSA public keys are pre-installed in your operating system and browser. When a website wants a TLS certificate, the CA verifies their identity and signs their public key with the CA's private key. Your browser verifies that signature using the CA's pre-installed public key — establishing a chain of trust from your browser all the way to the website without any prior communication.
+            </p>
+
+            <h2>THE QUANTUM THREAT</h2>
+
+            <p>
+                Everything above assumes an adversary using a classical computer. That assumption has a known expiry date.
+            </p>
+
+            <p>
+                In 1994, mathematician Peter Shor published an algorithm that, running on a sufficiently powerful quantum computer, can factor large integers in <em>polynomial time</em> — specifically O((log n)³) operations. Where the GNFS requires sub-exponential time that is still astronomically large for RSA-2048, <a href="shors-algorithm.html" style="color: #fb923c; text-decoration: none; border-bottom: 1px dotted #7c2d12;">Shor's algorithm</a> would factor RSA-2048 in hours or days on a large enough quantum machine. The hardness assumption that RSA rests on — that factoring is computationally intractable — is directly violated by Shor's algorithm.
+            </p>
+
+            <p>
+                The caveat is the hardware. Shor's algorithm requires a <strong>fault-tolerant quantum computer with thousands of logical qubits</strong>. Each logical qubit requires hundreds to thousands of physical qubits for error correction. Current state-of-the-art quantum computers have hundreds to low thousands of noisy physical qubits, nowhere near the millions of physical qubits that breaking RSA-2048 would require. The threat is real — but not immediate. Current estimates place a cryptographically relevant quantum computer (CRQC) somewhere between 2030 and 2050, with significant uncertainty.
+            </p>
+
+            <p>
+                NIST has responded. In 2024, following years of public cryptanalysis, NIST standardised its first post-quantum cryptographic algorithms: <strong>ML-KEM</strong> (for key exchange, based on module lattice problems) and <strong>ML-DSA</strong> (for signatures). These are designed to be hard for both classical and quantum computers, based on mathematical problems not known to yield to Shor's algorithm or any other efficient quantum method. The transition to these algorithms is already underway in major software ecosystems.
+            </p>
+
+            <p>
+                But here is why you should care about the quantum threat <em>today</em>, even if practical quantum computers are decades away: <strong>harvest now, decrypt later</strong> attacks. Nation-state adversaries with long-term intelligence interests are almost certainly recording encrypted internet traffic right now, archiving it in bulk. The data is currently unreadable — encrypted with RSA or ECDH. The moment a CRQC exists, those archived ciphertext dumps become readable. Anything encrypted today with classical algorithms and intended to remain secret for more than a decade — government communications, medical records, financial data, intellectual property — may already be compromised in the future tense.
+            </p>
+
+            <p>
+                The implication: the migration to post-quantum cryptography is not something to start when quantum computers arrive. It is something to start now, because the window of vulnerability opened years ago. Every day that critical infrastructure continues to use RSA without a PQC migration plan is another day of data accumulating in adversarial archives, waiting.
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL NOTE</h2>
+
+            <p>
+                I first encountered RSA in an undergraduate algorithms course, presented as a tidy application of number theory. The key generation, the encryption, the proof — all of it fit in twenty minutes of lecture. I understood it intellectually. But I did not find it <em>astonishing</em> until much later, when I thought about what it actually means.
+            </p>
+
+            <p>
+                You can publish a number — a 617-digit integer, in plain sight, on a public website — and announce: "Use this to send me secrets. Anyone can encrypt. Only I can decrypt." And it works. Not because of a secret process, not because of special hardware only you possess, but because of a mathematical relationship between two primes that you chose and then destroyed. The security lives entirely in arithmetic. The lock is made of numbers, and its combination is a proof.
+            </p>
+
+            <p>
+                Rivest, Shamir, and Adleman published their paper in 1977. Ron Rivest has recounted writing most of it overnight after a Passover dinner. The mathematical ingredients — Euler's theorem, the Extended Euclidean Algorithm — had all existed for centuries. The insight was recognising how they fit together into a practical cryptosystem. That kind of synthesis, finding a new structure in familiar pieces, is what good mathematical thinking looks like.
+            </p>
+
+            <p>
+                We are now building its replacement, because Shor's algorithm revealed a flaw in the hardness assumption. That is not a failure — that is science working correctly. RSA had a good run. Understanding it deeply makes you a better engineer and a clearer thinker about security. And understanding its successor will require understanding why it succeeded and exactly where it fell short.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">RSA</span>
+                <span class="tag">cryptography</span>
+                <span class="tag">public-key</span>
+                <span class="tag">number theory</span>
+                <span class="tag">modular arithmetic</span>
+                <span class="tag">Euler's theorem</span>
+                <span class="tag">TLS</span>
+                <span class="tag">post-quantum</span>
+                <span class="tag">Shor's algorithm</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="rlhf-explained.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">RLHF Explained</span>
+                </a>
+                <a href="post-quantum-cryptography.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Post-Quantum Cryptography</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-Quantum Cryptography — The Race to Encrypt Before Quantum Computers Break Everything — Umakant Kunal</title>
+    <meta name="description" content="NIST spent 7 years running a competition to find cryptographic algorithms that quantum computers cannot break. In 2022 they announced the winners. The race to deploy them is now.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+            --sec:       #fb923c;
+            --sec-dim:   #7c2d12;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-quantum    { color: #c084fc; border-color: #4c1d95; }
+        .cat-security   { color: var(--sec); border-color: var(--sec-dim); }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--sec-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--sec);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--sec-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--sec); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── ALGO BLOCK ── */
+        .algo-block {
+            margin: 28px 0;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--sec);
+            font-size: 0.85rem;
+            color: var(--muted);
+            line-height: 2;
+            overflow-x: auto;
+        }
+
+        .algo-block .algo-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.15rem;
+            color: var(--sec);
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .algo-block .algo-detail {
+            color: var(--muted);
+        }
+
+        .algo-block .algo-detail strong {
+            color: var(--text);
+        }
+
+        /* ── FORMULA BLOCK ── */
+        .formula {
+            margin: 28px 0;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid #c084fc;
+            font-size: 0.92rem;
+            color: #c084fc;
+            line-height: 2;
+            overflow-x: auto;
+        }
+
+        .formula .formula-label {
+            display: block;
+            font-size: 0.66rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .formula .eq {
+            display: block;
+            color: var(--text);
+        }
+
+        .formula .eq em {
+            color: #c084fc;
+            font-style: normal;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--sec-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--sec);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--sec-dim); border-radius: 2px; }
+        ::selection { background: var(--sec); color: var(--bg); }
+
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+            .algo-block { padding: 14px 16px; font-size: 0.8rem; }
+            .formula { padding: 14px 16px; font-size: 0.82rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                post-quantum-cryptography
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-25</span>
+                <span class="post-category cat-security">Cryptography</span>
+                <span class="post-category cat-security">Security</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">Post-Quantum Cryptography —<br>The Race to Encrypt<br>Before Quantum Computers<br>Break Everything</h1>
+
+            <p class="post-subtitle">
+                NIST spent seven years running a global competition to find cryptographic algorithms that quantum computers cannot break. In 2022 they announced the winners. The standards are finalised. The migration clock is running. This is the most consequential transition in cryptographic infrastructure since RSA was invented in 1977.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In 1977, Ron Rivest, Adi Shamir, and Leonard Adleman published a paper that would become the foundation of nearly all secure communication on the modern internet. RSA worked because multiplying two large prime numbers is trivially easy, while undoing that multiplication — factoring the product back into its primes — is computationally intractable on any classical machine we know how to build. For nearly five decades, that asymmetry has protected trillions of dollars in transactions, private messages, state secrets, and medical records.
+            </p>
+
+            <p>
+                In 1994, a mathematician named Peter Shor published an algorithm that breaks that asymmetry — on a quantum computer. The catch: the quantum computer needed to run Shor's algorithm at scale doesn't exist yet. The threat is real, but it's a timed threat. And the response — a seven-year global competition run by the US National Institute of Standards and Technology — has now produced a new generation of cryptographic standards built to survive the quantum era.
+            </p>
+
+            <p>
+                Understanding what's at stake, why it's urgent, and how the new algorithms work is not optional knowledge for anyone building systems that need to remain secure over the next decade. This post covers all of it.
+            </p>
+
+            <h2>WHAT QUANTUM COMPUTERS BREAK</h2>
+
+            <p>
+                Not all cryptography is equally threatened. The quantum danger is concentrated in specific mathematical structures, and understanding which ones tells you exactly what's at risk.
+            </p>
+
+            <p>
+                <strong>RSA and Elliptic Curve Cryptography (ECC)</strong> are the two workhorses of public-key cryptography — the systems used to establish secure connections (TLS/HTTPS), sign software, authenticate identities, and exchange session keys. RSA relies on the hardness of integer factorisation: given a product of two large primes, find the primes. ECC relies on the discrete logarithm problem over elliptic curve groups: given a point on a curve derived from a secret scalar, recover the scalar. Both problems are believed computationally intractable for classical computers at key sizes in common use today.
+            </p>
+
+            <p>
+                <strong>Shor's algorithm solves both.</strong> It runs in polynomial time — O((log N)³) for factoring an N-bit number, compared to the sub-exponential but enormous General Number Field Sieve that classical computers rely on. The speedup is not a constant factor; it's a categorical change in complexity class. RSA-2048, which would take longer than the age of the universe to factor classically, becomes feasible on a large-scale quantum computer. ECC keys fall by the same mechanism applied to the discrete log problem.
+            </p>
+
+            <p>
+                <strong>Symmetric encryption is a different story.</strong> AES-256, the standard for encrypting bulk data, is not threatened by Shor's algorithm — Shor exploits specific algebraic structure that AES doesn't have. The relevant quantum algorithm here is <strong>Grover's</strong>, which provides a quadratic speedup for unstructured search. Grover's algorithm effectively halves the bit-security of any symmetric cipher: AES-256 drops from 256-bit to 128-bit security. That's still secure — 128 bits of quantum security is fine. But AES-128 drops to 64-bit quantum security, which is not. The fix is straightforward: use AES-256, not AES-128.
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">Grover speedup on symmetric keys</span>
+                <span class="eq">Classical brute-force AES-128: O(2<sup>128</sup>) operations</span>
+                <span class="eq">Grover's quantum search:  O(√2<sup>128</sup>) = O(2<sup>64</sup>) evaluations</span>
+                <span class="eq">Classical brute-force AES-256: O(2<sup>256</sup>) operations</span>
+                <span class="eq">Grover's quantum search:  O(√2<sup>256</sup>) = O(2<sup>128</sup>) evaluations — <em>still secure</em></span>
+            </div>
+
+            <p>
+                The summary: Shor's algorithm <em>breaks</em> RSA and ECC entirely. Grover's algorithm <em>weakens</em> symmetric encryption, but the fix (doubling key size) is already deployed. The existential problem is public-key cryptography.
+            </p>
+
+            <h2>THE HARVEST NOW, DECRYPT LATER THREAT</h2>
+
+            <p>
+                Here is the argument for urgency that most people miss: you don't need a quantum computer to <em>use</em> the quantum threat today. You only need one to decrypt the traffic — and that can happen years from now.
+            </p>
+
+            <p>
+                Nation-state adversaries are almost certainly running <strong>harvest now, decrypt later</strong> (HNDL) operations right now. The operational pattern: intercept and store encrypted traffic at scale today — TLS handshakes, VPN sessions, encrypted email — and wait for quantum hardware to mature sufficiently to run Shor's algorithm against the stored public-key exchanges. Once the session key is recovered, all the payload data encrypted under it can be decrypted retroactively.
+            </p>
+
+            <p>
+                This is not a hypothetical concern. The NSA's Tailored Access Operations unit, the Chinese MSS, and several other intelligence services have the infrastructure to execute bulk intercept at national scale. Whether they're doing this specifically is unknown, but the incentive structure is clear: the cost of storage is plummeting, quantum hardware is advancing, and the value of intercepts from high-priority targets — diplomatic cables, military communications, financial settlements — could be enormous.
+            </p>
+
+            <blockquote>
+                "Foreign intelligence services and criminals are targeting your encrypted data now, with the expectation that they'll be able to decrypt it once they have access to quantum computers. The time to act is before that happens, not after."
+                <cite>— NIST Post-Quantum Cryptography, Final Standards Announcement, August 2024</cite>
+            </blockquote>
+
+            <p>
+                The consequence is stark: <strong>any data that needs to remain confidential for more than 10–15 years is already at risk today</strong> — not when quantum computers arrive, but right now, the moment that data is transmitted over a network. For government intelligence, medical records (often protected for decades under HIPAA and its equivalents), long-term financial contracts, and industrial intellectual property, the threat window opens the moment of transmission.
+            </p>
+
+            <p>
+                Even if a cryptographically relevant quantum computer is a decade away — and credible expert estimates range from 10 to 20 years for a machine capable of breaking RSA-2048 — the data being encrypted today using classical public-key systems may still be exposed. The security guarantee degrades retroactively. That's the asymmetry that makes HNDL attacks so dangerous, and why "wait and see" is not a viable security posture for long-lived secrets.
+            </p>
+
+            <h2>WHAT MAKES AN ALGORITHM POST-QUANTUM?</h2>
+
+            <p>
+                An algorithm is post-quantum if its security rests on a mathematical problem believed to be hard even for quantum computers — not merely hard for classical ones. The qualifier "believed" matters: unlike the hardness of factoring or discrete log, we don't have classical proofs that these problems are quantumly hard either. But they've survived sustained cryptanalysis — including quantum cryptanalysis — across decades of academic scrutiny.
+            </p>
+
+            <p>
+                The main families of post-quantum hard problems are:
+            </p>
+
+            <ul>
+                <li><strong>Lattice problems</strong> — the hardest class to solve, even with quantum algorithms. The core problems (Learning With Errors, Ring-LWE, Module-LWE, Shortest Vector Problem) have no known quantum speedup beyond modest polynomial factors. Most NIST winners are lattice-based.</li>
+                <li><strong>Code-based problems</strong> — decoding random linear error-correcting codes. First proposed by Robert McEliece in 1978, these have resisted cryptanalysis for nearly 50 years. The main drawback is large key sizes. Classic McEliece is a NIST alternate standard.</li>
+                <li><strong>Hash-based signatures</strong> — security based purely on the collision resistance and preimage resistance of hash functions. Conservative and well-understood; the only post-quantum assumption here is that SHA-2 or SHA-3 is a good hash function, which nearly everyone accepts. The downside is larger signature sizes.</li>
+                <li><strong>Multivariate polynomial systems</strong> — solving systems of multivariate quadratic equations over finite fields. NP-hard in general; some schemes survived the NIST process, though several were broken.</li>
+                <li><strong>Isogeny-based cryptography</strong> — computing maps between elliptic curves (isogenies). Formerly promising due to compact key sizes, but severely damaged when SIKE was broken in 2022 by a classical algorithm — more on this shortly.</li>
+            </ul>
+
+            <p>
+                The unifying intuition: quantum computers excel at exploiting specific mathematical structures — periodicity (Shor), unstructured search (Grover), and certain algebraic symmetries. Lattice problems, code-based problems, and hash-based schemes lack those structures. Quantum computers offer no meaningful shortcut because there's no hidden periodicity or algebraic trapdoor to exploit.
+            </p>
+
+            <h2>NIST PQC WINNERS</h2>
+
+            <p>
+                In July 2022 NIST announced the first algorithms selected for standardisation, and in August 2024 the final standards were published. Here are the four primary algorithms:
+            </p>
+
+            <div class="algo-block">
+                <span class="algo-title">ML-KEM (CRYSTALS-Kyber) — FIPS 203</span>
+                <span class="algo-detail"><strong>Role:</strong> Key Encapsulation Mechanism (KEM) — the post-quantum replacement for RSA-OAEP and ECDH in key exchange</span><br>
+                <span class="algo-detail"><strong>Basis:</strong> Module Learning With Errors (MLWE) — a variant of the lattice hard problem</span><br>
+                <span class="algo-detail"><strong>Key size:</strong> ~800 bytes public key, ~768 bytes ciphertext (Kyber-768)</span><br>
+                <span class="algo-detail"><strong>Why it won:</strong> Excellent performance — faster than RSA at comparable security levels. Small keys by post-quantum standards. Clean design with strong security proofs reducible to MLWE hardness. Strong team, extensive third-party cryptanalysis during the competition.</span>
+            </div>
+
+            <div class="algo-block">
+                <span class="algo-title">ML-DSA (CRYSTALS-Dilithium) — FIPS 204</span>
+                <span class="algo-detail"><strong>Role:</strong> Digital signatures — the post-quantum replacement for ECDSA and RSA-PSS</span><br>
+                <span class="algo-detail"><strong>Basis:</strong> Module Learning With Errors and Module Short Integer Solution (MSIS)</span><br>
+                <span class="algo-detail"><strong>Key size:</strong> ~1.3 KB public key, ~2.4 KB signature (Dilithium3)</span><br>
+                <span class="algo-detail"><strong>Why it won:</strong> The recommended general-purpose post-quantum signature scheme. Fast signing and verification, reasonable key and signature sizes, and a simple implementation that's difficult to exploit through side channels. Shares mathematical foundations with Kyber, making combined deployment natural.</span>
+            </div>
+
+            <div class="algo-block">
+                <span class="algo-title">FALCON — FIPS 206</span>
+                <span class="algo-detail"><strong>Role:</strong> Digital signatures — compact alternative when bandwidth matters</span><br>
+                <span class="algo-detail"><strong>Basis:</strong> NTRU lattice problem with Gaussian sampling</span><br>
+                <span class="algo-detail"><strong>Key size:</strong> ~897 bytes public key, ~666 bytes signature (FALCON-512)</span><br>
+                <span class="algo-detail"><strong>Why it won:</strong> Significantly more compact signatures than Dilithium — critical for constrained environments where bandwidth or storage is expensive. More complex to implement correctly (Gaussian sampling is notoriously hard to protect against side-channel attacks), but valuable as a second signature standard covering different trade-offs.</span>
+            </div>
+
+            <div class="algo-block">
+                <span class="algo-title">SLH-DSA (SPHINCS+) — FIPS 205</span>
+                <span class="algo-detail"><strong>Role:</strong> Digital signatures — the conservative, assumption-minimising option</span><br>
+                <span class="algo-detail"><strong>Basis:</strong> Hash functions only (XMSS/WOTS+ tree structures)</span><br>
+                <span class="algo-detail"><strong>Key size:</strong> 32–64 bytes keys, but 8–50 KB signatures depending on variant</span><br>
+                <span class="algo-detail"><strong>Why it won:</strong> If every lattice assumption turns out to be weaker than expected, SPHINCS+ is still secure — as long as SHA-2 or SHA-3 is secure, which is an assumption almost the entire field accepts. Larger signatures are the price of this conservatism. Recommended as a hedge: deploy it alongside ML-DSA for systems where long-term security is paramount and bandwidth is tolerable.</span>
+            </div>
+
+            <blockquote>
+                "CRYSTALS-Kyber, CRYSTALS-Dilithium, FALCON, and SPHINCS+ provide a set of tools that, taken together, cover the key encapsulation and digital signature needs of virtually all existing cryptographic protocols. We are confident these algorithms represent a sound foundation for post-quantum security."
+                <cite>— NIST Computer Security Division, "Post-Quantum Cryptography: FIPS 203, 204, 205, 206 Announcement", August 2024</cite>
+            </blockquote>
+
+            <h2>LATTICE CRYPTOGRAPHY EXPLAINED</h2>
+
+            <p>
+                Since three of the four NIST winners are lattice-based, it's worth understanding what a lattice is and why lattice problems are believed to be quantumly hard.
+            </p>
+
+            <p>
+                A <strong>lattice</strong> is a regular grid of points in n-dimensional space — think of the integer grid in 2D, but generalised to hundreds of dimensions and spanned by an arbitrary basis. Given a set of basis vectors, the lattice is all integer linear combinations of those vectors. The canonical hard lattice problems ask: given only a description of the lattice (its basis vectors), find the shortest non-zero vector in it (<em>Shortest Vector Problem, SVP</em>), or find the lattice point closest to a given target point (<em>Closest Vector Problem, CVP</em>).
+            </p>
+
+            <p>
+                In low dimensions these problems are easy. In hundreds or thousands of dimensions, they appear to be genuinely hard — <em>even for quantum computers</em>. The best known quantum algorithms for SVP achieve only modest polynomial improvements over classical algorithms; there is no Shor-like exponential speedup.
+            </p>
+
+            <p>
+                The <strong>Learning With Errors (LWE)</strong> problem, introduced by Oded Regev in 2005 and proven as hard as worst-case SVP, is the engine behind Kyber and Dilithium. The setup: you are given many linear equations of the form <strong>A·s ≈ b (mod q)</strong>, where <strong>A</strong> is a known matrix, <strong>s</strong> is a secret vector, and <strong>≈</strong> means each equation has a small random error added. Given sufficiently many noisy equations, find the secret <strong>s</strong>.
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">Learning With Errors — the core equation</span>
+                <span class="eq"><em>b</em> = A·s + e  (mod q)</span>
+                <span class="eq">A ∈ ℤ<sub>q</sub><sup>m×n</sup>  (public, random matrix)</span>
+                <span class="eq">s ∈ ℤ<sub>q</sub><sup>n</sup>     (secret — what the attacker wants)</span>
+                <span class="eq">e ∈ ℤ<sub>q</sub><sup>m</sup>     (small random error — from a Gaussian distribution)</span>
+                <span class="eq">Given (A, b), find s — this is hard even for quantum computers</span>
+            </div>
+
+            <p>
+                Without the error term, this is a system of linear equations solvable in polynomial time (Gaussian elimination). The error makes it look like a different kind of problem entirely. Geometrically: the right-hand side <strong>b</strong> is a point near a lattice point A·s, but displaced by the error. Recovering <strong>s</strong> means finding the nearest lattice point to <strong>b</strong> — and that's CVP, which is hard.
+            </p>
+
+            <p>
+                Why doesn't a quantum computer help? Shor's algorithm works because the function <em>f(x) = a<sup>x</sup> mod N</em> has a hidden period that the Quantum Fourier Transform can detect. LWE has no such periodic structure — the equations are corrupted by noise that destroys any algebraic pattern a quantum algorithm might exploit. The best quantum approaches to LWE achieve at most polynomial improvements over classical attacks, not exponential speedups.
+            </p>
+
+            <div class="callout" data-label="the intuition">
+                Lattice problems are hard in the same way a jigsaw puzzle without a picture is hard — there's no shortcut, no clever algorithm that makes the structure visible. You're searching a high-dimensional space for the one point that explains the noisy data, and quantum superposition doesn't help when there's no periodic structure to interfere constructively.
+            </div>
+
+            <h2>THE MIGRATION CHALLENGE</h2>
+
+            <p>
+                The new standards exist. Deploying them is a different problem — arguably a harder one than the cryptography itself.
+            </p>
+
+            <p>
+                Consider the scope. Public-key cryptography touches nearly every layer of modern digital infrastructure: TLS and HTTPS certificates (billions of them, renewed on one-to-two-year cycles); SSH keys on every server and developer workstation; code signing certificates for software distribution; VPN tunnels, email encryption (S/MIME, PGP), hardware security modules (HSMs) embedded in payment terminals and passports; embedded firmware in medical devices, industrial controllers, and automotive systems. All of it needs updating. Not just the algorithms — the key sizes change, signature sizes change, and some constrained devices don't have the memory or compute to run post-quantum schemes at all.
+            </p>
+
+            <p>
+                For context: the transition from DES to AES was announced in 2001 and is still not fully complete in legacy industrial systems. DES dates to 1977 — modern organisations are running 25-year-old cryptographic configurations. The PQC migration is more complex: it's not just a key size increase, it's a completely different mathematical family.
+            </p>
+
+            <p>
+                The pragmatic approach is <strong>hybrid schemes</strong> — combining a classical algorithm (ECDH, RSA) with a post-quantum algorithm (Kyber) in the same handshake. The session key is derived from both; an attacker needs to break both to compromise the session. This means: current classical hardware is still fully protected, the system degrades gracefully if one algorithm has an unforeseen weakness, and the transition can happen incrementally without ripping out all existing infrastructure simultaneously.
+            </p>
+
+            <p>
+                Major players have moved. <strong>Google's CECPQ2</strong> (Combined Elliptic-Curve and Post-Quantum Key Exchange) began shipping in Chrome in 2019, pairing X25519 with a NTRU-HRSS lattice scheme in TLS 1.3. Google subsequently moved to <strong>X25519Kyber768</strong> in Chrome 116 (2023). <strong>Apple's PQ3</strong>, announced in February 2024, deploys ML-KEM (Kyber) alongside Elliptic Curve Diffie-Hellman in iMessage, providing post-quantum forward secrecy. Apple called it a "Level 3" security advance — the highest tier in their framework for quantum-safe messaging.
+            </p>
+
+            <blockquote>
+                "The mathematical problems used to construct public-key systems are suddenly vulnerable to attack, and organisations need to act now — especially those whose data must remain confidential for many years. Waiting until cryptographically relevant quantum computers exist is not a viable strategy."
+                <cite>— Daniel J. Bernstein &amp; Tanja Lange, "Post-quantum cryptography — dealing with the fallout of physics success", Eurocrypt 2017</cite>
+            </blockquote>
+
+            <p>
+                For organisations without the engineering resources of Google or Apple, the guidance is practical: inventory your cryptographic dependencies (what key exchange and signature algorithms are in use, where, on what hardware); prioritise internet-facing TLS endpoints and long-lived secrets; deploy hybrid schemes as a first step; plan HSM and embedded device upgrades over a multi-year roadmap. NIST, NSA, and CISA have all published migration guidance documents that are worth reading.
+            </p>
+
+            <div class="callout" data-label="timeline reality check">
+                The US National Security Agency's Commercial National Security Algorithm Suite 2.0 (CNSA 2.0) mandates post-quantum cryptography for national security systems by 2030 for new software and firmware, and 2035 for legacy systems. If the NSA — which has the most advanced quantum intelligence of any organisation on Earth — is giving 9 years, the threat timeline is real but not immediate. The operative phrase: "not immediate" means "start now," not "start later."
+            </div>
+
+            <h2>WHAT WAS BROKEN ALONG THE WAY</h2>
+
+            <p>
+                The NIST competition's value wasn't only in selecting winners — it was in subjecting candidates to years of public cryptanalysis. Some candidates failed spectacularly, and those failures teach important lessons.
+            </p>
+
+            <p>
+                <strong>SIKE (Supersingular Isogeny Key Encapsulation)</strong> was a finalist. Isogeny-based cryptography is mathematically beautiful: security rests on the hardness of computing maps (isogenies) between supersingular elliptic curves. Key sizes are tiny — competitive with classical ECC. SIKE appeared promising enough to advance through multiple rounds of the competition.
+            </p>
+
+            <p>
+                In July 2022 — the same month NIST announced the lattice-based winners — a pair of Belgian researchers published a paper titled "An Efficient Key Recovery Attack on SIDH." The attack used classical mathematics: a technique based on "gluing" abelian varieties using auxiliary torsion point information that SIKE's protocol design made available to attackers. Running on a single laptop core, the attack recovered SIKE private keys in roughly <strong>one hour</strong>. The "post-quantum" finalist fell not to a quantum computer but to a classical computer running a clever 2022 mathematical insight.
+            </p>
+
+            <blockquote>
+                "The attack exploits specific auxiliary information about the torsion points that SIDH/SIKE reveals during the protocol, enabling an attacker to apply powerful tools from algebraic geometry that were not previously seen as relevant. It is a sobering reminder that new mathematics can change the security landscape abruptly."
+                <cite>— Wouter Castryck &amp; Thomas Decru, "An Efficient Key Recovery Attack on SIDH", EUROCRYPT 2023 Best Paper Award</cite>
+            </blockquote>
+
+            <p>
+                SIKE's failure is instructive at multiple levels. First: <em>new mathematics is unpredictable</em>. Isogeny-based crypto drew on algebraic geometry, a rich area with ongoing research. What no one knew in 2017 was that tools from that same area could be weaponised against the scheme. Second: <em>this is why competition processes matter</em>. The NIST process didn't prevent SIKE from reaching the finals — it provided a public forum where the attack could eventually be found and published. A scheme adopted without scrutiny might have been deployed at scale before the break was discovered. Third: <em>mathematical confidence in a new hard problem takes time</em>. The lattice problems underlying Kyber and Dilithium have been studied since the 1990s, with no comparable breaks.
+            </p>
+
+            <p>
+                Several other candidates were broken or significantly weakened during the competition: GeMSS (multivariate) weakened by structural attacks; Rainbow (multivariate signatures) broken entirely in 2022 by Ward Beullens in a paper titled "Breaking Rainbow Takes a Weekend on a Laptop" — another laptop-scale classical break. The multivariate family proved more fragile than hoped.
+            </p>
+
+            <p>
+                What survived: lattice-based schemes (Kyber, Dilithium, FALCON), hash-based signatures (SPHINCS+), and code-based schemes (Classic McEliece, as an alternate). The pattern is meaningful: the schemes with the longest cryptanalytic track records — lattice problems studied since Ajtai's 1996 paper, code-based problems since McEliece 1978, hash-based signatures since Lamport's 1979 one-time signatures — are the ones that held.
+            </p>
+
+            <hr>
+
+            <h2>A NOTE FROM ME</h2>
+
+            <p>
+                There's a strange cognitive experience in studying post-quantum cryptography: you're engineering defences against an adversary that doesn't fully exist yet. The attack isn't coming from a known threat. It's coming from a machine that is still being built, running an algorithm we've known about since 1994, against protocols that will be deployed over the next decade. The timeline is uncertain. The threat is real, but probabilistic and distributed across a range of years.
+            </p>
+
+            <p>
+                This is different from most security engineering, where you're defending against attacks that are already happening. HNDL adversaries aside — and they may already be active — the main quantum cryptographic threat is future-tense. You are writing code today whose security properties will be tested by hardware that doesn't exist yet.
+            </p>
+
+            <p>
+                What I find technically fascinating is the discipline this forces: you can't know the exact properties of the future adversary, so you have to reason carefully about which mathematical assumptions are load-bearing and which are incidental. The SIKE break is a perfect illustration — the mathematical hardness of isogeny computation was probably real, but the protocol revealed auxiliary information that changed the attack surface. Security proofs matter. Tight reductions to well-studied hard problems matter. The lattice-based schemes weren't selected because they're convenient; they were selected because decades of public analysis found no breaks.
+            </p>
+
+            <p>
+                If you're building systems today — especially anything involving long-lived keys, high-value data, or compliance with government standards — the practical recommendation is concrete: inventory your public-key cryptographic dependencies, prioritise internet-facing TLS with hybrid Kyber+ECDH as a first step, and follow the NIST and NSA migration timelines. The standards exist. The libraries (Open Quantum Safe, liboqs, the upcoming OpenSSL post-quantum provider) are maturing. The work is available. The question is whether your organisation does it now, while the window is open, or later, when it may not be.
+            </p>
+
+            <p>
+                The race isn't dramatic in real time — it's a quiet engineering marathon happening across standards bodies, library maintainers, browser vendors, and hardware manufacturers. But it's arguably the most important cryptographic transition of the century so far. And it's happening right now.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">post-quantum</span>
+                <span class="tag">cryptography</span>
+                <span class="tag">NIST PQC</span>
+                <span class="tag">CRYSTALS-Kyber</span>
+                <span class="tag">lattice crypto</span>
+                <span class="tag">LWE</span>
+                <span class="tag">SIKE</span>
+                <span class="tag">Shor's algorithm</span>
+                <span class="tag">TLS</span>
+                <span class="tag">security</span>
+                <span class="tag">SPHINCS+</span>
+                <span class="tag">FALCON</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="how-rsa-works.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">How RSA Works</span>
+                </a>
+                <a href="zero-knowledge-proofs.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Zero-Knowledge Proofs</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

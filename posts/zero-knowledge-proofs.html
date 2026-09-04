@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero-Knowledge Proofs — Proving You Know Something Without Revealing What You Know — Umakant Kunal</title>
+    <meta name="description" content="Zero-knowledge proofs let you prove a statement is true without revealing anything beyond the truth of the statement. From Ali Baba caves to zkSNARKs, here is how they work and why they matter.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-security  { color: #fb923c;        border-color: #7c2d12; }
+        .cat-theory    { color: #7dd3fc;         border-color: #1e3a5f; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                zero-knowledge-proofs
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-01</span>
+                <span class="post-category cat-security">Cryptography</span>
+                <span class="post-category cat-theory">Theory</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">Zero-Knowledge Proofs —<br>Proving You Know Something<br>Without Revealing What You Know</h1>
+
+            <p class="post-subtitle">
+                A mathematical framework that sounds impossible: convince someone you possess a secret without disclosing a single bit of it. From theoretical curiosity to the backbone of private blockchains and verifiable AI, zero-knowledge proofs are quietly rewriting what trust means in a digital world.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Imagine proving to a bank that your credit score is above 700 without revealing what your score actually is. Or proving you are over 18 without handing over your ID — no name, no date of birth, no address, nothing. Or imagine having solved a Sudoku puzzle and proving you have the solution to a stranger without showing them a single number of that solution. These scenarios sound like logical paradoxes. How can you demonstrate knowledge of something while keeping that thing completely hidden? Zero-knowledge proofs make all of this possible, and they are quietly becoming one of the most important technologies in the world.
+            </p>
+
+            <p>
+                The concept emerged from theoretical computer science in the mid-1980s and sat in academic papers for decades before the cryptographic engineering caught up with the theory. Today, zkSNARKs power Zcash's private transactions and Ethereum's zkRollups. ZK circuits are being used to compress hundreds of thousands of computations into a single compact proof. And researchers are beginning to ask whether zero-knowledge techniques could let us verify AI models without ever seeing their weights. This is a field that went from mathematical curiosity to production infrastructure in less than a generation, and it is still accelerating.
+            </p>
+
+            <h2>THE CONCEPT</h2>
+
+            <p>
+                A zero-knowledge proof is an interactive protocol between two parties: a <strong>prover</strong> and a <strong>verifier</strong>. The prover wants to convince the verifier that some statement is true. The twist is that the proof reveals nothing beyond the bare fact that the statement is true — the verifier learns no information about <em>why</em> it is true or what secret the prover used to establish it.
+            </p>
+
+            <p>
+                Three formal properties define a valid ZKP system. <strong>Completeness</strong>: if the statement is true and both parties follow the protocol honestly, the verifier will be convinced. An honest prover never fails to prove a true statement. <strong>Soundness</strong>: if the statement is false, no cheating prover — no matter how computationally powerful — can convince the verifier that it is true, except with negligible probability. The system cannot be fooled. <strong>Zero-knowledge</strong>: the verifier learns nothing from the interaction except the truth of the statement. Whatever the verifier could compute after the protocol, they could have computed just as well without running it at all.
+            </p>
+
+            <blockquote>
+                "We put forward the novel concept of interactive proofs in which the prover possesses infinite computational power and the verifier is probabilistic polynomial time. We show that the class of languages that have interactive proofs is exactly NP... We introduce the concept of zero-knowledge interactive proofs."
+                <cite>— Shafi Goldwasser, Silvio Micali, and Charles Rackoff, <em>The Knowledge Complexity of Interactive Proof Systems</em> (1989)</cite>
+            </blockquote>
+
+            <p>
+                The Ali Baba cave story is the canonical illustration. Imagine a circular cave with a single entrance and a magic door in the middle that can only be opened with a secret password. Peggy (the prover) claims she knows the password. Victor (the verifier) wants to be convinced, but Peggy does not want to reveal the password itself. Here is the protocol: Victor waits outside while Peggy enters and goes down either the left or right path. Victor then walks to the entrance and shouts which path he wants Peggy to emerge from. If Peggy knows the password, she can always comply — she opens the door and appears from the requested side. If she does not know the password and went down the correct side by luck, she has a 50% chance of being caught on any given round.
+            </p>
+
+            <p>
+                Repeat this twenty times. The probability that a cheating Peggy gets lucky every single time is one in a million. After enough rounds, Victor is statistically certain that Peggy knows the password — and yet he has learned nothing about what the password actually is. That is zero-knowledge in action.
+            </p>
+
+            <h2>INTERACTIVE ZKPs</h2>
+
+            <p>
+                The Ali Baba story is a toy example, but the framework scales to surprisingly complex mathematical statements. The classic academic example is <strong>graph 3-colouring</strong>. Given a graph — a set of nodes connected by edges — a valid 3-colouring assigns one of three colours to each node such that no two adjacent nodes share the same colour. This problem is NP-complete: it is easy to verify a solution, but hard to find one in general. The prover claims to have found a valid colouring of a very large graph. How can they prove it without revealing the colouring?
+            </p>
+
+            <p>
+                Here is the interactive protocol. The prover takes their valid 3-colouring and randomly permutes the three colours — say, they randomly relabel red→blue, blue→green, green→red. They then commit to the new colouring by placing each node's colour in a locked box and handing all boxes to the verifier. The verifier picks an edge at random and asks the prover to unlock the two boxes for its endpoints. The prover complies. The verifier checks: are these two different colours? If yes, the edge is valid. If no, the prover was cheating.
+            </p>
+
+            <p>
+                One round proves nothing — the prover could have prepared a fake colouring and gotten lucky on the chosen edge. But here is the critical detail: the prover re-randomises the colour permutation before each round. After enough rounds, if the prover is consistently producing valid adjacent-pair differences from a re-shuffled palette, the only explanation is that they actually possess a valid underlying colouring. Each round multiplies the probability of catching a cheater. After k rounds, the soundness error is at most (1 − 1/E)^k, where E is the number of edges. For a graph with 100 edges, running 1000 rounds reduces the cheating probability below 10⁻⁴.
+            </p>
+
+            <p>
+                Meanwhile, the verifier only ever sees two colours per round, drawn from a randomly permuted palette. They see valid pairs, but learn nothing about the global structure. The locked-box commitments ensure the prover cannot change their answers after seeing which edge was chosen — they are bound to their colouring before the question is asked. This binding-plus-randomisation combination is the heart of interactive ZKP security.
+            </p>
+
+            <div class="callout" data-label="key insight">
+                The power of ZKPs lies in <strong>commitment schemes</strong>: the prover locks in their answer before the verifier's challenge, preventing retroactive cheating. The random re-permutation before each round ensures the verifier accumulates no information about the underlying secret — they always see a freshly shuffled view, statistically independent of the original colouring.
+            </div>
+
+            <h2>NON-INTERACTIVE ZKPs</h2>
+
+            <p>
+                Interactive ZKPs have a fundamental limitation: they require multiple rounds of back-and-forth communication between prover and verifier. The verifier must be online and engaged during proof generation. This is fine in some settings, but impractical for public blockchains — you cannot have every network node interactively challenge every transaction prover in real time.
+            </p>
+
+            <p>
+                The breakthrough is the <strong>Fiat-Shamir heuristic</strong>, introduced by Amos Fiat and Adi Shamir in 1986. The idea is elegant: replace the verifier's random challenges with the output of a cryptographic hash function. Instead of waiting for the verifier to send a random number, the prover computes the challenge themselves by hashing the transcript so far. Because a good hash function behaves like a <em>random oracle</em> — its outputs are unpredictable without computing them — the prover cannot anticipate what the challenge will be before committing to their answer.
+            </p>
+
+            <p>
+                This transforms any interactive sigma protocol into a <strong>non-interactive zero-knowledge proof (NIZK)</strong>: a single message from prover to verifier that can be checked by anyone, at any time, without any interaction. The proof becomes a piece of data — publish it on a blockchain, email it, store it in a file. Anyone with the verification algorithm can check it independently. The interactive conversation collapses into a single artifact.
+            </p>
+
+            <p>
+                The security of Fiat-Shamir relies on the <em>random oracle model</em> — a theoretical framework where hash functions are idealised as truly random. In practice, real hash functions like SHA-256 or Keccak are not perfectly random, but they are close enough that Fiat-Shamir is considered secure in all practical deployments. The heuristic has survived decades of cryptanalysis and is now the standard technique for converting interactive proofs to non-interactive ones.
+            </p>
+
+            <h2>ZKSNARKS</h2>
+
+            <p>
+                NIZKs from Fiat-Shamir are useful, but they do not scale to arbitrary computation. The real revolution came with <strong>zkSNARKs</strong> — Zero-Knowledge Succinct Non-Interactive Arguments of Knowledge. The word "succinct" is load-bearing: a zkSNARK proof is tiny regardless of how large or complex the underlying computation is. You can prove the correct execution of a program with millions of steps and produce a proof that fits in a few hundred bytes. Verification takes milliseconds.
+            </p>
+
+            <p>
+                The core idea is to encode any computation as a set of polynomial equations — an <em>arithmetic circuit</em>. The prover's job is to convince the verifier that they know inputs to the circuit that satisfy all the constraints. The magic is in the polynomial commitment schemes and pairing-based cryptography that make it possible to verify this claim about a gigantic system of equations by checking just a handful of elliptic curve operations. The math is formidable — it involves quadratic arithmetic programs, Kate commitments, and bilinear pairings over elliptic curves — but the interface is clean: compute a proof, verify a proof.
+            </p>
+
+            <blockquote>
+                "ZK-rollups are the most promising scaling technology for Ethereum. They provide both security and scalability in a way that optimistic rollups cannot match in the long run. The proof systems are ready; the tooling is catching up."
+                <cite>— Vitalik Buterin, Ethereum Foundation blog, 2021</cite>
+            </blockquote>
+
+            <p>
+                zkSNARKs power some of the most important deployed cryptographic systems today. <strong>Zcash</strong> uses them to enable fully private cryptocurrency transactions — the blockchain confirms that a transaction is valid and that no coins are created from nothing, without revealing sender, receiver, or amount. <strong>zkRollups</strong> on Ethereum use them to process thousands of transactions off-chain and post a single succinct proof to the main chain, achieving massive throughput at a fraction of the gas cost. <strong>Filecoin</strong> uses them for proofs of spacetime — storage providers prove they are continuously storing data without having to retrieve the whole file on demand.
+            </p>
+
+            <p>
+                The catch is the <strong>trusted setup</strong>. Early zkSNARK systems (Groth16, the scheme used in Zcash) require a one-time ceremony to generate public parameters. If the participants in that ceremony are dishonest and retain secret values — the so-called "toxic waste" — they could forge proofs undetected. Zcash performed a multi-party computation ceremony specifically so that the toxic waste would be destroyed as long as at least one participant was honest. <strong>PLONK</strong>, a more recent universal zkSNARK scheme, relaxes this: a single trusted setup works for any circuit up to a given size, rather than requiring a fresh ceremony per circuit. But the fundamental tension between efficiency and trustlessness remained until the next generation.
+            </p>
+
+            <h2>ZKSTARKS</h2>
+
+            <p>
+                <strong>zkSTARKs</strong> — Scalable Transparent Arguments of Knowledge — were introduced by Eli Ben-Sasson and colleagues at StarkWare in 2018. They solve the trusted setup problem entirely: zkSTARKs are <em>transparent</em>, meaning they require no trusted setup at all. The only cryptographic assumption is collision-resistant hash functions — one of the most conservative and well-studied assumptions in all of cryptography.
+            </p>
+
+            <p>
+                This transparency comes with a bonus: zkSTARKs are believed to be <strong>post-quantum secure</strong>. Most zkSNARK systems rely on elliptic curve cryptography and bilinear pairings, which would be broken by a sufficiently powerful quantum computer running Shor's algorithm. zkSTARKs use only hash functions, which are thought to be quantum-resistant. For long-term security — protecting financial infrastructure that might need to last decades — this is a significant advantage.
+            </p>
+
+            <p>
+                The trade-off is proof size. A zkSTARK proof is typically tens to hundreds of kilobytes, compared to a zkSNARK proof that might be 200 bytes. Verification is also somewhat more expensive. For applications where on-chain storage of proofs is the bottleneck, this cost matters. For applications where trustlessness and post-quantum security are paramount, the size premium is acceptable. <strong>StarkWare</strong> has built a production ecosystem around zkSTARKs, including StarkEx (a scalability engine processing billions of dollars in trades) and StarkNet (a ZK-rollup on Ethereum). The choice between SNARKs and STARKs is now a genuine engineering trade-off rather than a clear winner.
+            </p>
+
+            <div class="callout" data-label="snark vs stark">
+                <strong>zkSNARK</strong>: tiny proofs (~200 bytes), fast verification, requires trusted setup, vulnerable to quantum. Best for on-chain verification where proof size drives gas costs.<br><br>
+                <strong>zkSTARK</strong>: larger proofs (10–200 KB), no trusted setup, post-quantum secure. Best for high-security applications where transparency and longevity matter more than proof size.
+            </div>
+
+            <h2>REAL-WORLD APPLICATIONS</h2>
+
+            <p>
+                <strong>Blockchain scalability</strong> is the most mature application. ZK-rollups batch thousands of transactions, compute a zkSNARK or zkSTARK proof that all transactions are valid, and post that proof to Ethereum's main chain. The main chain verifies the proof in milliseconds and updates its state root. The result: the security of Ethereum layer 1 with the throughput of a specialised off-chain processor. zkSync, StarkNet, and Polygon zkEVM are all live systems processing real volume using these techniques. The vision — Ethereum as a global settlement layer verified by cryptographic proofs — is already partially realised.
+            </p>
+
+            <p>
+                <strong>Private identity</strong> is where ZKPs could have the most direct impact on everyday people. Today, proving you are over 18 requires showing an ID that also reveals your full name, exact date of birth, and address. A ZKP-based identity system would let you prove the predicate "this person is over 18" without any additional disclosure. Same logic applies to credit checks, medical records, citizenship status, professional credentials. You prove the claim; you reveal nothing else. Projects like Worldcoin, Polygon ID, and zk.id are building towards this vision, and the EU's digital identity framework has begun exploring ZK-compatible architectures.
+            </p>
+
+            <p>
+                <strong>Verifiable computation</strong> extends ZKPs beyond proving knowledge to proving correct execution. You can now prove that a specific program — a sorting algorithm, a financial model, an image transformation — ran correctly on certain inputs without revealing those inputs. This enables a cloud provider to prove they executed your computation correctly without learning your data. It enables a medical researcher to run an analysis on private patient records and produce a verifiable result without anyone seeing the underlying data. The combination of outsourced computation and cryptographic accountability is a fundamentally new paradigm.
+            </p>
+
+            <p>
+                <strong>ZK-ML</strong> is an emerging area where machine learning inference is wrapped in a ZKP. A model owner can prove that a neural network produced a specific output from a specific input without revealing the model architecture or weights. This enables monetised ML-as-a-service with proprietary models, and it enables a form of algorithmic accountability: proving a model was used correctly, even to adversarial auditors, without intellectual property disclosure.
+            </p>
+
+            <h2>ZK AND AI</h2>
+
+            <p>
+                The intersection of zero-knowledge proofs and artificial intelligence is one of the most interesting and underexplored areas in current research. The core tension in AI accountability is this: we want to verify what AI systems do, but AI systems involve proprietary weights, private training data, and inference over sensitive inputs. ZKPs offer a way to thread this needle.
+            </p>
+
+            <blockquote>
+                "The knowledge complexity of a proof system measures how much extra knowledge the verifier gains beyond the validity of the assertion. Zero-knowledge means the verifier gains zero extra knowledge — the proof is a cryptographic miracle that says yes without saying anything else."
+                <cite>— Oded Goldreich, <em>Foundations of Cryptography</em>, Vol. 1</cite>
+            </blockquote>
+
+            <p>
+                Consider the problem of AI training provenance. A company claims their model was trained only on licensed data and did not include pirated books, private medical records, or scraped personal information. Today, auditing this claim requires either trusting the company's word or demanding full access to their training pipeline — neither is satisfactory. A ZKP-based training audit could allow the company to prove cryptographic commitments over their training data were satisfied without revealing a single training sample. The verifier gains the assurance; the company retains the privacy.
+            </p>
+
+            <p>
+                <strong>Proof of correct inference</strong> is similarly powerful. An AI model is used to make a medical diagnosis, a credit decision, or a hiring recommendation. The subject of that decision has a right to know it was computed fairly. But the model might be proprietary. A ZKP of inference would let the operator prove that the model ran correctly on the submitted input and produced the stated output, without revealing the model weights. This separates the accountability claim — "the decision was produced by this model running correctly" — from the intellectual property — "here are our weights."
+            </p>
+
+            <p>
+                Projects like EZKL, Modulus Labs, and Giza are actively building ZK proving systems for neural networks. The current state is impressive but limited: proving inference for small convolutional or fully-connected networks is feasible; proving a full transformer inference for a large language model remains computationally expensive. Proof generation for a ResNet-50 inference takes minutes rather than milliseconds. The field is improving rapidly, and the research directions — more efficient arithmetic circuits for ReLU and softmax, hardware acceleration for ZK proving, recursive proof composition — are all active and well-funded.
+            </p>
+
+            <p>
+                More ambitiously, ZKPs could help address the deep accountability problem with AI at societal scale. If regulators can demand verifiable proofs of model behaviour — provably fair training data distributions, provably non-discriminatory decision rules — without requiring disclosure of the underlying system, then ZK technology becomes a mechanism for trustworthy AI governance. You do not have to choose between protecting intellectual property and being accountable to the public. The proof is the accountability; the model stays private.
+            </p>
+
+            <hr>
+
+            <p>
+                I came to zero-knowledge proofs through cryptography, but I keep returning to them because of what they say about epistemology. Knowledge, in the everyday sense, is inseparable from its evidence — you believe something because you saw it, heard it, computed it. ZKPs sever that link. They allow conviction without evidence in the traditional sense. The verifier ends the protocol more certain, but no more informed. It is a strange and beautiful inversion of how we usually think about learning.
+            </p>
+
+            <p>
+                What strikes me most about the current moment is how the theory from 1985 is suddenly meeting engineering reality in the same decade. Goldwasser, Micali, and Rackoff wrote a paper that was almost purely abstract — they were not building a product, they were asking whether something was possible. Four decades later, the answer is not just "yes" but "here it is, running in production, securing billions of dollars." The distance between mathematical truth and deployed infrastructure has never been shorter in this field. And the applications — private identity, verifiable AI, trustless computation — are not incremental improvements. They are new categories of what is possible. I think we are near the beginning of understanding what ZKPs will eventually unlock.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">zero-knowledge</span>
+                <span class="tag">cryptography</span>
+                <span class="tag">zkSNARKs</span>
+                <span class="tag">zkSTARKs</span>
+                <span class="tag">blockchain</span>
+                <span class="tag">privacy</span>
+                <span class="tag">verifiable computation</span>
+                <span class="tag">ZK-ML</span>
+                <span class="tag">AI accountability</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="post-quantum-cryptography.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">Post-Quantum Cryptography</span>
+                </a>
+                <a href="p-vs-np.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">P vs NP</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

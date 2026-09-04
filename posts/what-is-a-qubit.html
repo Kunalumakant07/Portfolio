@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is a Qubit? — Umakant Kunal</title>
+    <meta name="description" content="The qubit explained properly: probability amplitudes, the Bloch sphere, superposition without the metaphysics, and why quantum speedup is about interference, not parallelism.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-quantum   { color: #c084fc;         border-color: #4c1d95; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── FORMULA BLOCK ── */
+        .formula-block {
+            margin: 30px 0;
+            padding: 22px 24px;
+            border: 1px solid #4c1d95;
+            background: var(--dim);
+            text-align: center;
+            position: relative;
+        }
+
+        .formula-block::before {
+            content: 'state vector';
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #c084fc;
+            background: var(--dim);
+            padding: 0 6px;
+        }
+
+        .formula-block .formula-main {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.15rem;
+            color: #e9d5ff;
+            letter-spacing: 2px;
+            line-height: 2;
+            display: block;
+        }
+
+        .formula-block .formula-constraint {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+            .formula-block { padding: 16px 14px; }
+            .formula-block .formula-main { font-size: 0.95rem; letter-spacing: 1px; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                what-is-a-qubit
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-01-05</span>
+                <span class="post-category cat-quantum">Quantum Computing</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">What Is a Qubit?<br>(And Why It Is Not Just<br>'0 and 1 at the Same Time')</h1>
+
+            <p class="post-subtitle">
+                The popular explanation is not wrong exactly — it is just so stripped of context that it teaches you nothing useful and leaves you more confused than before. Let us fix that.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Every time quantum computing comes up in a popular article, a podcast, or a conference keynote, someone says the same thing: <strong>"A qubit is different from a classical bit because it can be 0 and 1 at the same time."</strong> The audience nods. The speaker moves on. And almost nothing has been communicated.
+            </p>
+
+            <p>
+                It is not that the statement is false. In some technical sense it points at something real. But as an explanation, it is like telling someone that a violin is different from a piano because "it makes a sound when you touch it." Technically true, deeply useless, and it will send you in entirely the wrong direction if you ever try to understand what is actually going on.
+            </p>
+
+            <p>
+                I spent a long time thinking I understood qubits because I had heard this explanation. I did not. This post is my attempt to write the explanation I wish I had found at the beginning — grounded in the physics, honest about the mathematics, and careful about the philosophical claims we are actually entitled to make.
+            </p>
+
+            <h2>THE CLASSICAL BIT</h2>
+
+            <p>
+                Before we can appreciate what a qubit is, we need to be precise about what a classical bit actually is — because most people have a surprisingly fuzzy picture of it.
+            </p>
+
+            <p>
+                A classical bit is not an abstract symbol. It is a <strong>physical system</strong> that can exist in one of exactly two distinguishable states, and those states are stable enough that we can read them reliably. The abstraction — "0" and "1" — is just a label we put on top of a real physical phenomenon.
+            </p>
+
+            <p>
+                In a CMOS transistor, which is what your laptop's CPU uses, those two states are a high voltage (roughly 1.2–3.3V depending on the process node) and a low voltage (roughly 0V). The transistor acts as a switch: it either conducts or it does not. The gap between the two voltage levels is engineered to be large enough that thermal noise — the random vibration of electrons — cannot accidentally flip a 0 into a 1.
+            </p>
+
+            <p>
+                In a magnetic hard drive, the states are the orientation of a magnetic domain: north–south pointing one way versus the other. In an optical disc, they are the reflectivity of a tiny pit etched into a polycarbonate surface versus a flat land. In flash memory, they are the number of electrons trapped in an insulated floating gate — above a threshold counts as one state, below it counts as the other.
+            </p>
+
+            <p>
+                The physical substrate changes completely. The abstract idea — <em>two distinguishable states, stable against noise, readable without destroying the information</em> — remains identical. That is what a bit is. And notice: before you read a classical bit, it has a perfectly definite value. You may not know what it is, but it is one thing. The uncertainty is epistemic — in your head, not in the world.
+            </p>
+
+            <h2>THE QUANTUM STATE</h2>
+
+            <p>
+                A qubit is also a two-level physical system. The difference is in what quantum mechanics says about the state of such a system — and quantum mechanics says something very strange.
+            </p>
+
+            <p>
+                The physical systems used as qubits include: the <strong>spin of an electron</strong> (spin-up versus spin-down, two states forced by the quantisation of angular momentum), the <strong>polarisation of a photon</strong> (horizontal versus vertical, or left-circular versus right-circular), the <strong>energy levels of a superconducting circuit</strong> (ground state versus first excited state), and the <strong>hyperfine states of a trapped ion</strong> (two specific energy levels that are separated by a microwave frequency). Different physical substrates, same abstract two-level structure.
+            </p>
+
+            <p>
+                Now here is where classical intuition breaks. Quantum mechanics describes the state of any physical system using a <em>state vector</em> — a mathematical object that lives in a complex vector space called a Hilbert space. For a two-level system, that Hilbert space is two-dimensional, and the state vector is:
+            </p>
+
+            <div class="formula-block">
+                <span class="formula-main">|ψ⟩ = α|0⟩ + β|1⟩</span>
+                <span class="formula-constraint">where |α|² + |β|² = 1,  and  α, β ∈ ℂ</span>
+            </div>
+
+            <p>
+                Let me unpack every piece of that notation, because it is dense. The <strong>|ψ⟩</strong> is Dirac's "ket" notation for a quantum state — just a vector, written in a physicists' shorthand. The <strong>|0⟩</strong> and <strong>|1⟩</strong> are the two basis states, the quantum analogues of our classical 0 and 1. They are the states you get after a measurement — after the system has been forced to make up its mind.
+            </p>
+
+            <p>
+                The coefficients <strong>α</strong> and <strong>β</strong> are <em>complex numbers</em> — not real numbers, not probabilities. They are called <strong>probability amplitudes</strong>. This distinction is absolutely crucial and is precisely what the "0 and 1 at the same time" explanation destroys. An amplitude is not a probability. It is a complex number whose squared magnitude gives a probability. Specifically: if you measure the qubit, you get the outcome |0⟩ with probability |α|² and the outcome |1⟩ with probability |β|². The constraint |α|² + |β|² = 1 is just the requirement that those probabilities sum to one.
+            </p>
+
+            <p>
+                But the amplitude carries more information than a probability. It has a <em>phase</em> — an angle in the complex plane — and that phase can cause interference. Two amplitudes can add constructively (increasing the probability of an outcome) or destructively (cancelling it out). This is the mechanism behind every quantum algorithm. Probabilities cannot interfere. Amplitudes can. And that is the entire ballgame.
+            </p>
+
+            <h3>The Bloch Sphere</h3>
+
+            <p>
+                There is a beautiful geometric way to visualise the state of a single qubit: the <strong>Bloch sphere</strong>. Any pure qubit state can be written as a point on the surface of a unit sphere in three dimensions. The north pole represents |0⟩, the south pole represents |1⟩, and every other point on the surface represents a superposition. The angle from the north pole (θ, the polar angle) controls the ratio of |α|² to |β|², while the angle around the equator (φ, the azimuthal angle) encodes the relative phase between α and β.
+            </p>
+
+            <p>
+                What this means geometrically: a classical bit can only be at the north or south pole. A qubit's state can be anywhere on the surface. The entire sphere of possibilities collapses to a single pole the moment you measure it. And the operations you perform on a qubit — quantum gates — are rotations of this sphere. A Hadamard gate, for instance, rotates a state sitting at the north pole to a point on the equator, exactly halfway between |0⟩ and |1⟩ in all respects.
+            </p>
+
+            <h2>SUPERPOSITION</h2>
+
+            <p>
+                So what does superposition actually mean? This is where I want to be careful, because there are several wrong ways to think about it, and most popular explanations pick the most wrong one available.
+            </p>
+
+            <p>
+                <strong>Superposition does not mean the particle is in two places at once.</strong> It does not mean the qubit secretly holds two values simultaneously, like a coin spinning in the air. Those descriptions import classical intuitions into a fundamentally non-classical situation and produce nonsense.
+            </p>
+
+            <p>
+                What superposition means — as precisely as we can state it — is that the qubit is in a state for which the quantity we call "its value" simply <em>has no definite value</em>. This is not a statement about our ignorance. It is a statement about the physics. Before measurement, there is no hidden classical value waiting to be revealed. The question "is it 0 or 1?" does not have an answer, not because we do not know, but because the question is malformed.
+            </p>
+
+            <blockquote>
+                "If quantum mechanics hasn't profoundly shocked you, you haven't understood it yet."
+                <cite>— Niels Bohr</cite>
+            </blockquote>
+
+            <p>
+                The cleanest demonstration of why this is not just classical ignorance is the <strong>double-slit experiment</strong>. Send a single electron through two slits and look at where it lands on a screen behind them. If the electron were secretly going through one slit or the other (like a classical particle whose trajectory we just did not bother to track), you would expect to see two bands on the screen, one behind each slit. What you actually see is an interference pattern — many alternating bands — as if the electron passed through both slits simultaneously and the two paths interfered with each other.
+            </p>
+
+            <p>
+                Now, if you put a detector at the slits to find out which one the electron went through, the interference pattern immediately disappears. You measure which slit, and you get two bands, exactly as if it were a classical particle. The act of obtaining which-path information destroys the superposition. This is not a measurement artefact. It is fundamental to quantum mechanics.
+            </p>
+
+            <div class="callout" data-label="common misconception">
+                Superposition is often described as "being in two states at once," implying the particle has a definite value and we just do not know it. This is incorrect — and experimentally refutable. Bell's theorem, and subsequent experiments by Aspect, Zeilinger, and others, prove that no theory of hidden classical values (local hidden variable theories) can reproduce the predictions of quantum mechanics. The indefiniteness is real.
+            </div>
+
+            <p>
+                Superposition is a property of the mathematical description of a quantum state, not a metaphysical claim about the particle being physically in two places. The state vector |ψ⟩ = α|0⟩ + β|1⟩ is the complete description of the qubit. There is nothing more to know. The phrase "0 and 1 at the same time" is a desperate attempt to render this in classical language, and that attempt fails, because classical language is exactly what does not apply here.
+            </p>
+
+            <h2>MEASUREMENT</h2>
+
+            <p>
+                When you measure a qubit in the state |ψ⟩ = α|0⟩ + β|1⟩, something irreversible happens. The state vector "collapses" — the qubit is forced into one of the basis states, |0⟩ or |1⟩, and the continuous information encoded in the complex amplitudes α and β is destroyed. All you get out is a single classical bit: 0, with probability |α|², or 1, with probability |β|².
+            </p>
+
+            <blockquote>
+                "The more precisely the position is determined, the less precisely the momentum is known in this instant, and vice versa."
+                <cite>— Werner Heisenberg, uncertainty principle, 1927</cite>
+            </blockquote>
+
+            <p>
+                This is a brutal consequence with serious implications for quantum computing. The interference — the quantum speedup, the thing that makes quantum algorithms different from classical ones — happens <em>before</em> measurement, in the complex amplitude space. It happens while the qubits are being manipulated by quantum gates, while superpositions evolve and interfere with each other according to the Schrödinger equation. The moment you look, you collapse the superposition into a classical outcome, and you lose all that richness except for a single probabilistic bit.
+            </p>
+
+            <p>
+                This is why quantum algorithms are so difficult to design. You have to arrange the gates — the rotations on the Bloch sphere, the entanglement operations between qubits — so that by the time you measure, the amplitudes corresponding to wrong answers have cancelled out (destructive interference) and the amplitudes corresponding to the correct answer have reinforced each other (constructive interference). The measurement then gives you the right answer with high probability. The art of quantum algorithm design is choreographing interference before measurement forces the collapse.
+            </p>
+
+            <p>
+                And this is exactly why the "0 and 1 at the same time" explanation is not just incomplete — it is actively harmful. It suggests that a quantum computer is somehow running all computations in parallel simultaneously, like many classical computers working at once. That is not what is happening. What is happening is a single coherent evolution of a probability amplitude landscape, shaped by carefully constructed interference. The analogy to parallelism leads you to entirely wrong conclusions about what quantum computers can and cannot do.
+            </p>
+
+            <h2>WHY THIS IS USEFUL</h2>
+
+            <p>
+                So if the "parallel computation" story is wrong, why are quantum computers interesting at all? What is the actual source of computational power?
+            </p>
+
+            <p>
+                The answer is <strong>interference</strong>. A quantum computer manipulates complex probability amplitudes in a way that no classical computer can efficiently simulate. For certain problems, you can engineer algorithms that steer the amplitude flow so that the amplitudes of good solutions grow large and the amplitudes of bad solutions cancel to near-zero, all in far fewer steps than any classical approach requires.
+            </p>
+
+            <blockquote>
+                "I think I can safely say that nobody understands quantum mechanics."
+                <cite>— Richard P. Feynman, The Character of Physical Law (1965)</cite>
+            </blockquote>
+
+            <p>
+                <strong>Grover's algorithm</strong> is the cleanest example. Suppose you have an unsorted database of N entries and you want to find a specific one. A classical algorithm requires O(N) steps on average — you just check entries one by one. Grover's algorithm finds the answer in O(√N) steps. That is a genuine quadratic speedup, and it works like this:
+            </p>
+
+            <ul>
+                <li>Start all N qubits in superposition — a uniform distribution of amplitudes over all possible entries.</li>
+                <li>Apply an <em>oracle</em> — a quantum operation that flips the sign of the amplitude corresponding to the correct entry. This is the "mark the answer" step.</li>
+                <li>Apply a <em>diffusion operator</em> — sometimes called inversion about the mean — that amplifies amplitudes above the average and suppresses amplitudes below it.</li>
+                <li>Repeat steps 2 and 3 approximately √N times.</li>
+                <li>Measure. With high probability you read out the correct entry.</li>
+            </ul>
+
+            <p>
+                The magic is in the diffusion step. After the oracle flips the amplitude of the correct answer into negative territory, the diffusion operator amplifies it — because it is now below the mean, inversion about the mean pushes it further from the mean in the positive direction. Repeat this enough times and the correct answer's amplitude towers over all others. This is constructive interference applied systematically. There is no parallelism. There is no "trying all answers at once." There is only amplitude, phase, and interference.
+            </p>
+
+            <div class="callout" data-label="quantum speedup — the real picture">
+                Quantum speedup exists for specific problems where the structure of the problem allows interference to be exploited. Shor's algorithm (factoring, exponential speedup over the best known classical algorithm), Grover's algorithm (search, quadratic speedup), and quantum simulation (exponential speedup for simulating quantum systems) are the canonical examples. For generic computation — sorting, arithmetic, database joins — quantum computers offer no known advantage, and some tasks are actively slower due to the overhead of maintaining quantum coherence.
+            </div>
+
+            <h2>PHYSICAL IMPLEMENTATIONS</h2>
+
+            <p>
+                Qubits are real physical objects, and building them is an engineering problem of extraordinary difficulty. Different groups around the world have bet on different physical substrates, each with its own advantages and fundamental challenges.
+            </p>
+
+            <p>
+                <strong>Superconducting qubits</strong> — used by Google and IBM — are tiny electrical circuits made of a Josephson junction, a sandwich of two superconductors separated by a thin insulator. When cooled to within a few millikelvin of absolute zero (colder than outer space), the circuit exhibits quantum behaviour: its energy levels are quantised, and the two lowest levels act as |0⟩ and |1⟩. The key challenge is coherence time — vibrations from the environment and tiny electromagnetic fluctuations continuously disturb the qubit's phase, causing errors. Google's Sycamore processor operates with coherence times on the order of tens to hundreds of microseconds, which sounds long until you realise that a gate operation takes tens of nanoseconds and you need thousands of gates for any useful computation.
+            </p>
+
+            <p>
+                <strong>Trapped-ion qubits</strong> — the approach used by IonQ and Quantinori (formerly Honeywell Quantum Solutions) — use individual atoms, typically ytterbium or barium ions, suspended in electromagnetic traps and manipulated with laser beams. The qubit states are two hyperfine energy levels of the atom, which are extraordinarily stable — coherence times of minutes or even hours have been demonstrated. The key challenge is speed: laser gate operations are slower than superconducting gates by several orders of magnitude, and scaling to large numbers of ions while maintaining precise individual control is a formidable engineering problem.
+            </p>
+
+            <p>
+                <strong>Photonic qubits</strong> — the approach pursued by PsiQuantum — use the polarisation or path of individual photons as the qubit. Photons are naturally noise-resistant: they do not interact with their environment easily, which means decoherence is low. The challenge is the same property turned around: because photons do not interact with each other easily, making two-qubit gates requires clever optical tricks — post-selection, auxiliary photons, and probabilistic gate operations — which dramatically increase the resource overhead.
+            </p>
+
+            <p>
+                <strong>Topological qubits</strong> — Microsoft's long-term bet — would use exotic quasi-particles called Majorana fermions, which emerge at the ends of certain nanowire structures under precisely controlled conditions. The promise is that topological qubits encode information non-locally in a way that makes them inherently resistant to local noise — the error correction problem, which consumes the majority of qubits in every other approach, would become vastly simpler. The challenge: Majorana fermions are extremely difficult to create, verify, and control, and the field is still in a very early experimental stage after years of contested claims.
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL NOTE</h2>
+
+            <p>
+                I want to be honest about something. After spending months reading quantum mechanics textbooks, working through the linear algebra, and convincing myself that I understand the formalism, I still find the whole thing deeply strange. Not in a poetic way. In a visceral, uncomfortable way.
+            </p>
+
+            <p>
+                The mathematics works. The predictions are verified to more decimal places than any other theory in the history of science. Quantum mechanics is, by any empirical measure, the most successful physical theory ever written down. But when I ask what it means — what is really happening when a qubit exists in superposition, why measurement causes collapse, whether the wave function is a real physical object or just a bookkeeping device — I hit a wall. Not a wall of insufficient intelligence, but a wall that seems to be in the territory itself.
+            </p>
+
+            <p>
+                Feynman said nobody understands quantum mechanics, and I think he meant it seriously, not as a joke. He did not mean nobody can use it. He meant that our best theories have outrun our ability to construct a coherent picture of what the world looks like at that scale. The math is the most reliable guide we have, and the math says: complex amplitudes, interference, collapse. What that corresponds to in reality — whether there is a single collapsing universe or infinitely many branching ones, whether the wave function is real or epistemic — remains genuinely, profoundly open.
+            </p>
+
+            <p>
+                What I find strangely comforting is that this openness does not stop the technology from working. We can build quantum computers without knowing why quantum mechanics is true. The algorithms run, the amplitudes interfere, and the answers come out correct — regardless of which interpretation of quantum mechanics you subscribe to. There is something almost funny about that. We have built laboratories that exploit one of the deepest mysteries in physics, and the mystery does not care whether we have resolved it.
+            </p>
+
+            <p>
+                A qubit is not 0 and 1 at the same time. It is something stranger, and more precise, and more interesting than that. It is a two-level quantum system whose state is a complex vector living in a Hilbert space, manipulated by rotations, and collapsed by observation into a single classical outcome. The strangeness is in the mathematics. The mathematics is in the machine. And the machine is beginning to be built.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">quantum computing</span>
+                <span class="tag">qubits</span>
+                <span class="tag">superposition</span>
+                <span class="tag">hilbert space</span>
+                <span class="tag">bloch sphere</span>
+                <span class="tag">grover's algorithm</span>
+                <span class="tag">interference</span>
+                <span class="tag">measurement</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="../blog.html" class="prev">
+                    <span class="nav-dir">← back to</span>
+                    <span class="nav-title">All Posts</span>
+                </a>
+                <a href="quantum-entanglement.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Quantum Entanglement: Spooky Action Explained</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

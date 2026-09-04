@@ -326,31 +326,6 @@
             background: linear-gradient(to right, var(--border), transparent);
         }
 
-        /* ════════════════════════════════════════════
-           SKETCH SCENE
-        ════════════════════════════════════════════ */
-        .sketch-scene {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            height: 340px;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.13;
-        }
-
-        #home {
-            position: relative;
-        }
-
-        #home .container {
-            position: relative;
-            z-index: 2;
-        }
-
-
         .fade {
             opacity: 0;
             transform: translateY(18px);
@@ -778,24 +753,26 @@
         /* ════════════════════════════════════════════
            MOBILE RESPONSIVE
         ════════════════════════════════════════════ */
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .skills-block { grid-template-columns: 1fr; gap: 32px; }
+            .contact-shell { grid-template-columns: 1fr; gap: 36px; }
+            .about-grid { grid-template-columns: 1fr; }
+            .profile-wrap { display: flex; align-items: center; gap: 20px; text-align: left; }
+            .profile-frame { flex-shrink: 0; }
+        }
+
+        /* ── 680px MOBILE ── */
         @media (max-width: 680px) {
             section { padding: 64px 0; }
 
             .nav-links { display: none; }
-
             .nav-links.open {
-                display: flex;
-                flex-direction: column;
-                position: absolute;
-                top: 58px; right: 0;
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-top: none;
-                padding: 16px 24px;
-                gap: 18px;
-                min-width: 180px;
+                display: flex; flex-direction: column;
+                position: absolute; top: 58px; right: 0;
+                background: var(--surface); border: 1px solid var(--border);
+                border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px;
             }
-
             .nav-toggle { display: block; }
 
             .hero-name { margin: 20px 0 14px; }
@@ -804,23 +781,31 @@
             .profile-wrap { display: flex; align-items: center; gap: 20px; text-align: left; }
             .profile-frame { flex-shrink: 0; }
             .profile-img { width: 100px; height: 100px; }
-
             .interests-grid { grid-template-columns: 1fr; }
 
             .skills-block { grid-template-columns: 1fr; gap: 32px; }
 
+            .project-card { padding: 20px 18px; }
             .project-top { flex-direction: column; }
             .project-links-row { margin-top: 0; }
+            .project-title { font-size: 1.3rem; }
 
             .contact-shell { grid-template-columns: 1fr; gap: 36px; }
+            .contact-list li { font-size: 0.8rem; }
 
             footer .container { flex-direction: column; text-align: center; }
-            footer .quote-footer { text-align: center; }
+            footer .quote-footer { text-align: center; font-size: 0.68rem; }
         }
 
+        /* ── 420px SMALL PHONES ── */
         @media (max-width: 420px) {
-            .container { padding: 0 18px; }
+            .container { padding: 0 16px; }
             .hero-cta { flex-direction: column; }
+            .btn { font-size: 0.78rem; padding: 9px 16px; }
+            .section-title { font-size: 1.6rem; letter-spacing: 2px; }
+            .project-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+            .social-link { font-size: 0.78rem; }
         }
 
         /* ════════════════════════════════════════════
@@ -899,119 +884,6 @@
 
             </div>
         </div>
-
-        <!-- ░░ SKETCH BACKGROUND SCENE ░░ -->
-        <svg class="sketch-scene" viewBox="0 0 1440 340" preserveAspectRatio="xMidYMax meet"
-             xmlns="http://www.w3.org/2000/svg"
-             fill="none" stroke="#00ff9f" stroke-linecap="round" stroke-linejoin="round">
-
-            <defs>
-                <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" result="noise"/>
-                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
-                </filter>
-            </defs>
-
-            <g filter="url(#rough)" stroke-width="1.3" opacity="0.9">
-
-                <!-- FAR MOUNTAINS -->
-                <polyline points="0,320 180,230 260,160 340,220 430,130 520,200 610,110 700,185 790,90 870,170 960,95 1040,175 1130,100 1220,165 1310,115 1400,180 1440,200 1440,340 0,340 Z" stroke-width="1.1" opacity="0.5"/>
-
-                <!-- MID MOUNTAINS -->
-                <polyline points="0,340 0,295 90,265 160,230 240,255 310,200 390,240 460,195 540,235 610,185 680,225 760,175 840,215 920,170 1000,210 1080,168 1150,205 1230,172 1310,208 1380,182 1440,215 1440,340 Z" stroke-width="1.4"/>
-
-                <!-- GROUND LINE -->
-                <path d="M0,310 Q200,290 360,298 Q480,304 580,288 Q700,272 820,282 Q940,292 1060,275 Q1180,262 1300,278 Q1380,286 1440,272 L1440,340 L0,340 Z" stroke-width="1.2" opacity="0.6"/>
-
-                <!-- SNOW CAPS -->
-                <polyline points="597,132 610,110 623,133" stroke-width="1"/>
-                <line x1="600" y1="126" x2="615" y2="118" stroke-width="0.8"/>
-                <line x1="606" y1="120" x2="617" y2="126" stroke-width="0.8"/>
-                <polyline points="778,114 790,90 803,115" stroke-width="1"/>
-                <line x1="781" y1="108" x2="795" y2="100" stroke-width="0.8"/>
-                <line x1="788" y1="100" x2="797" y2="108" stroke-width="0.8"/>
-                <polyline points="949,118 960,95 972,119" stroke-width="1"/>
-                <line x1="952" y1="112" x2="965" y2="103" stroke-width="0.8"/>
-
-                <!-- PINE TREES left -->
-                <line x1="62" y1="285" x2="62" y2="240" stroke-width="1.4"/>
-                <polyline points="62,240 42,268 62,262 80,268 62,240" stroke-width="1.1"/>
-                <polyline points="62,255 46,278 62,272 78,278 62,255" stroke-width="1.1"/>
-                <polyline points="62,268 48,290 62,285 76,290 62,268" stroke-width="1.1"/>
-                <line x1="100" y1="290" x2="100" y2="248" stroke-width="1.4"/>
-                <polyline points="100,248 80,276 100,269 120,276 100,248" stroke-width="1.1"/>
-                <polyline points="100,263 82,283 100,277 118,283 100,263" stroke-width="1.1"/>
-                <polyline points="100,276 84,294 100,288 116,294 100,276" stroke-width="1.1"/>
-                <line x1="36" y1="292" x2="36" y2="258" stroke-width="1.2"/>
-                <polyline points="36,258 20,278 36,274 52,278 36,258" stroke-width="1"/>
-                <polyline points="36,270 22,286 36,282 50,286 36,270" stroke-width="1"/>
-                <polyline points="36,280 23,294 36,290 49,294 36,280" stroke-width="1"/>
-
-                <!-- PINE TREES right -->
-                <line x1="1330" y1="286" x2="1330" y2="242" stroke-width="1.4"/>
-                <polyline points="1330,242 1310,270 1330,263 1350,270 1330,242" stroke-width="1.1"/>
-                <polyline points="1330,257 1312,279 1330,272 1348,279 1330,257" stroke-width="1.1"/>
-                <polyline points="1330,270 1314,291 1330,284 1346,291 1330,270" stroke-width="1.1"/>
-                <line x1="1370" y1="292" x2="1370" y2="252" stroke-width="1.4"/>
-                <polyline points="1370,252 1350,280 1370,273 1390,280 1370,252" stroke-width="1.1"/>
-                <polyline points="1370,266 1352,285 1370,278 1388,285 1370,266" stroke-width="1.1"/>
-                <polyline points="1370,278 1355,296 1370,290 1385,296 1370,278" stroke-width="1.1"/>
-                <line x1="1300" y1="291" x2="1300" y2="260" stroke-width="1.2"/>
-                <polyline points="1300,260 1284,280 1300,275 1316,280 1300,260" stroke-width="1"/>
-                <polyline points="1300,272 1286,288 1300,283 1314,288 1300,272" stroke-width="1"/>
-
-                <!-- PINE TREES centre -->
-                <line x1="490" y1="294" x2="490" y2="255" stroke-width="1.3"/>
-                <polyline points="490,255 472,278 490,271 508,278 490,255" stroke-width="1"/>
-                <polyline points="490,268 474,285 490,279 506,285 490,268" stroke-width="1"/>
-                <polyline points="490,279 475,296 490,291 505,296 490,279" stroke-width="1"/>
-                <line x1="522" y1="291" x2="522" y2="258" stroke-width="1.2"/>
-                <polyline points="522,258 507,277 522,272 537,277 522,258" stroke-width="1"/>
-                <polyline points="522,270 508,284 522,279 536,284 522,270" stroke-width="1"/>
-                <polyline points="522,281 509,294 522,289 535,294 522,281" stroke-width="1"/>
-
-                <!-- HUT -->
-                <rect x="850" y="248" width="88" height="54" stroke-width="1.5"/>
-                <polyline points="842,250 894,210 946,250" stroke-width="1.6"/>
-                <line x1="858" y1="246" x2="876" y2="218" stroke-width="0.9" opacity="0.6"/>
-                <line x1="872" y1="248" x2="886" y2="212" stroke-width="0.9" opacity="0.6"/>
-                <line x1="886" y1="250" x2="900" y2="215" stroke-width="0.9" opacity="0.6"/>
-                <line x1="900" y1="250" x2="912" y2="222" stroke-width="0.9" opacity="0.6"/>
-                <line x1="914" y1="248" x2="924" y2="230" stroke-width="0.9" opacity="0.6"/>
-                <rect x="880" y="272" width="22" height="30" stroke-width="1.3"/>
-                <rect x="858" y="258" width="16" height="14" stroke-width="1.1"/>
-                <line x1="858" y1="265" x2="874" y2="265" stroke-width="0.8"/>
-                <line x1="866" y1="258" x2="866" y2="272" stroke-width="0.8"/>
-                <rect x="910" y="258" width="16" height="14" stroke-width="1.1"/>
-                <line x1="910" y1="265" x2="926" y2="265" stroke-width="0.8"/>
-                <line x1="918" y1="258" x2="918" y2="272" stroke-width="0.8"/>
-                <rect x="920" y="223" width="10" height="26" stroke-width="1.2"/>
-                <path d="M924,222 Q920,212 926,204 Q930,197 924,190" stroke-width="1" opacity="0.55"/>
-                <path d="M927,221 Q933,210 928,202" stroke-width="0.9" opacity="0.4"/>
-                <line x1="842" y1="302" x2="946" y2="302" stroke-width="1.1" opacity="0.5"/>
-
-                <!-- FENCE -->
-                <line x1="946" y1="270" x2="990" y2="270" stroke-width="1.1"/>
-                <line x1="946" y1="280" x2="990" y2="280" stroke-width="1.1"/>
-                <line x1="952" y1="262" x2="952" y2="288" stroke-width="1.1"/>
-                <line x1="962" y1="262" x2="962" y2="288" stroke-width="1.1"/>
-                <line x1="972" y1="262" x2="972" y2="288" stroke-width="1.1"/>
-                <line x1="982" y1="262" x2="982" y2="288" stroke-width="1.1"/>
-
-                <!-- BIRDS -->
-                <path d="M420,148 Q428,143 436,148" stroke-width="1" opacity="0.6"/>
-                <path d="M448,138 Q456,133 464,138" stroke-width="1" opacity="0.6"/>
-                <path d="M436,155 Q441,151 447,155" stroke-width="0.9" opacity="0.5"/>
-                <path d="M1050,122 Q1057,117 1064,122" stroke-width="1" opacity="0.6"/>
-                <path d="M1068,130 Q1074,125 1080,130" stroke-width="0.9" opacity="0.5"/>
-
-                <!-- MOON -->
-                <circle cx="1360" cy="90" r="28" stroke-width="1.2" opacity="0.5"/>
-                <circle cx="1360" cy="90" r="36" stroke-width="0.6" opacity="0.2"/>
-
-            </g>
-        </svg>
-        <!-- ░░ END SKETCH ░░ -->
 
     </section>
 
@@ -1356,7 +1228,7 @@
     ══════════════════════════════════════════ -->
     <footer>
         <div class="container">
-            <p>© 2025 Umakant Kunal &nbsp;·&nbsp; built with ♥ + pure HTML/CSS/JS</p>
+            <p>© 2026 Umakant Kunal &nbsp;·&nbsp; built with ♥ + pure HTML/CSS/JS</p>
             <p class="quote-footer" id="footerQuote"></p>
         </div>
     </footer>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuromorphic Computing — Chips That Think Like Brains — Umakant Kunal</title>
+    <meta name="description" content="Your brain runs on 20 watts. Training GPT-4 consumed the electricity of a small country. Neuromorphic computing is the attempt to close that gap — and it's harder than it sounds.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                neuromorphic-computing
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-12</span>
+                <span class="post-category cat-ai">AI</span>
+                <span class="post-category cat-ai">Computer Architecture</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">Neuromorphic Computing —<br>Chips That Think Like Brains</h1>
+
+            <p class="post-subtitle">
+                Your brain processes information using about 20 watts — the power of a dim light bulb. Training GPT-4 consumed roughly the annual electricity of a small country. If we want AI that is genuinely intelligent rather than merely large, we need hardware that thinks more like biology. <em>Neuromorphic computing is the attempt.</em>
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                The numbers are almost offensive. The human brain — three pounds of electrochemical tissue that can compose poetry, navigate grief, and recognise a friend's face in a crowd — does all of it on roughly 20 watts. That is less than a laptop in idle. GPT-4, by contrast, required an estimated 50 to 100 gigawatt-hours to train — numbers that put it in the same order of magnitude as the annual electricity consumption of a small nation-state. And GPT-4 cannot tie its shoes.
+            </p>
+
+            <p>
+                This is not a knock on large language models. They are genuinely remarkable tools. But the efficiency gap — a gap of roughly seven or eight orders of magnitude per unit of cognitive output — is a signal that we are building intelligence the wrong way. Not wrong in the sense of useless, but wrong in the sense of <strong>architecturally mismatched with the problem</strong>. The brain solved intelligence with an approach so alien to the von Neumann architecture that we are still struggling to understand it. Neuromorphic computing is the engineering discipline that tries to take brain architecture seriously — to build chips that work the way neurons do, not chips that simulate what neurons compute.
+            </p>
+
+            <h2>THE VON NEUMANN BOTTLENECK</h2>
+
+            <p>
+                Every computer you have ever used — from the calculator on your wrist to the supercluster training the latest foundation model — is a von Neumann machine at heart. John von Neumann's 1945 architecture separated memory from processing: data lives in RAM, instructions live in ROM or cache, and a CPU shuttles data between them to perform computation. It was an elegant solution to the engineering constraints of 1945. It has not aged well.
+            </p>
+
+            <p>
+                The fundamental problem is <strong>the memory wall</strong>. As CPUs became faster, memory bandwidth didn't keep pace. Today, a high-end GPU can perform hundreds of teraflops of computation, but it spends a substantial fraction of its time simply waiting for data to arrive from memory. For deep learning inference specifically — where the same model weights are read repeatedly across millions of inputs — this is not a minor inefficiency. It is the dominant cost. We are building increasingly powerful engines and connecting them to an increasingly inadequate supply chain.
+            </p>
+
+            <p>
+                The brain has no such problem. In biological neural tissue, memory and computation are co-located by definition. A synapse is both a memory element (its weight, encoded in synaptic strength) and a computational element (it fires when threshold is reached). There is no bus to cross, no cache to miss, no memory controller to negotiate with. Computation happens exactly where the data lives. The architecture is the memory system.
+            </p>
+
+            <div class="callout" data-label="Key Concept">
+                The von Neumann bottleneck is not a bug in the design — it was an acceptable trade-off in 1945. But for AI workloads, where the same weights are read billions of times and the ratio of computation to memory access is dominated by memory, it has become the primary limiting factor. Every FLOP costs data movement, and data movement costs energy.
+            </div>
+
+            <h2>WHAT NEUROMORPHIC MEANS</h2>
+
+            <p>
+                The term was coined by Carver Mead at Caltech in the late 1980s, though his vision was broader than chip design — he was imagining an entire new way of doing electronics, inspired by the analogue, continuous, massively parallel dynamics of biological neural circuits.
+            </p>
+
+            <blockquote>
+                "The nervous system is not a digital computer. It is an analogue system operating in continuous time, using massively parallel, event-driven signals — spikes — to represent and process information. If we want to build systems with the efficiency and adaptability of biological intelligence, we need to take that architecture seriously, not just simulate it on von Neumann hardware."
+                <cite>— Carver Mead, pioneer of neuromorphic engineering, Caltech</cite>
+            </blockquote>
+
+            <p>
+                A neuromorphic chip departs from conventional architecture in three fundamental ways. First, it is <strong>massively parallel</strong> — not in the GPU sense of thousands of identical processing units running the same instruction, but in the biological sense of millions of heterogeneous units each running their own local computation. Second, it is <strong>event-driven</strong>: neuromorphic processors only consume energy when there is something to process. A neuron that is not firing consumes almost nothing. In a sparse, sensory input environment, this means the chip sits largely quiet — no clock, no wasted cycles. Third, <strong>memory is co-located with processing</strong>. Synaptic weights are stored on-chip, adjacent to the computation units that use them. There is no memory wall to cross.
+            </p>
+
+            <p>
+                The algorithmic model is the <strong>spiking neural network (SNN)</strong>. Where a conventional artificial neural network passes continuous-valued activations between layers, an SNN passes discrete spikes — binary events in time. Information can be encoded in multiple ways: <em>rate coding</em> represents signal strength as the frequency of spikes over a time window (more important signal = faster spiking). <em>Temporal coding</em> encodes information in the precise timing of individual spikes — a richer representation that uses far fewer spikes to convey the same content. The brain likely uses both, and the choice of encoding has deep implications for the efficiency of downstream computation.
+            </p>
+
+            <h2>INTEL'S LOIHI</h2>
+
+            <p>
+                Intel's research neuromorphic chip program has produced two generations of hardware that represent the current frontier of what's actually buildable. Loihi 1, released in 2017, contained 128 neuromorphic cores on a single chip, supporting roughly 130,000 neurons and 130 million synapses. Each core implemented a leaky integrate-and-fire neuron model and a simple on-chip learning rule — the ability to modify synaptic weights based on spike timing without routing information off-chip. For the first time, an Intel-fabricated processor could learn on the fly, locally, in hardware.
+            </p>
+
+            <p>
+                Loihi 2 in 2021 was a substantial step forward: up to one million programmable neurons per chip, 120 million synapses, a more flexible neuron model (programmable rather than fixed), and dramatically better inter-chip communication for building multi-chip systems. Intel's Pohoiki Springs system scaled this to 100 Loihi chips, providing 100 million neurons — still far short of the 86 billion in the human brain, but enough to run meaningful experiments on practical tasks.
+            </p>
+
+            <p>
+                Where Loihi genuinely shines is <strong>sparse, event-driven inference at the edge</strong>. For problems like gesture recognition from event cameras, olfactory sensing, and constraint satisfaction — tasks where inputs are naturally sparse and temporal — Loihi achieves energy efficiency two to three orders of magnitude better than comparable GPU implementations. A task that costs 100 milliwatts on a GPU might cost 100 microwatts on Loihi. That is not a rounding error. For always-on sensing in battery-constrained environments, that gap is the difference between possible and impossible.
+            </p>
+
+            <p>
+                What Loihi cannot do — yet — is match GPU performance on dense, continuous workloads like transformer inference. The mapping between standard deep learning models and spiking networks is lossy; accuracy drops when you force conventional ANNs onto neuromorphic hardware. This is not a silicon problem. It is a software and algorithms problem, and it is the hardest open challenge in the field.
+            </p>
+
+            <h2>IBM'S NORTHPOLE</h2>
+
+            <p>
+                In late 2023, IBM published a paper in <em>Science</em> describing NorthPole — and the AI hardware community took notice. NorthPole is not strictly neuromorphic in the spiking-network sense, but it embodies the core architectural insight of neuromorphic design: <strong>eliminate the memory wall entirely</strong>.
+            </p>
+
+            <p>
+                NorthPole integrates 256MB of on-chip SRAM directly into a mesh of 256 compute cores. During inference, the chip never reaches out to external DRAM. Every weight, every activation — it all lives on-chip. The result is staggering by conventional metrics: on ResNet-50 image classification, NorthPole achieved a 25× improvement in energy efficiency compared to a leading GPU, while also being faster. On a frames-per-joule basis, it is the most efficient neural network inference chip ever measured in a peer-reviewed study.
+            </p>
+
+            <blockquote>
+                "NorthPole is a statement about where the efficiency gains come from. Not from better transistors, not from more parallelism — from fundamentally rethinking where computation and memory should live relative to each other. The brain has been making this point for 500 million years."
+                <cite>— Dharmendra Modha, IBM Fellow and Chief Scientist for Brain-Inspired Computing, IBM Research</cite>
+            </blockquote>
+
+            <p>
+                The philosophical difference between NorthPole and Loihi is instructive. Loihi tries to replicate the mechanism of biological computation — spiking, event-driven, plastic synapses. NorthPole takes a higher-level lesson — near-memory computation — and implements it using conventional (if highly optimised) digital logic. Both are right about the bottleneck. They disagree about how closely to mimic the solution. NorthPole's pragmatism gives it immediate applicability to existing deep learning models; Loihi's fidelity to biology may prove more important in the long run.
+            </p>
+
+            <h2>SPIKING NEURAL NETWORKS</h2>
+
+            <p>
+                Here is where the honest technical difficulty lives. Neuromorphic hardware exists. Intel and IBM have demonstrated that brain-inspired chips can achieve remarkable efficiency on carefully chosen tasks. The problem is that the <em>algorithms</em> — the methods for training and deploying spiking neural networks — lag significantly behind the hardware capability.
+            </p>
+
+            <p>
+                The root issue is that <strong>spikes are non-differentiable</strong>. A spike either happens or it doesn't — a binary event with a discontinuous derivative. Standard backpropagation, which underpins virtually all modern deep learning, requires smooth, differentiable activation functions to propagate error gradients through a network. SNNs violate this requirement by design.
+            </p>
+
+            <p>
+                Several approaches have been developed to work around this. <strong>ANN-to-SNN conversion</strong> trains a conventional network and then maps it onto a spiking architecture using rate coding — the most common approach but with significant accuracy loss and latency overhead. <strong>Surrogate gradient methods</strong> are more promising: they use a smooth approximation of the spiking threshold function during the backward pass while preserving the true spiking dynamics during the forward pass. This allows backprop-like training while retaining the spike-based representation. Recent work using this approach has closed the accuracy gap significantly on image classification benchmarks.
+            </p>
+
+            <div class="callout" data-label="Research Frontier">
+                Surrogate gradient training for SNNs is an active research area, and the gap with standard ANNs is closing — but it has not closed. On ImageNet, the best SNN results as of 2025 trail the best conventional networks by a few percentage points. That gap sounds small until you consider that it represents years of engineering effort and that the conventional networks keep improving too. The algorithmic maturity of SNNs is roughly where deep learning was in 2010.
+            </div>
+
+            <p>
+                There is also a subtler problem: most modern deep learning tasks have been designed around the ANN paradigm. The benchmarks, datasets, and problem framings all assume continuous-valued, synchronous computation. SNNs may be dramatically better at tasks we have not learned to formalise yet — continuous sensory processing, online adaptation, multi-modal temporal integration — but we do not have clean benchmarks for those tasks. The field is, to some extent, solving the wrong problems because those are the problems with leaderboards.
+            </p>
+
+            <h2>THE BIG PICTURE</h2>
+
+            <p>
+                It is tempting to frame neuromorphic computing as merely an efficiency story — a way to run existing AI algorithms with less power. That framing misses what is actually interesting about it. Neuromorphic computing proposes a <strong>different model of computation</strong>, one with implications that go beyond energy budgets.
+            </p>
+
+            <p>
+                In a spiking system, <strong>time is part of the representation</strong>. Information is not encoded as static activations at a given moment — it is encoded in patterns of events over time. This makes SNNs naturally suited to temporal reasoning, prediction, and adaptation in ways that feedforward ANNs handle only awkwardly. A neuromorphic system perceiving the world does not take a snapshot and classify it; it tracks a stream and updates its internal state continuously, the way you do.
+            </p>
+
+            <p>
+                <strong>Continuous learning</strong> — the ability to learn new things without forgetting old ones — is another area where neuromorphic architectures have a structural advantage. Standard deep learning systems suffer catastrophic forgetting: training on new data overwrites old knowledge. The brain does not have this problem to the same degree, and the reason is partly architectural — local learning rules, modular organisation, and sparse representations make interference less likely. Loihi's on-chip plasticity is a small step in this direction; it is a direction that matters.
+            </p>
+
+            <blockquote>
+                "The brain is not a static lookup table. It is a dynamical system that continuously rewrites itself in response to experience. Any hardware architecture that cannot do the same — that treats inference as separate from learning — is, at a fundamental level, not solving the right problem."
+                <cite>— Christof Koch, Chief Scientist, MindScope Program, Allen Institute for Brain Science</cite>
+            </blockquote>
+
+            <p>
+                Then there is the question of what it means for AGI. I am cautious about strong claims here, but the general argument is coherent: if biological intelligence is evidence that a certain type of architecture is sufficient for general intelligence, and if the efficiency gap between biological and artificial systems is architectural rather than fundamental, then closing that architectural gap is at least worth taking seriously as a path toward more capable and more efficient AI. Neuromorphic hardware alone will not produce AGI. But the algorithmic ideas it forces — temporal representation, event-driven inference, continuous learning, local plasticity — may be prerequisites that the current paradigm simply sidesteps.
+            </p>
+
+            <h2>HONEST STATE OF THE FIELD</h2>
+
+            <p>
+                Neuromorphic computing is approximately fifteen years old as a serious engineering discipline, and it remains almost entirely a research endeavour. There is no production neuromorphic chip you can buy in volume. There is no killer application where neuromorphic hardware is so dramatically better than GPUs that the industry has been forced to adopt it. Intel's neuromorphic research group is real and productive, but Loihi is a research chip — it ships to academic partners, not data centres.
+            </p>
+
+            <p>
+                The honest diagnosis: <strong>the field has impressive point results and no scalable deployment story</strong>. Loihi is fantastically efficient on event-camera gesture recognition. It is not efficient enough on transformer inference to compete with an H100. NorthPole is a landmark efficiency result for image classification, but image classification is a solved problem — what matters now is language and reasoning, which NorthPole has not demonstrated. The gap between what neuromorphic hardware is good at and what the market demands is substantial.
+            </p>
+
+            <p>
+                There are two ways to read this. The pessimistic reading: neuromorphic computing has been fifteen years away from relevance for fifteen years, and the GPU ecosystem's momentum — its software libraries, trained engineers, and capital base — is now so large that a fundamentally different architecture faces near-insurmountable adoption barriers. The optimistic reading: the efficiency pressures are building. The cost of training and inference is growing faster than GPU efficiency improvements; the energy requirements of frontier AI are becoming a genuine geopolitical and infrastructure problem; and the algorithmic gap in SNNs is closing. A sufficiently dramatic demonstration on a sufficiently important task could shift the conversation quickly.
+            </p>
+
+            <p>
+                My own read is that the optimists are probably right on the timescale of a decade, and the pessimists are probably right on the timescale of two or three years. The field is genuinely promising. The timelines are genuinely uncertain.
+            </p>
+
+            <hr>
+
+            <p>
+                <strong>A personal note:</strong> I came to neuromorphic computing from computational neuroscience — from reading about how the brain actually works, not from hardware engineering. What strikes me most about this field is how much it forces you to question assumptions you did not know you were making. Why should learning and inference be separate phases? Why should information be continuous-valued rather than event-driven? Why should memory be a separate system from computation? These are not arbitrary constraints; they are artefacts of von Neumann's 1945 solution to a 1945 problem. Neuromorphic research does not just propose better chips — it proposes better questions. And in engineering, the quality of your questions usually determines the quality of your eventual answers. I do not know when neuromorphic computing will matter commercially. I am fairly confident that the ideas it is developing will matter, in some form, for as long as we are building machines that need to think.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">neuromorphic</span>
+                <span class="tag">computer architecture</span>
+                <span class="tag">spiking neural networks</span>
+                <span class="tag">Loihi</span>
+                <span class="tag">NorthPole</span>
+                <span class="tag">AI hardware</span>
+                <span class="tag">energy efficiency</span>
+                <span class="tag">brain-inspired computing</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="emergent-abilities-llms.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">Emergent Abilities in Large Language Models</span>
+                </a>
+                <a href="ai-reasoning-wrong-reasons.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">AI Gets the Right Answer for the Wrong Reasons</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Brain as a Computer — And Why the Analogy Is Mostly Wrong — Umakant Kunal</title>
+    <meta name="description" content="The digital computer metaphor for the brain is the most productive and the most misleading we have ever had. Here is what it gets right, what it misses, and why it matters for AI.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-science { color: #34d399; border-color: #064e3b; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                brain-as-computer
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-22</span>
+                <span class="post-category cat-science">Neuroscience × Computing</span>
+                <span class="post-read-time">10 min read</span>
+            </div>
+
+            <h1 class="post-title">The Brain as a Computer —<br>And Why the Analogy Is Mostly Wrong</h1>
+
+            <p class="post-subtitle">
+                We have always understood the mind through the lens of our best technology. The clock. The telegraph. The telephone exchange. Today: the digital computer. The metaphor is remarkably fruitful. It is also, in almost every important respect, <em>wrong</em> — and understanding exactly how it fails is the most interesting question in cognitive science.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In the 17th century, René Descartes watched the hydraulically animated statues in the royal gardens of Saint-Germain-en-Laye — figures that moved, played music, and responded to visitors stepping on hidden plates — and concluded that the nervous system must work the same way: fluids flowing through hollow nerves, animating the body like a living automaton. The brain was a pump. The model was completely wrong in its mechanics. It was also the most sophisticated available theory of its time, and it drove real research for a century.
+            </p>
+
+            <p>
+                The 19th century brought the telegraph, and suddenly the nervous system became a network of electrical wires carrying signals between a central station and the periphery. Nerve fibres were wires. The brain was the exchange. The 20th century gave us the telephone switchboard: the cortex routes calls, patches connections, manages traffic. Each metaphor was wrong. Each also illuminated something genuine — the directional propagation of signals, the role of the brain as coordinator, the distinction between channel and message.
+            </p>
+
+            <p>
+                Today the metaphor is the digital computer, and it is simultaneously <strong>the most productive and by far the most misleading</strong> analogy we have ever used. It has generated more neuroscience than all previous metaphors combined. It has also, I will argue, systematically misdirected attention away from the most interesting things the brain actually does.
+            </p>
+
+            <h2>WHAT THE ANALOGY GETS RIGHT</h2>
+
+            <p>
+                Let us be fair to the metaphor before dismantling it, because the dismissal is easy and the substance is real. Neurons <em>do</em> process information. Action potentials carry signals. Synapses modulate transmission. The nervous system does have inputs — sensory organs converting physical stimuli into neural signals — and outputs — motor commands that produce behaviour. These are not metaphors. They are descriptions of actual function.
+            </p>
+
+            <p>
+                Memory does involve physical changes in neural connectivity. Long-term potentiation (LTP) — the strengthening of synaptic connections through repeated activation — is one of the best-documented mechanisms in neuroscience, and it genuinely resembles the writing of data to a substrate. The brain does perform something computationally recognisable: it takes input, transforms it through a series of processing stages, and produces output. Computational models of the visual system, auditory cortex, and motor planning have been genuinely predictive and scientifically valuable.
+            </p>
+
+            <p>
+                The analogy is not <em>wrong</em>. It is <em>incomplete</em> — in ways that matter enormously.
+            </p>
+
+            <h2>WHAT IT MISSES</h2>
+
+            <p>
+                There are at least five fundamental properties of biological neural computation that the digital computer metaphor obscures or actively inverts.
+            </p>
+
+            <p>
+                <strong>First: continuous-time dynamics, not clock cycles.</strong> A digital computer operates on a clock. Every operation is synchronised to a global tick, typically measured in gigahertz. The brain has no such clock. Neural activity is asynchronous, continuous, and massively parallel in ways that have no equivalent in von Neumann architecture. Oscillations exist — gamma, theta, alpha bands — but they are not clocks in any architectural sense; they are more like tides that modulate processing than timers that synchronise it.
+            </p>
+
+            <p>
+                <strong>Second: hardware and software are the same thing.</strong> In a computer, the distinction between hardware (the physical processor) and software (the program running on it) is absolute by design. In the brain, learning physically changes the architecture. Synaptic weights, dendritic morphology, axonal projections, even the number and type of receptors expressed at a synapse — all of these change as a function of experience. The program rewrites the processor. There is no separation. This makes the brain's computational substrate fundamentally unlike anything in classical computing.
+            </p>
+
+            <p>
+                <strong>Third: embodiment is not peripheral.</strong> A computer could, in principle, run the same software on any hardware, in a temperature-controlled server room, disconnected from any sensorimotor interface. The brain evolved to control a specific body moving through a physical environment. Its architecture is deeply shaped by that body — the proportion of somatosensory cortex devoted to the hands and lips, the specialised processing for vestibular information, the tight loop between motor commands and sensory predictions. You cannot subtract the body and still have the brain. The boundary between neural computation and bodily dynamics is not a clean interface.
+            </p>
+
+            <p>
+                <strong>Fourth: energy and metabolic constraints are intrinsic, not external.</strong> The brain consumes roughly 20% of the body's energy budget at rest while comprising only 2% of its mass. This is not a background fact — it is a design constraint that shapes everything. Neurons do not fire unnecessarily; sparse coding is not just efficient but metabolically obligatory. Astrocytes regulate local energy supply. The blood-brain barrier controls what molecules reach neural tissue. The entire computational architecture is co-designed with its metabolic substrate in ways that digital systems are not. Power consumption in a GPU is an engineering problem. In the brain, it is a computational principle.
+            </p>
+
+            <p>
+                <strong>Fifth: meaning and context shape processing at every level.</strong> In a digital computer, interpretation happens at the application layer. Raw bits are meaningless; the operating system and application impose structure. In the brain, context modulates processing all the way down. Attention changes the gain of sensory neurons. Expectation shapes what the visual cortex responds to before the stimulus arrives. Emotion modulates memory consolidation at the molecular level. The brain is not a context-free processor that receives data and applies fixed algorithms. Meaning is not a property of the top layer — it permeates the architecture.
+            </p>
+
+            <blockquote>
+                "The brain does not process information, retrieve knowledge, or store memories. The brain is not a computer. We are not born with blank-slate memories, and we do not develop by filling in that memory with data. We are organisms, not computers, and we must stop seeing ourselves through that lens if we are to understand who we really are."
+                <cite>— Robert Epstein, "The Empty Brain", Aeon, 2016</cite>
+            </blockquote>
+
+            <p>
+                Epstein overstates his case — the brain <em>does</em> do something we can reasonably call information processing — but the directional correction is right. The computer metaphor is not neutral. It shapes what questions get asked, what phenomena look like noise versus signal, and what kinds of models are built.
+            </p>
+
+            <h2>NEURONS ARE NOT TRANSISTORS</h2>
+
+            <p>
+                A transistor has two states: on and off. Its output is a function of its input at a single moment in time. This is the primitive of digital logic, and it is extraordinarily powerful as an engineering substrate. But a neuron is not a transistor.
+            </p>
+
+            <p>
+                A neuron's state is described by a system of differential equations. The Hodgkin-Huxley model — which earned its authors the 1963 Nobel Prize — describes membrane voltage as a function of time using four coupled differential equations with conductance variables for sodium and potassium channels. The simplified integrate-and-fire model captures the key behaviour: a neuron integrates incoming signals continuously over time, and fires an action potential when accumulated charge crosses a threshold. Timing matters. The interval between spikes matters. The pattern of activity over tens of milliseconds matters. None of this maps onto binary logic.
+            </p>
+
+            <p>
+                But it is the dendrites that make the transistor analogy most embarrassingly inadequate. For most of the 20th century, dendrites were thought to be passive cables — structures that simply conveyed signals toward the cell body. We now know they are active computational devices. Dendritic branches contain their own voltage-gated channels. They can generate local spikes. They perform nonlinear operations — coincidence detection, direction selectivity, pattern completion — before any signal reaches the soma.
+            </p>
+
+            <div class="callout" data-label="research highlight">
+                <strong>Poirazi et al. (2003)</strong> showed computationally and experimentally that a single pyramidal neuron with active dendrites has the computational capacity of a two-layer neural network with roughly five hidden units per dendritic branch. A 2021 paper by Gidon et al. demonstrated that human cortical neurons generate a novel class of action potential — a calcium-mediated dendritic spike — that enables single neurons to solve XOR, a problem that requires at least two layers in a classical artificial neural network. <strong>The neuron is not a logic gate. It is closer to a small neural network in its own right.</strong>
+            </div>
+
+            <p>
+                This has profound implications. When we say the brain has roughly 86 billion neurons, we are dramatically underestimating its computational complexity if we think of each neuron as a binary unit. The real primitive may be the dendritic compartment, of which there are orders of magnitude more. The brain's computational depth per layer is not what we assumed.
+            </p>
+
+            <blockquote>
+                "The neuron is not the atom of neural computation. It is more like a molecule — itself composed of interacting parts, each with its own dynamics, each capable of local computation that the cell body never directly sees."
+                <cite>— Patricia Churchland, Neurophilosophy: Toward a Unified Science of the Mind-Brain</cite>
+            </blockquote>
+
+            <h2>WHAT CONNECTOMES ACTUALLY LOOK LIKE</h2>
+
+            <p>
+                If the computer metaphor is right, then having the complete wiring diagram of a nervous system should tell us almost everything about what it computes — just as having a circuit diagram tells you what an electronic device does. We now have several complete or near-complete connectomes. What they reveal is humbling.
+            </p>
+
+            <p>
+                <em>C. elegans</em>, the nematode worm, has exactly 302 neurons and 7,000 synapses. Its connectome was completely mapped by White, Southgate, Thomson, and Brenner in 1986 — a heroic multi-year effort that earned Brenner the Nobel Prize. It remains the only fully mapped connectome of a complete nervous system. And here is the uncomfortable truth: <strong>we still cannot fully predict the animal's behaviour from the wiring diagram alone.</strong> We can identify circuits involved in chemotaxis, egg-laying, and locomotion. We cannot derive the full behavioural repertoire from the graph. The map is not the territory.
+            </p>
+
+            <p>
+                The <em>Drosophila</em> connectome — roughly 100,000 neurons in the fly's central brain — was published in 2023 by the FlyEM team at Janelia Research Campus. It took years of electron microscopy and reconstruction, producing a dataset of unprecedented scale. The mouse connectome is in progress, a project that will produce petabytes of imaging data for a nervous system with 70 million neurons. The Human Connectome Project has mapped the large-scale white matter tracts of the human brain using diffusion MRI — a connectivity map at a resolution orders of magnitude coarser than synaptic level.
+            </p>
+
+            <p>
+                What we are learning is that having the wiring diagram is necessary but far from sufficient. Synaptic weights matter — two neurons can be connected, but whether that connection excites or inhibits, and how strongly, is not visible in the structural connectome. Neuromodulatory systems — dopamine, serotonin, acetylcholine — change the effective connectivity of the entire network without altering its structure. Temporal dynamics matter in ways the static graph cannot capture. The connectome is a constraint on computation, not a description of it.
+            </p>
+
+            <h2>THE MEMORY PROBLEM</h2>
+
+            <p>
+                Computer memory is one of the cleanest features of digital architecture. Data is stored at an address. You write to that address; you read from it. The data you retrieve is identical to what you stored, degradation aside. Storage is separate from processing — memory and CPU are distinct components. This is the Von Neumann architecture, and it is extraordinarily useful for engineering.
+            </p>
+
+            <p>
+                Brain memory has almost none of these properties. It is <strong>distributed</strong> — no single location stores a given memory; it is encoded across patterns of synaptic weights spread throughout associative cortex. It is <strong>associative</strong> — memories are retrieved by pattern completion, not address lookup. Give the system a fragment of a pattern and it reconstructs the whole. It is <strong>reconstructive rather than reproductive</strong> — when you remember an event, you are not playing back a recording. You are reconstructing a plausible version of what happened, heavily influenced by your current knowledge, beliefs, and emotional state.
+            </p>
+
+            <p>
+                <strong>Remembering changes the memory.</strong> Reconsolidation — the process by which a retrieved memory becomes temporarily labile and must be re-encoded — means that every act of remembering is also an act of editing. Eyewitness testimony is unreliable not because humans are dishonest but because retrieval is constructive. The memory of a traumatic event can be changed by subsequent experience, suggestion, or even the act of recalling it in a new context.
+            </p>
+
+            <blockquote>
+                "Memory is not a filing cabinet. It is a reconstruction that takes place in the present, shaped by everything that has happened since the original experience. Every act of remembering is also, in some sense, an act of imagination."
+                <cite>— Douglas Hofstadter, I Am a Strange Loop</cite>
+            </blockquote>
+
+            <p>
+                <strong>Forgetting is not data loss.</strong> From an engineering perspective, forgetting looks like a bug — the system is losing information it once had. But forgetting is adaptive. The ability to generalise across experiences rather than retaining every specific instance requires the discarding of idiosyncratic details. Patients with certain memory disorders who cannot forget — who retain perfect recall of every detail of every day — are often profoundly disabled in their ability to function normally. The brain forgets strategically, and that strategy is part of its computational design.
+            </p>
+
+            <p>
+                Hebbian learning — "neurons that fire together wire together" — is the brain's local learning rule. Synaptic weights change as a function of correlated activity. This is unsupervised, local, and continuous. Backpropagation — the algorithm that trains deep neural networks — requires a global error signal to be propagated backwards through the network, updating weights based on their contribution to the final output. The brain almost certainly does not do this. There is no known biological mechanism for transmitting precise gradient information backwards through multiple layers of synapses. How the brain actually achieves credit assignment — how it figures out which of its billions of synapses contributed to an error — remains one of the deepest open questions in theoretical neuroscience.
+            </p>
+
+            <div class="callout" data-label="open question">
+                The <strong>credit assignment problem</strong> is the gap between biological learning and the backpropagation algorithm that powers modern AI. Several candidate mechanisms have been proposed — predictive coding, contrastive Hebbian learning, target propagation, dendritic error signals — but none has been fully validated experimentally. The biological learning algorithm, if there is a single one, remains unknown. This is important: the spectacular success of deep learning with backpropagation does not tell us how the brain learns. It tells us what is possible with a different algorithm.
+            </div>
+
+            <h2>THE EMBODIMENT ARGUMENT</h2>
+
+            <p>
+                Francisco Varela and Humberto Maturana, working in Santiago in the 1970s and 1980s, proposed something that was radical at the time and remains underappreciated now: cognition is not the processing of information inside a skull. It is a dynamic loop between brain, body, and environment. They called this the <em>enactivist</em> view — the idea that mind is enacted through action, not computed and then expressed through action as an afterthought.
+            </p>
+
+            <p>
+                The implications are structural. If cognition is genuinely loop-based rather than input-output based, then you cannot understand the brain by studying it in isolation from the body that moves it and the world it moves through. The nervous system did not evolve to perform abstract computation. It evolved to enable adaptive behaviour in a physical environment. Its architecture reflects that history at every level.
+            </p>
+
+            <p>
+                Consider the octopus. Two-thirds of its neurons are not in its brain — they are distributed throughout its eight arms, each of which can act semi-autonomously. When an octopus reaches into a crevice, the arm explores and reacts based on local sensory information without waiting for instructions from the central brain. The arm is doing computation. The distinction between central processor and peripheral actuator, so clean in digital architecture, does not map onto cephalopod neurology. The octopus is distributed computation embodied in a soft-bodied predator, and it is extraordinarily effective.
+            </p>
+
+            <p>
+                <strong>Proprioception</strong> — the sense of the body's own position and movement — is not a luxury feature. It is deeply integrated into motor control at every level, from spinal cord reflexes to cerebellar predictive models to cortical motor planning. The brain does not send commands to the body and wait for outcomes. It continuously predicts the sensory consequences of its own motor commands, compares predictions to actual input, and updates its models. The body is not a peripheral device attached to the brain. It is half the computation.
+            </p>
+
+            <p>
+                Robotics has learned this the hard way. Decades of top-down, computer-brain-style robotics — build a complete internal model of the world, plan a trajectory, execute it — produced robots that were slow, brittle, and comically bad at tasks a toddler handles effortlessly. The field shifted when researchers began treating the body's physical properties as computational resources: designing compliance into limbs, using sensory feedback rather than precise position control, letting the body's dynamics do work that the controller would otherwise have to compute explicitly. This is embodied robotics, and it works much better — but only when you stop treating the body as peripheral.
+            </p>
+
+            <h2>WHAT THIS MEANS FOR AI</h2>
+
+            <p>
+                Deep learning is brain-inspired but not brain-like. This is not a criticism — it is a description of where the technology actually is. The perceptron was inspired by the neuron. Convolutional networks were inspired by Hubel and Wiesel's work on the visual cortex. Attention mechanisms have a loose relationship to biological attention. But modern neural networks are trained with backpropagation on static datasets in ways that have no known biological equivalent, with architectures optimised for GPU parallelism rather than metabolic efficiency, on tasks defined by human benchmarks rather than survival in a physical environment.
+            </p>
+
+            <p>
+                This matters for where the field is going. Geoffrey Hinton and Yann LeCun — two of the architects of the deep learning revolution — have diverged significantly on what is missing. Hinton has become increasingly interested in whether backpropagation is the right learning algorithm, exploring alternatives like the forward-forward algorithm and expressing concern that current architectures may be fundamentally limited by their departure from biological principles. LeCun has argued that what is missing is not biological fidelity but a richer world model — a self-supervised system that learns a deep model of how the world works from observation, more like how an infant learns than how a language model is trained.
+            </p>
+
+            <p>
+                Both positions share an acknowledgment that something important is absent from current systems. GPT-4 passes bar exams. It cannot learn a new task from a handful of examples without forgetting everything it knew before. It has no persistent memory of interactions. It does not model its own uncertainty in a way that correlates reliably with actual error rates. It cannot act in the world and update its representations from the consequences of those actions. These are not minor engineering gaps. They are fundamental architectural differences from biological intelligence.
+            </p>
+
+            <p>
+                Embodied AI, continuous learning, and world models are the research directions that take the brain's architecture more seriously — not by copying biology, but by asking what problems biological solutions evolved to solve and whether current architectures actually solve them. The gap between narrow AI and general intelligence is not, I suspect, primarily a matter of scale. It is a matter of architecture, and the architecture of biological intelligence is still not well understood.
+            </p>
+
+            <blockquote>
+                "The entire history of science is a progression of analogies that illuminate one part of nature by mapping it onto another. The danger is not the analogy — it is forgetting that it is one."
+                <cite>— Santiago Ramón y Cajal, Recollections of My Life (translated edition)</cite>
+            </blockquote>
+
+            <hr>
+
+            <p>
+                There is a particular kind of vertigo that comes with studying the brain. The instrument of inquiry is the object of inquiry. Every thought you have about neural computation is itself a neural computation. Every model you build of memory is itself a product of the memory system you are modelling. The brain is doing the studying.
+            </p>
+
+            <p>
+                I find this not paralysing but clarifying. It demands a kind of epistemic humility that I think is genuinely rare in technically oriented fields. We are not outside the system, looking in at a mechanism we fully understand and simply need to describe with sufficient precision. We are inside it, using its own tools to build partial, provisional, perpetually revisable models of itself.
+            </p>
+
+            <p>
+                The computer metaphor has been invaluable. It gave us a vocabulary, a set of questions, and a research programme that produced enormous progress. It is also, in ways I have tried to spell out here, systematically misleading — about the nature of neurons, the structure of memory, the role of the body, and the relationship between brain and world. Holding both of these things simultaneously — gratitude for what the metaphor illuminated and scepticism about what it obscures — seems to me the correct stance.
+            </p>
+
+            <p>
+                We will need better metaphors. Perhaps we will need to stop looking for metaphors from existing technologies and start taking the brain on its own terms — as something genuinely novel, shaped by four billion years of evolution rather than fifty years of computer science. That is harder. It is also the only path to actually understanding it.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">neuroscience</span>
+                <span class="tag">computation</span>
+                <span class="tag">connectome</span>
+                <span class="tag">embodiment</span>
+                <span class="tag">deep learning</span>
+                <span class="tag">memory</span>
+                <span class="tag">AI</span>
+                <span class="tag">dendrites</span>
+                <span class="tag">enactivism</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="dna-computing.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">DNA Computing and the Molecules That Think</span>
+                </a>
+                <a href="alphafold.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">AlphaFold and the Protein Folding Revolution</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

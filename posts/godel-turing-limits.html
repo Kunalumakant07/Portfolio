@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gödel, Turing, and the Limits of Mathematics — Umakant Kunal</title>
+    <meta name="description" content="In 1931, Gödel proved mathematics contains truths that can never be proved. In 1936, Turing proved computations that no algorithm can perform. These are the same theorem, seen from two angles.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-space     { color: var(--blue);    border-color: #1e4a6e; }
+        .cat-quantum   { color: var(--purple);  border-color: #3d2d6e; }
+        .cat-theory    { color: var(--blue);    border-color: #1e3a5f; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                godel-turing-limits
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-08</span>
+                <span class="post-category cat-theory">Theory of Computation</span>
+                <span class="post-category cat-philosophy">Philosophy</span>
+                <span class="post-read-time">12 min read</span>
+            </div>
+
+            <h1 class="post-title">Gödel, Turing, and the<br>Limits of Mathematics</h1>
+
+            <p class="post-subtitle">
+                In 1931, a 25-year-old mathematician proved that mathematics contains true statements that can never be proved. Five years later, a different genius proved that there are computations no algorithm can perform. These are not separate results. They are <em>the same theorem</em>, seen from two angles.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In 1931, a 25-year-old mathematician named Kurt Gödel proved that mathematics — the most certain form of human knowledge, the discipline that deals in proof and not mere evidence — contains true statements that can never be proved. Not difficult to prove. Not unproved yet. <strong>Unprovable in principle, forever, within any fixed formal system</strong>.
+            </p>
+
+            <p>
+                Five years later, Alan Turing proved that there are computations that no algorithm can perform. Not slow to perform. Not unimplemented yet. <strong>Impossible by logical necessity</strong>, for any machine following any set of rules.
+            </p>
+
+            <p>
+                These are not two separate results that happen to share a theme. They are the same theorem, approached from different directions — one from the philosophy of mathematics, one from the theory of computation — and they meet at the same boundary. Understanding that boundary is one of the most clarifying things you can do as someone who thinks seriously about knowledge, truth, and the limits of formal reasoning.
+            </p>
+
+            <h2>THE HILBERT PROGRAMME</h2>
+
+            <p>
+                To understand what Gödel destroyed, you first need to understand what David Hilbert was trying to build.
+            </p>
+
+            <p>
+                In 1900, Hilbert stood before the International Congress of Mathematicians in Paris and presented twenty-three unsolved problems that would define mathematics for the coming century. But behind those specific problems lay a deeper, more sweeping vision. Hilbert believed that mathematics could — and should — be placed on a completely rigorous foundation. He wanted to formalise all of mathematics: to identify a finite set of axioms and rules of inference so precise and so complete that every true mathematical statement could, in principle, be derived from them mechanically, step by step, without any appeal to intuition.
+            </p>
+
+            <p>
+                The programme had three requirements. First, <strong>consistency</strong>: the axioms must not contradict each other. You cannot derive both a statement and its negation. Second, <strong>completeness</strong>: for every statement expressible in the formal language, either it or its negation must be provable. No statement left stranded — no mathematical question without a reachable answer. Third, <strong>decidability</strong> — the <em>Entscheidungsproblem</em>: there must exist a mechanical procedure, an algorithm, that takes any mathematical statement as input and determines in finite time whether it is true or false.
+            </p>
+
+            <blockquote>
+                "We must know. We will know."
+                <cite>— David Hilbert, closing words of his 1930 address to the Society of German Scientists and Physicians, Königsberg — the day before Gödel announced his incompleteness theorem at a conference in the same city</cite>
+            </blockquote>
+
+            <p>
+                The ambition was breathtaking. Mathematical truth, made mechanical. Every theorem in principle derivable by a sufficiently patient clerk following rules, with no insight required. It was the most ambitious intellectual project in the history of formal thought. Hilbert spent decades working toward it, and he attracted some of the finest mathematical minds of the early twentieth century.
+            </p>
+
+            <p>
+                Gödel destroyed it in 22 pages.
+            </p>
+
+            <h2>GÖDEL'S FIRST INCOMPLETENESS THEOREM</h2>
+
+            <p>
+                The theorem, stated precisely: <strong>any consistent formal system F that is powerful enough to express basic arithmetic contains true statements that cannot be proved within F.</strong>
+            </p>
+
+            <p>
+                This is remarkable on its face. But the proof technique is even more remarkable. To understand it, you need to follow three moves.
+            </p>
+
+            <h3>Move 1: Gödel Numbering</h3>
+
+            <p>
+                Gödel's first insight was that the symbols, formulas, and proofs of a formal system can themselves be encoded as numbers. Every symbol in the formal language gets a number. Every formula — a finite string of symbols — gets a number computed from the numbers of its component symbols (Gödel used prime factorisation: if the symbols are s₁, s₂, …, sₙ, the formula gets the number 2^g(s₁) × 3^g(s₂) × 5^g(s₃) × … × pₙ^g(sₙ), where g maps each symbol to its Gödel number). Every proof — a finite sequence of formulas — gets a number in the same way.
+            </p>
+
+            <p>
+                The result: every statement in the formal system corresponds to a unique natural number, and every natural number can be decoded back to the statement it represents (or decoded as "not a valid formula" if it doesn't correspond to one). The formal system and the natural numbers are now talking about the same objects. Statements about formulas are, in a precise sense, statements about numbers. And if the formal system can talk about numbers — which it can, since we assumed it can express arithmetic — it can talk about its own statements.
+            </p>
+
+            <h3>Move 2: The Liar's Paradox, Formalised</h3>
+
+            <p>
+                The ancient liar's paradox: "This statement is false." If it is true, then it is false. If it is false, then it is true. The paradox is generated by self-reference: a statement referring to its own truth value. Natural language tolerates this sloppily and generates contradictions. Gödel's insight was to construct a version that does not generate a contradiction — because it talks about <em>provability</em>, not truth.
+            </p>
+
+            <p>
+                Consider the statement: <em>"This statement is unprovable."</em> Now ask: is it true? If it is provable, then it is false (it says it cannot be proved, but it can). A consistent system cannot prove false things, so it cannot prove this statement — which is exactly what the statement claims. So if the system is consistent, the statement is <strong>true</strong>. But we just established it cannot be proved within the system.
+            </p>
+
+            <p>
+                There is your unprovable truth.
+            </p>
+
+            <h3>Move 3: The Formal Construction</h3>
+
+            <p>
+                Gödel made this rigorous. Using Gödel numbering, he constructed an arithmetic predicate Provable(n) that is true when n is the Gödel number of a provable statement. Then — the key move — he used a diagonal argument to construct a statement G whose Gödel number is n* such that G says, in the language of arithmetic: "The statement with Gödel number n* is not provable." That is, <em>G says of itself that it cannot be proved.</em>
+            </p>
+
+            <p>
+                If the system is consistent and G is provable, then G is false — the system proves a false statement, contradicting consistency. If G is not provable, then G is true (it correctly describes its own unprovability), but the system cannot reach it. Either way, either the system is inconsistent, or it is incomplete. Gödel assumed consistency and concluded incompleteness.
+            </p>
+
+            <div class="callout" data-label="// the key insight">
+                Gödel didn't find a complicated mathematical statement that happened to be hard to prove. He constructed a statement that is <em>about the proof system itself</em>, using the proof system's own language. The self-reference is not a bug or a trick — it is the mechanism. By making the formal system capable of talking about its own provability (via number-coding), Gödel made it capable of generating statements it cannot reach. Every sufficiently expressive formal system carries this capacity. You cannot escape it by choosing different axioms; you can only move the boundary.
+            </div>
+
+            <h2>GÖDEL'S SECOND INCOMPLETENESS THEOREM</h2>
+
+            <p>
+                The first theorem is striking. The second is devastating.
+            </p>
+
+            <p>
+                <strong>A consistent formal system F cannot prove its own consistency.</strong>
+            </p>
+
+            <p>
+                The proof is elegant once you have the first theorem. Suppose F could prove "F is consistent." Consider what happens when you combine that with the proof of G (the statement "G is unprovable if F is consistent"). If F is consistent and F can prove it is consistent, then F can prove G — but G says it is unprovable. Contradiction. Therefore F cannot prove its own consistency without becoming inconsistent.
+            </p>
+
+            <p>
+                The philosophical consequence is immediate and unavoidable. Hilbert wanted mathematics to prove that mathematics is consistent — to give an absolute guarantee, from within the formal system, that no contradiction lurks somewhere in the axioms. Gödel proved this is impossible. You cannot audit the foundations using the foundations. You cannot use arithmetic to certify that arithmetic does not contain a hidden contradiction. The ground cannot verify itself.
+            </p>
+
+            <blockquote>
+                "I don't believe in natural science. I only believe in pure mathematics... The world exists in a way that no natural science can explain, because natural science itself is part of the world it tries to explain."
+                <cite>— Kurt Gödel, in conversation with Hao Wang, as recorded in <em>A Logical Journey</em></cite>
+            </blockquote>
+
+            <p>
+                This does not mean mathematics is broken. It means that mathematical certainty is always relative to a set of axioms whose own consistency must be assumed, not proved. You can always extend the system — add an axiom that asserts the consistency of the previous system. But by the second incompleteness theorem, the extended system cannot prove <em>its</em> consistency either. The regress is irreducible. There is no bedrock, only deeper and deeper assumptions.
+            </p>
+
+            <p>
+                Hilbert's programme — the dream of mathematics grounded all the way down in certainty — died in 1931. But the deeper question, the computational question, was still open. Is mathematical truth at least <em>decidable</em>? Can an algorithm determine, for any statement, whether it is true or false?
+            </p>
+
+            <h2>TURING'S HALTING PROBLEM</h2>
+
+            <p>
+                In 1936 — before computers existed in any physical form — Alan Turing invented the theoretical model of computation that now bears his name, and with it proved that the Entscheidungsproblem has no solution. There is no algorithm that can decide, in general, whether a mathematical statement is true. But Turing's result came in a form that has proved even more practically important: the halting problem.
+            </p>
+
+            <p>
+                The question: <strong>is there an algorithm that, given any program P and any input I, determines in finite time whether P will eventually halt when run on I, or whether it will loop forever?</strong>
+            </p>
+
+            <p>
+                Turing's proof that no such algorithm exists is one of the most beautiful arguments in all of mathematics. It proceeds by contradiction.
+            </p>
+
+            <h3>Step 1: Assume the Algorithm Exists</h3>
+
+            <p>
+                Suppose there is a program H — the hypothetical halting oracle — that takes as input a program P and an input I, and always returns either "halts" or "loops." H is assumed to always terminate and always be correct. We don't assume we know how H works; we only assume it exists.
+            </p>
+
+            <h3>Step 2: Construct the Adversarial Program</h3>
+
+            <p>
+                Now construct a new program, call it D (for "diagonal"). D takes as input any program P and runs H on (P, P) — that is, it asks H what happens when P is run on <em>itself as its own input</em>. Then D behaves as follows:
+            </p>
+
+            <ul>
+                <li>If H says "P halts when run on P," then D loops forever.</li>
+                <li>If H says "P loops when run on P," then D halts immediately.</li>
+            </ul>
+
+            <p>
+                D is a well-defined program. It uses H as a subroutine and does the opposite of what H predicts.
+            </p>
+
+            <h3>Step 3: Feed D to Itself</h3>
+
+            <p>
+                Ask: what does H say when we run D on the input D? That is, what happens when D is run on itself?
+            </p>
+
+            <ul>
+                <li><strong>Case 1:</strong> H says "D halts when run on D." By D's definition, D then loops forever when run on D. But H said it halts. Contradiction.</li>
+                <li><strong>Case 2:</strong> H says "D loops when run on D." By D's definition, D then halts when run on D. But H said it loops. Contradiction.</li>
+            </ul>
+
+            <p>
+                Both cases produce a contradiction. The assumption that H exists must be false. <strong>No algorithm can solve the halting problem.</strong>
+            </p>
+
+            <blockquote>
+                "We may compare a man in the process of computing a real number to a machine which is only capable of a finite number of conditions... The behaviour of the computer at any moment is determined by the symbols which he is observing, and his 'state of mind' at that moment."
+                <cite>— Alan Turing, <em>On Computable Numbers, with an Application to the Entscheidungsproblem</em>, 1936</cite>
+            </blockquote>
+
+            <p>
+                The diagonal structure — constructing an object that references itself and then asking what happens when it refers to itself — should feel familiar. It is the same move Gödel made. The Gödel statement G was constructed to refer to its own unprovability. The Turing program D was constructed to do the opposite of what the oracle predicts about it. Both proofs exploit self-reference to generate an unavoidable contradiction from the assumption that a certain all-powerful procedure exists.
+            </p>
+
+            <h2>THE CONNECTION</h2>
+
+            <p>
+                This is not a coincidence of technique. The two results are formally equivalent. The correspondence runs deep.
+            </p>
+
+            <p>
+                Given a formal system F and a statement S, we can encode the question "is S provable in F?" as a computation: enumerate all possible proofs in F (there is a systematic way to do this — list all finite strings of symbols in some canonical order and check each one), and halt if you find a proof of S. This program halts if and only if S is provable in F. Now suppose we had a halting oracle. We could decide provability. But by Gödel, there are statements whose provability is undecidable — and the halting oracle would therefore need to solve an undecidable problem. Contradiction.
+            </p>
+
+            <p>
+                The connection goes even further through the <strong>Church-Turing thesis</strong> — the conjecture, now almost universally accepted, that the intuitive notion of "computable by any mechanical process" is exactly captured by Turing machines. This means: the computations Turing machines cannot perform are not just the computations <em>we</em> cannot perform; they are computations no physical procedure following mechanical rules could perform. The boundary is not about hardware — it is about logic.
+            </p>
+
+            <p>
+                <strong>Rice's theorem</strong> extends the devastation: almost every non-trivial property of programs is undecidable. Does this program ever output 42? Does it compute the same function as that other program? Does it ever reach a particular line of code? Undecidable. Undecidable. Undecidable. The halting problem is not an isolated edge case — it is the tip of an iceberg of incomputable problems that pervades the entire space of questions about programs.
+            </p>
+
+            <div class="callout" data-label="// formal statement">
+                Rice's theorem (1953): for any non-trivial property P of the partial functions computed by programs — where "non-trivial" means some programs have it and some don't — the question "does program X compute a function with property P?" is undecidable. The proof reduces every such question to the halting problem. Program analysis is, in a formal and inescapable sense, the halting problem in disguise.
+            </div>
+
+            <p>
+                Gödel's unprovable statements correspond exactly to Turing's undecidable problems. A statement is unprovable in a sufficiently powerful formal system if and only if the computational problem of searching for its proof is unsolvable. Truth outruns provability in exactly the same way that halting outruns prediction.
+            </p>
+
+            <h2>WHAT THIS MEANS FOR MATHEMATICS</h2>
+
+            <p>
+                The standard misreading of Gödel is that he showed mathematics to be flawed, or that his theorem somehow undermines the reliability of mathematical results. This is wrong. What Gödel showed is that mathematics has an <strong>unreachable interior</strong> — a region of true statements that cannot be accessed from within any fixed formal system, no matter how cleverly designed.
+            </p>
+
+            <p>
+                The working mathematician is not paralysed by this. Almost all the mathematics anyone ever does — number theory, analysis, topology, algebra — is provable within standard axiom systems like ZFC (Zermelo-Fraenkel set theory with the axiom of choice). Gödel's unprovable statements, when first constructed, were self-referential and artificial — designed to demonstrate the theorem, not to arise naturally. But over the decades, genuinely natural mathematical statements have been found that are independent of ZFC: statements about combinatorics, set theory, and large cardinals that are neither provable nor disprovable within the standard framework.
+            </p>
+
+            <p>
+                The only escape is to extend the axioms. Add a new axiom — say, the consistency of ZFC, or the existence of large cardinals — and you can now prove statements that were previously unreachable. But any extension will have its own unprovable truths. The incompleteness is not a failure to find the right axioms; it is <strong>structural</strong>. Any sufficiently expressive formal system, no matter how extended, contains true statements it cannot reach. You can always move the horizon. You cannot reach it.
+            </p>
+
+            <h2>WHAT THIS MEANS FOR COMPUTATION</h2>
+
+            <p>
+                For computation, the implications are practical as well as philosophical. There are things computers cannot do — not because of engineering constraints, not because current hardware is insufficiently fast or large, but because of <strong>logical constraints that no amount of engineering can overcome</strong>.
+            </p>
+
+            <p>
+                The halting problem is the canonical example. No program can correctly determine for all programs and all inputs whether they halt. This is not a statement about any particular computer; it is a statement about all Turing-equivalent machines, including hypothetical future machines of arbitrary power.
+            </p>
+
+            <p>
+                The consequences pervade software engineering. <strong>Program verification</strong> — proving, in full generality, that a program meets its specification — is undecidable. You can verify specific programs, with specific properties, using specific techniques. But there is no general-purpose verifier that accepts a program and a specification and always correctly returns "correct" or "incorrect." The problem is equivalent to halting.
+            </p>
+
+            <p>
+                <strong>The limits of AI</strong> inherit the same constraints. An AI system, however powerful, is — at its computational core — a formal system operating on symbols according to rules. If it is powerful enough to reason about arithmetic, it is subject to Gödel's theorem. There are true things it cannot prove. There are questions it cannot answer. The consciousness post explores this in more depth, but the formal result is already clear: if a mind is a Turing machine (or equivalent), there are truths it cannot reach from its axioms. If it is not, we do not yet have a theory of what it is.
+            </p>
+
+            <h2>WHAT THIS MEANS FOR PHILOSOPHY</h2>
+
+            <p>
+                Gödel himself drew sweeping philosophical conclusions from his theorems, and his conclusions were not universally shared. He was a mathematical Platonist — he believed that mathematical objects exist independently of human minds, that mathematical truth is discovered rather than invented, and that the human intellect has access to mathematical truth through a form of intuition that transcends formal rules. His incompleteness theorems were, for him, evidence of this: if formal systems cannot capture all mathematical truth, then mathematical truth cannot be a purely formal matter, and some human cognitive faculty must be operating beyond the formal.
+            </p>
+
+            <p>
+                Roger Penrose extended this into a stronger argument in <em>The Emperor's New Mind</em> (1989) and <em>Shadows of the Mind</em> (1994). The argument, simplified: suppose the human mathematician operates like a consistent formal system F. Then by Gödel, there is a statement G_F that F cannot prove. But the human mathematician, understanding Gödel's proof, can <em>see</em> that G_F is true — can follow the argument that if F is consistent, G_F must be true. So the human mathematician knows something that F cannot prove. Therefore the human mathematician is not equivalent to any consistent formal system. Therefore human mathematical cognition is non-algorithmic. Therefore there is something in human consciousness that transcends computation.
+            </p>
+
+            <blockquote>
+                "Mathematical truth is not something that we ascertain merely by use of an algorithm. I believe that our awareness of mathematical truth depends upon processes that lie beyond all ordinary algorithmic procedures."
+                <cite>— Roger Penrose, <em>Shadows of the Mind</em>, 1994</cite>
+            </blockquote>
+
+            <p>
+                The counter-arguments are numerous and serious. The most pointed: when the human mathematician "sees" that G_F is true by following Gödel's argument, they are reasoning within a <em>stronger</em> formal system — one that includes the axiom "F is consistent." They are not transcending formality; they are operating under different and stronger assumptions. Gödel's theorem applies to every specific formal system, not to the totality of mathematical reasoning — and if the human mathematician keeps extending their axiom system indefinitely, they keep being subject to the theorem at each extension. There is no single formal system that captures all their possible reasoning, but that does not mean their reasoning is non-algorithmic; it may simply mean that it is not bounded to a single fixed system.
+            </p>
+
+            <p>
+                The deeper question that Gödel raises for philosophy is about <strong>mathematical Platonism</strong>. If there are mathematical truths that lie beyond any formal system — truths that exist but cannot be captured in any set of axioms — what is their ontological status? Are they part of a Platonic realm of mathematical objects that exists independently of human minds and human formal systems? Or is "truth beyond provability" simply a technical artifact of how we define truth in model-theoretic semantics, with no deeper metaphysical significance?
+            </p>
+
+            <p>
+                There is no consensus. The question of what it means that truth outruns provability — that mathematics contains an interior it cannot access from within — is genuinely open, and it is one of the deepest questions in the philosophy of mathematics.
+            </p>
+
+            <hr>
+
+            <p>
+                I keep returning to a particular image when I think about these theorems. Imagine standing at the edge of a territory so large you cannot see across it — a territory of true statements, mathematical facts, logical necessities. And then imagine that no matter where you stand, no matter how far you build your formal system outward, there is always more territory beyond where you can see. Not territory you haven't mapped yet. Territory that <em>cannot</em> be mapped from your position, by your tools, under your rules.
+            </p>
+
+            <p>
+                This is what Gödel and Turing found. The edge of what can be known — not in the empirical sense of facts about the world, but in the formal sense of truths about abstract structures — is not a boundary you can push through with more effort or more cleverness. It is structural. It is part of what it means to use a formal system at all.
+            </p>
+
+            <p>
+                I find this genuinely humbling, in the right way. Not demoralising — mathematics has not collapsed, computation has not failed, reasoning has not been shown to be useless. But the dream of completeness, the dream of a mechanical procedure that decides all truth, the dream of a system that verifies itself — those dreams are over. The limits are real. And there is something clarifying about knowing, precisely, where the edge is.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">Gödel</span>
+                <span class="tag">Turing</span>
+                <span class="tag">incompleteness</span>
+                <span class="tag">halting problem</span>
+                <span class="tag">formal systems</span>
+                <span class="tag">computability</span>
+                <span class="tag">Church-Turing</span>
+                <span class="tag">undecidability</span>
+                <span class="tag">philosophy of mathematics</span>
+                <span class="tag">Rice's theorem</span>
+                <span class="tag">Hilbert</span>
+                <span class="tag">Penrose</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="p-vs-np.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">P vs NP</span>
+                </a>
+                <a href="conways-game-of-life.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Conway's Game of Life</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

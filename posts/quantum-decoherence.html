@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Quantum Computers Are So Hard to Build — Umakant Kunal</title>
+    <meta name="description" content="Decoherence is why we can't just build a quantum computer. Understanding what makes qubits so fragile — and the heroic engineering trying to tame them.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-quantum   { color: #c084fc;        border-color: #4c1d95; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                quantum-decoherence
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-01-12</span>
+                <span class="post-category cat-quantum">Quantum Computing</span>
+                <span class="post-read-time">8 min read</span>
+            </div>
+
+            <h1 class="post-title">Why Quantum Computers Are<br>So Hard to Build —<br>The Decoherence Problem</h1>
+
+            <p class="post-subtitle">
+                A qubit can theoretically exist in superposition, encode exponential information, and be teleported across a lab. So why don't we have quantum computers solving everything? Because the universe doesn't cooperate — and the reason why is one of the most profound stories in modern physics.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In the previous post, we explored quantum entanglement — the strange correlations that persist across arbitrary distances and underlie quantum computation's theoretical power. The picture is seductive: qubits in superposition, entangled registers encoding exponentially many states simultaneously, quantum algorithms that cut through classically intractable problems like a blade through fog. Shor's algorithm factoring RSA keys. Grover's algorithm searching unsorted databases in square-root time. The theory is rock solid.
+            </p>
+
+            <p>
+                So why isn't there a quantum computer on your desk? Why, in 2026, after three decades of intensive research and billions of dollars in investment, are we still running 1000-qubit devices that struggle to outperform a laptop on most tasks? The answer is <strong>decoherence</strong> — and it is not a mere engineering inconvenience. It is the quantum world's fundamental resistance to being observed, controlled, and exploited.
+            </p>
+
+            <p>
+                Understanding decoherence means understanding something deep about the boundary between quantum and classical reality. It is also, I think, the most humbling problem in all of applied physics: we are trying to isolate a quantum system from the rest of the universe, one photon at a time, while the universe pushes back with everything it has.
+            </p>
+
+            <h2>WHAT DECOHERENCE IS</h2>
+
+            <p>
+                A qubit in superposition exists, mathematically, as a linear combination of its basis states: <em>|ψ⟩ = α|0⟩ + β|1⟩</em>, where α and β are complex amplitudes whose squared magnitudes sum to one. This is not a statement about our ignorance — the qubit is genuinely in both states simultaneously, with specific phase relationships between them. Those phase relationships are the computational resource. They are what makes quantum interference possible, and quantum interference is what makes quantum algorithms faster.
+            </p>
+
+            <p>
+                The problem is that this quantum state is extraordinarily fragile. The qubit does not exist in isolation — it exists in the real world, surrounded by an environment: thermal photons, vibrating lattice atoms, stray electromagnetic fields, cosmic rays, even the microwave control pulses used to manipulate it. Any interaction between the qubit and its environment causes the two to become <strong>entangled</strong> — not in the useful sense we want, but in the disastrous sense that information about the qubit's state leaks into the environment.
+            </p>
+
+            <p>
+                The formal framework for this is <em>open quantum systems</em>. Instead of treating the qubit as an isolated system with a pure quantum state, we model it as a small system coupled to a much larger <em>bath</em> — the environment. The qubit-bath system as a whole evolves unitarily and beautifully according to the Schrödinger equation. But when we trace out the bath (mathematically average over all the environmental degrees of freedom we can't track), what remains of the qubit's state is no longer a pure superposition. It becomes a <strong>mixed state</strong>: a classical probability distribution over the basis states, with the off-diagonal coherences — the interference terms — decayed to zero.
+            </p>
+
+            <p>
+                The superposition is gone. You are left with something that behaves exactly like a coin that is either heads or tails, you just don't know which. The quantum resource has been destroyed. This is decoherence — not a measurement, not a collapse in the dramatic sense, but a quiet, irreversible seeping of quantumness into the environment. The qubit's phase information is still in the universe, technically; it has just been distributed across <em>10²³</em> environmental degrees of freedom, making it irretrievably inaccessible.
+            </p>
+
+            <blockquote>
+                "Nature isn't classical, dammit, and if you want to make a simulation of nature, you'd better make it quantum mechanical, and by golly it's a wonderful problem, because it doesn't look so easy."
+                <cite>— Richard Feynman, "Simulating Physics with Computers", 1981</cite>
+            </blockquote>
+
+            <p>
+                Feynman's insight was visionary. But he was describing the <em>opportunity</em>. What he couldn't fully anticipate was how brutally the environment would resist our attempts to exploit it. Building a quantum computer means not merely controlling qubits — it means engineering a system that interacts with its environment precisely where we want (when we apply gates, when we read out results) and not at all everywhere else. That turns out to be nearly impossible.
+            </p>
+
+            <h2>THE NUMBERS</h2>
+
+            <p>
+                Decoherence is not just a qualitative problem — it is a quantitative race. The relevant metric is the <strong>coherence time</strong>: how long a qubit retains its quantum state before the environment destroys it. Different physical qubit implementations have wildly different coherence times, and the gaps are consequential.
+            </p>
+
+            <ul>
+                <li><strong>Superconducting qubits</strong> (the technology used by Google, IBM, and Rigetti) operate by cooling aluminium or niobium circuits to near absolute zero, where they exhibit quantum behaviour. Coherence times: roughly <strong>100–500 microseconds</strong> for the best research qubits today. A few years ago it was microseconds. Progress is real, but the upper limit imposed by materials defects and two-level system noise is hard to push past.</li>
+                <li><strong>Trapped-ion qubits</strong> (IonQ, Quantinuum) hold individual ions in electromagnetic traps and encode qubit states in hyperfine or optical transitions. Coherence times: on the order of <strong>seconds to minutes</strong>. Ions are exquisitely well-isolated from their environment, which is why they hold state so long. The trade-off is speed: gate operations are slower, measured in microseconds rather than nanoseconds.</li>
+                <li><strong>Nuclear spin qubits</strong> (NV centres in diamond, silicon-28 devices) encode quantum information in nuclear spins, which couple to the environment even less. Coherence times: <strong>hours</strong>, in carefully prepared isotopically purified samples. Currently very difficult to control and scale, but the coherence is stunning.</li>
+                <li><strong>Photonic qubits</strong> (encoded in photon polarisation or path) have essentially infinite coherence in principle — photons don't interact with much — but two-qubit gates are probabilistic and the technology is at an earlier stage.</li>
+            </ul>
+
+            <p>
+                Coherence time alone doesn't determine what you can compute. What matters is the ratio of coherence time to <strong>gate time</strong> — the time required to perform a single quantum operation. A superconducting two-qubit gate takes roughly 20–100 nanoseconds. With a coherence time of 200 microseconds, that gives you a window of perhaps <strong>2,000–10,000 gate operations</strong> before errors dominate. In practice, accounting for realistic gate fidelities and error propagation, useful coherent circuits top out at around <strong>1,000 meaningful gates</strong> for current best-in-class devices. For trapped ions, the gate-to-coherence ratio is actually lower in some respects because gates are slower, even though coherence times are vastly longer.
+            </p>
+
+            <div class="callout" data-label="numbers at a glance">
+                Superconducting: ~200 µs coherence / ~50 ns gate → ~4,000 gate budget. Trapped ion: ~60 s coherence / ~200 µs gate → ~300,000 gate budget — but with far fewer qubits and much lower connectivity. For Shor's algorithm on a 2048-bit RSA key, fault-tolerantly, you need on the order of 10¹² physical gate operations. We are many orders of magnitude away from the regime where quantum computation solves real-world cryptographic problems.
+            </div>
+
+            <p>
+                One thousand coherent gates sounds like a lot, until you realise that classical computers execute billions of operations per second with error rates below one in <em>10¹⁷</em>. The coherence window is the single largest obstacle between where quantum hardware is today and where it needs to be to outperform classical computers on problems that matter.
+            </p>
+
+            <h2>QUANTUM ERROR CORRECTION</h2>
+
+            <p>
+                Classical computers deal with bit errors using redundancy — store the same bit in three places, take a majority vote. Quantum error correction should be impossible by this logic: the no-cloning theorem prevents us from copying a qubit's state, and measuring a qubit to check for errors destroys the superposition we're trying to preserve. For a long time in the early 1990s, people assumed quantum error correction was a dead end.
+            </p>
+
+            <p>
+                Then in 1995–96, Peter Shor and Andrew Steane independently showed that quantum error correction is possible after all — if you encode one <em>logical</em> qubit across many <em>physical</em> qubits in a clever entangled state. You can measure <em>error syndromes</em> — properties of the multi-qubit system that tell you what went wrong without revealing the encoded logical state. Errors can be detected and corrected without ever directly measuring the quantum information. This was one of the great theoretical breakthroughs of the twentieth century.
+            </p>
+
+            <p>
+                The most promising practical scheme is the <strong>surface code</strong>, developed in the late 1990s and refined extensively since. In the surface code, a single logical qubit is encoded across a 2D grid of physical qubits. You perform syndrome measurements on neighbouring qubits, infer the pattern of errors, and apply corrections. The surface code has two critical properties: it requires only nearest-neighbour interactions (easy to build in superconducting hardware) and it has a <strong>relatively high error threshold</strong> — roughly 1% per gate. If your physical error rate is below ~1%, the surface code can suppress logical errors to arbitrarily low levels by adding more physical qubits.
+            </p>
+
+            <blockquote>
+                "We are at a particularly exciting moment in the development of quantum technology... We have entered the NISQ era — Noisy Intermediate-Scale Quantum. The 50-to-few-hundred qubit processors available in the near future will be too noisy for fault tolerance, but may nevertheless be able to perform tasks beyond the reach of classical simulation."
+                <cite>— John Preskill, "Quantum Computing in the NISQ Era and Beyond", 2018</cite>
+            </blockquote>
+
+            <p>
+                The catch is the overhead. To achieve fault-tolerant logical error rates of, say, 10⁻¹² — what you need for a million-step algorithm — requires roughly <strong>1,000 physical qubits per logical qubit</strong>, assuming physical error rates around 0.1%. IBM's 2025 roadmap targets building a 100,000 physical qubit system by the end of the decade, which would support perhaps 100 logical qubits with high fidelity. That is not enough to break RSA encryption (which requires thousands of logical qubits for the necessary circuit depth), but it could be enough to simulate quantum chemistry problems that are classically intractable.
+            </p>
+
+            <p>
+                This is why <strong>1,000 qubits today does not mean 1,000 logical qubits</strong>. IBM's 1,121-qubit Condor processor announced in 2023 was a milestone in physical qubit count. But with physical error rates around 0.1–0.5% per gate, most of those qubits need to be spent on error correction, leaving perhaps a handful of fully fault-tolerant logical qubits — if the system were run in full surface code mode, which it currently isn't. The qubit count headline grabs attention; the error rate is what actually matters.
+            </p>
+
+            <p>
+                The <strong>threshold theorem</strong> is the theoretical guarantee that makes all of this worthwhile: provided the physical error rate is below the code threshold, adding more physical qubits exponentially suppresses the logical error rate. We are currently hovering just above or at the threshold for some operations. Crossing it reliably, at scale, across a whole processor — that is the engineering challenge of our generation.
+            </p>
+
+            <h2>THE ENGINEERING CHALLENGE</h2>
+
+            <p>
+                Reading about qubits and error correction makes quantum computing sound like a software problem — a question of clever encoding and careful algorithm design. The reality is that quantum computing is, before anything else, one of the most extreme engineering challenges in human history. The gap between the theory and a working machine is filled with physics that wants to kill your quantum states at every turn.
+            </p>
+
+            <p>
+                Superconducting qubits must operate at temperatures of approximately <strong>15 millikelvin</strong> — roughly 0.015 degrees above absolute zero. For reference, deep interstellar space is about 2.7 Kelvin (from the cosmic microwave background); a superconducting quantum processor is nearly 200 times colder than that. Achieving these temperatures requires <em>dilution refrigerators</em> — machines that mix helium-3 and helium-4 isotopes in a closed cycle. A dilution refrigerator capable of cooling a 1,000-qubit chip costs upwards of half a million dollars, takes weeks to cool down, and occupies a room-sized enclosure. The reason for these temperatures is not just to make the metal superconducting: thermal fluctuations at room temperature carry energy of about 25 meV, while qubit transition energies correspond to ~10 GHz microwave photons — about 0.04 meV. A single room-temperature thermal photon reaching the chip would immediately scramble every qubit on it.
+            </p>
+
+            <p>
+                The cryogenic system is wrapped in layers of thermal shielding, but mechanical vibrations are almost as destructive as thermal noise. A truck driving past the building, a footstep on the lab floor, the building's own acoustic modes — all of these couple mechanical energy into the chip and drive decoherence. Leading quantum labs sit on vibration-isolation tables, and some have moved underground or into specially isolated basement facilities. When Google's Sycamore chip performed its 2019 quantum supremacy experiment, the entire cryostat was suspended on pneumatic mounts in a building where visitors were asked not to run.
+            </p>
+
+            <p>
+                Then there is the control problem. Manipulating qubits requires sending precisely shaped microwave pulses to each one — pulses accurate to parts per thousand in frequency, amplitude, and timing. Each qubit needs its own control line running from room-temperature electronics down through the cryostat's temperature stages. A thousand qubits means a thousand coaxial cables threading through a system where every wire is a potential thermal pathway conducting heat into the 15 mK stage. Current designs use attenuators and filters at each temperature stage to combat this, but the wiring harness inside a state-of-the-art dilution fridge is an extraordinary feat of micro-engineering: hundreds of carefully thermally-anchored coaxial lines, each selected for minimal thermal conductivity.
+            </p>
+
+            <div class="callout" data-label="the wiring bottleneck">
+                One of the most pressing unsolved problems in quantum hardware is the classical-quantum interface. You cannot run 1,000,000 coaxial cables into a cryostat — each one brings in heat. The leading approach is cryogenic CMOS control electronics that generate the microwave pulses inside the fridge at 4 Kelvin, dramatically reducing the number of room-temperature connections. Intel's Horse Ridge chip and similar efforts aim to put the control plane inside the cold environment. Whether this scales to millions of qubits remains an open research question.
+            </div>
+
+            <p>
+                Electromagnetic shielding is another layer of the problem. Stray magnetic fields thread through Josephson junctions and shift qubit frequencies unpredictably. The entire cryostat must be wrapped in mu-metal magnetic shielding and, in some designs, superconducting shields that expel magnetic flux entirely. The microwave control lines themselves must be carefully filtered to prevent room-temperature Johnson noise — random thermal electromagnetic radiation — from propagating to the chip. This is physics and electrical engineering operating simultaneously at the limits of both disciplines.
+            </p>
+
+            <h2>NISQ — WHERE WE ACTUALLY ARE</h2>
+
+            <p>
+                John Preskill coined the term <strong>NISQ</strong> — Noisy Intermediate-Scale Quantum — in 2018 to describe the devices we have now and will have for the foreseeable future: processors with 50 to a few thousand qubits, error rates too high for full fault tolerance, but large enough that classical simulation becomes difficult. It was a characteristically honest assessment from one of the field's most careful thinkers.
+            </p>
+
+            <p>
+                NISQ devices have genuine uses and genuine limits. On the <em>cannot do</em> side: they cannot run Shor's algorithm on cryptographically relevant key sizes (the circuit depth required exceeds the coherence budget by orders of magnitude without error correction). They cannot run Grover's algorithm to a depth that beats optimised classical search on practical database sizes. Any algorithm that requires millions of coherent gates is out of reach.
+            </p>
+
+            <p>
+                On the <em>potentially can do</em> side: <strong>variational quantum algorithms</strong> (VQAs) are the main NISQ-era approach. The idea is to use the quantum device as a black-box function evaluator inside a classical optimisation loop. A parameterised quantum circuit prepares a state, a measurement is taken, a classical computer updates the parameters. The Variational Quantum Eigensolver (VQE) uses this to approximate ground-state energies of molecular Hamiltonians — potentially useful for drug discovery and materials science. The Quantum Approximate Optimisation Algorithm (QAOA) applies a similar strategy to combinatorial optimisation problems.
+            </p>
+
+            <p>
+                The honest assessment of NISQ-era quantum advantage claims is: <em>it's complicated</em>. Google's 2019 supremacy paper claimed their Sycamore chip solved a specific sampling problem in 200 seconds that would take the best classical supercomputer 10,000 years. Within months, classical researchers had reduced that estimate to days, then hours, by exploiting tensor network methods. The specific problem Sycamore solved — random circuit sampling — was deliberately chosen to be hard to simulate classically. Whether any NISQ device will demonstrate advantage on a practically important problem remains genuinely open. The consensus among sceptical experts is cautious: NISQ devices may offer advantages in quantum chemistry simulation at a scale where classical methods genuinely struggle (~50-70 qubits of quantum chemistry), but this has not yet been convincingly demonstrated.
+            </p>
+
+            <h2>TIMELINES — WHAT THEY'RE ACTUALLY SAYING</h2>
+
+            <p>
+                The press and the press releases are often difficult to separate in quantum computing. Here is a more careful read of what the major players are actually committed to.
+            </p>
+
+            <p>
+                <strong>IBM's roadmap</strong> is the most detailed and transparent. Their 2023 "IBM Quantum System Two" targets 100,000 physical qubits by 2033, with the explicit goal of running error-corrected circuits with hundreds of logical qubits. IBM has been remarkably consistent in hitting qubit count milestones; the harder question is whether error rates will improve fast enough. Their stated target of demonstrating "quantum-centric supercomputing" — genuine computational advantage over classical hardware on practically relevant problems — is 2029–2033.
+            </p>
+
+            <p>
+                <strong>Google</strong> announced in December 2024 their Willow chip, claiming it solved a benchmark problem in five minutes that would take today's fastest supercomputer 10 septillion (10²⁵) years. The caveat applies again: the benchmark is specifically designed for quantum hardware. More significant was Google's claim of exponential error suppression below the surface code threshold — genuine progress on the path to fault tolerance. Google's internal target for fault-tolerant quantum computation is "commercially useful" applications by 2029–2030.
+            </p>
+
+            <p>
+                <strong>Microsoft</strong> has taken a different architectural bet: topological qubits based on Majorana fermions, which are theoretically more resistant to decoherence due to their non-local encoding of information. After years of controversy (including a retracted Science paper in 2018 claiming premature results), Microsoft announced in 2023 that they had observed signatures consistent with Majorana modes. The approach, if it works, could dramatically reduce the overhead for error correction. If it works. The timelines here are the least certain of the major players.
+            </p>
+
+            <p>
+                <strong>IonQ</strong> works with trapped-ion qubits and has the best published gate fidelities — 99.9%+ for two-qubit gates. With fewer qubits but higher quality, their path to fault tolerance is different from IBM's: fewer physical qubits needed per logical qubit, but scaling to large numbers of trapped ions in a single system is its own challenge. IonQ's roadmap targets "fault-tolerant" operation by 2028, with "broadly useful" quantum computing around 2030–2032.
+            </p>
+
+            <blockquote>
+                "The quantum computing roadmaps from IBM, Google, and others are serious engineering plans, not marketing. But translating qubit milestones into genuine computational advantage for practical problems remains the open challenge. We expect the first demonstrations of useful fault-tolerant quantum computation — on problems with real-world value — sometime in the 2030–2035 window."
+                <cite>— Paraphrased consensus, 2024 IBM Quantum Summit and Q2B conference proceedings</cite>
+            </blockquote>
+
+            <p>
+                The realistic expectation: <strong>fault-tolerant quantum computing at useful scale — 2030 to 2035</strong>. "Useful scale" means circuits long enough to run quantum chemistry simulations relevant to pharmaceutical discovery, or to accelerate specific machine learning training tasks, or (eventually, and much further out) to threaten RSA encryption. The timescales for the last application are probably beyond 2040 even in optimistic scenarios. The press reports of "quantum computers will break encryption in five years" — perennial since 2015 — are not serious estimates.
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL NOTE</h2>
+
+            <p>
+                There is something philosophically extraordinary about the decoherence problem that I keep returning to. What we are attempting, in quantum computing, is to carve out a pocket of the universe where quantum coherence is preserved — where the quantum world exists, fragile and intact, protected from all the noise and heat and randomness that the macroscopic world constantly generates. We are trying to hold a conversation with the quantum realm while keeping the classical realm from listening in.
+            </p>
+
+            <p>
+                The universe pushes back at every level. Thermal photons, vibrating atoms, stray magnetic fields, the control electronics we use to manipulate the system — all of these are, in a sense, the universe trying to <em>know</em> the qubit's state. And the moment the universe knows, the superposition is gone. There is something almost poetic about the fact that our biggest obstacle is not complexity, not mathematics, not computational theory — it is the universe's own tendency to become correlated with everything it touches.
+            </p>
+
+            <p>
+                The people working on this problem — building dilution refrigerators that are colder than deep space, shielding chips from the electromagnetic radiation of their own control electronics, engineering Josephson junctions with defect densities measured in parts per billion — are doing some of the most careful, demanding technical work in human history. They are fighting the second law of thermodynamics at millikelvin temperatures. The fact that they are making progress, year by year, coherence time by coherence time, error rate by error rate, is genuinely inspiring.
+            </p>
+
+            <p>
+                The quantum computer is not inevitable. It is being willed into existence, against a universe that would prefer everything to decohere. That, I think, is worth appreciating.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">quantum computing</span>
+                <span class="tag">decoherence</span>
+                <span class="tag">qubits</span>
+                <span class="tag">error correction</span>
+                <span class="tag">NISQ</span>
+                <span class="tag">surface code</span>
+                <span class="tag">superconducting</span>
+                <span class="tag">trapped ions</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="quantum-entanglement.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">Quantum Entanglement</span>
+                </a>
+                <a href="shors-algorithm.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Shor's Algorithm</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergent Abilities in LLMs — Umakant Kunal</title>
+    <meta name="description" content="Do large language models develop emergent abilities at scale, or is it all a measurement illusion? A deep dive into one of AI's most contested debates.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                emergent-abilities-llms
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-08</span>
+                <span class="post-category cat-ai">AI / Machine Learning</span>
+                <span class="post-read-time">10 min read</span>
+            </div>
+
+            <h1 class="post-title">Emergent Abilities in LLMs —<br>Do They Actually Exist or<br>Is It a Measurement Illusion?</h1>
+
+            <p class="post-subtitle">
+                In 2022, a paper claimed large language models develop capabilities that appear suddenly and unpredictably at scale. Then a 2023 paper argued it was all an artefact of how we measure. This is a story about what we think we understand about AI — and how fragile that understanding is.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In 2022, a group of researchers at Google published a paper that sent ripples through the AI community. Their claim was striking: large language models develop <strong>emergent abilities</strong> — capabilities that appear suddenly and unpredictably once models cross certain size thresholds, absent entirely in smaller models and impossible to predict by extrapolating from smaller-scale performance. It became one of the most cited papers in AI that year.
+            </p>
+
+            <p>
+                Then, in 2023, another set of researchers published a direct rebuttal. Their claim was equally striking: the emergent abilities were never there. The discontinuities in the graphs were artefacts of the measurement tools, not properties of the models. Change how you measure, and the sharp jumps become smooth curves. The capability was always scaling — we just couldn't see it.
+            </p>
+
+            <p>
+                This debate matters far beyond academic point-scoring. If emergence is real, it means AI capabilities can appear without warning, making safety planning much harder. If it is a measurement illusion, it means our intuitions about AI development have been systematically distorted by bad metrics. Either conclusion is uncomfortable. Together, they expose how shallow our understanding of these systems actually is.
+            </p>
+
+            <h2>WHAT EMERGENCE MEANS</h2>
+
+            <p>
+                Emergence is a concept from complexity theory. It describes properties that do not exist in a system's components but appear at the level of the whole. Water is wet; individual H₂O molecules are not. A single car is not traffic; ten thousand cars on one motorway are. Consciousness — if it exists in the brain — is not a property of any individual neuron.
+            </p>
+
+            <p>
+                The key feature of emergence is <strong>non-reducibility</strong>: you cannot predict the higher-level property by studying the lower-level components in isolation. This is what makes it interesting and what makes it dangerous. If a system exhibits genuine emergence, you cannot extrapolate its behaviour at scale from its behaviour at smaller scales. The rules change.
+            </p>
+
+            <p>
+                The claim applied to LLMs is specific: at certain model sizes — typically measured in parameters, but sometimes in training FLOPs — models develop capabilities that were near-zero at smaller scales and jump sharply to non-trivial performance. And crucially, this jump cannot be predicted from the smooth trajectory of other, non-emergent capabilities. It comes out of nowhere.
+            </p>
+
+            <div class="callout" data-label="key concept">
+                In complexity science, emergence describes system-level properties that cannot be inferred from studying components in isolation. Applied to LLMs, the claim is that certain capabilities do not scale smoothly — they are absent, then suddenly present, as model size crosses a threshold.
+            </div>
+
+            <h2>THE ORIGINAL CLAIM</h2>
+
+            <p>
+                The paper that kicked off this debate was <em>Emergent Abilities of Large Language Models</em> by Jason Wei, Yi Tay, Rishi Bommasani, and colleagues at Google Research, published in 2022. It examined performance on a wide range of tasks from the BIG-Bench benchmark suite and from other evaluations. The pattern they found was striking: many tasks showed essentially zero performance up to a certain model scale, followed by a sharp, discontinuous jump to above-chance performance.
+            </p>
+
+            <p>
+                The tasks that showed this pattern included multi-step arithmetic, word unscrambling, logical deduction, and — most famously — chain-of-thought reasoning. Below around 100 billion parameters, models produced largely incoherent or incorrect outputs on these tasks. Above that threshold, performance improved rapidly and substantially. The graphs in the paper showed near-vertical lines, not gradual slopes.
+            </p>
+
+            <blockquote>
+                "An ability is emergent if it is not present in smaller models but is present in larger models. Thus, emergent abilities cannot be predicted by extrapolating a model's performance on smaller models, and they appear to be qualitatively different from the gradual scaling improvements seen in most language modeling tasks."
+                <cite>— Wei et al., "Emergent Abilities of Large Language Models," 2022</cite>
+            </blockquote>
+
+            <p>
+                The excitement this generated was substantial — and understandable. If the finding was correct, it had profound implications. It meant that scaling up models could produce genuinely new capabilities that we could not anticipate. It meant that the next GPT-scale model might do things the current one cannot, not because it had been specifically trained to do them, but because something had <em>clicked</em> at sufficient scale.
+            </p>
+
+            <p>
+                For AI safety researchers, this was alarming. An AI system that develops unpredicted capabilities is an AI system that is harder to control, audit, or align. For AI enthusiasts, it was thrilling: evidence that scaling was a kind of alchemy. For the broader public, it fed a narrative about AI awakening — capabilities emerging like consciousness from complexity.
+            </p>
+
+            <h2>THE COUNTER-ARGUMENT</h2>
+
+            <p>
+                A year later, Rylan Schaeffer, Brando Miranda, and Sanmi Koyejo at Stanford published <em>Are Emergent Abilities of Large Language Models a Mirage?</em> They did not argue that the original researchers had fabricated data. They argued something more subtle and, in some ways, more damaging: the discontinuities were artefacts of the evaluation metrics.
+            </p>
+
+            <p>
+                Their core argument was this. When you use a <strong>non-linear metric</strong> — for example, accuracy on a multi-choice task, which goes from 0 to 1 with nothing in between — a model that is gradually improving on the underlying task will appear to be performing at zero until it crosses the threshold of getting more questions right than chance, at which point its score jumps. The jump is in the metric, not in the model.
+            </p>
+
+            <p>
+                But if you instead measure the same model's performance using a <strong>linear metric</strong> — for example, token-level log-likelihood, which measures how much probability the model assigns to the correct next token — you see something completely different. The capability scales smoothly and continuously from small models to large ones. There is no discontinuity. There is no sudden jump. The model was always improving; the binary accuracy metric was simply too coarse to detect it.
+            </p>
+
+            <blockquote>
+                "We show that emergent abilities may be creations of the researcher's choice of metric rather than a fundamental property of the model family on the specific task. Specifically, we show that non-linear or discontinuous metrics can mask continuous, predictable changes in model outputs."
+                <cite>— Schaeffer, Miranda & Koyejo, "Are Emergent Abilities of Large Language Models a Mirage?", 2023</cite>
+            </blockquote>
+
+            <p>
+                To demonstrate this, Schaeffer and colleagues did something elegant: they took tasks that appeared emergent under the original metrics, re-evaluated them using different metrics, and showed the discontinuities disappeared. They also showed that you can <em>induce</em> the appearance of emergent abilities in artificial data by choosing the right metric — the emergence is not in the data, it is in the measurement instrument.
+            </p>
+
+            <p>
+                This matters for several reasons. First, it means we should be deeply suspicious of discontinuous-looking graphs in AI research. When you see a hockey-stick curve, the first question should be: is this a property of the model, or a property of how I am measuring the model? Second, it implies that capabilities are more predictable than the emergent abilities narrative suggests — which is both reassuring (for safety) and deflating (for the magic-at-scale story). Third, it reveals how metric choice can systematically distort our picture of what is happening inside these systems.
+            </p>
+
+            <h2>THE SCALING LAWS UNDERNEATH</h2>
+
+            <p>
+                To understand why the measurement critique is so compelling, it helps to understand what is happening at a deeper level. In 2020, Jared Kaplan and colleagues at OpenAI published <em>Scaling Laws for Neural Language Models</em>, which showed that language model loss — the model's average per-token prediction error — scales as a <strong>power law</strong> with three variables: the number of parameters, the amount of training data, and the compute budget.
+            </p>
+
+            <p>
+                These are remarkably clean relationships. Double the parameters, and loss falls by a predictable amount. Double the data, same thing. The curves are smooth, continuous, and highly predictable across many orders of magnitude. There are no discontinuities. There are no jumps. The model simply gets better at predicting text, slowly and steadily, as you pour in more resources.
+            </p>
+
+            <p>
+                Two years later, Hoffman and colleagues at DeepMind published what became known as the Chinchilla paper — formally, <em>Training Compute-Optimal Large Language Models</em>. Their finding was that the models being trained in 2022 were drastically undertrained: the field had been scaling parameters without scaling data proportionally. For a given compute budget, the optimal strategy is to use a smaller model trained on significantly more data, not a larger model trained on less data. GPT-3, by their analysis, should have been trained on roughly 20 times more tokens.
+            </p>
+
+            <p>
+                What do these smooth scaling laws say about emergence? They create a puzzle. If loss scales smoothly and predictably, and if task performance is a function of loss, then task performance should also scale smoothly. The Schaeffer critique is precisely that it does — and the apparent emergent jumps are what happens when you apply a threshold to a smooth underlying function. Cross a threshold, and a continuous improvement looks discontinuous.
+            </p>
+
+            <div class="callout" data-label="scaling laws">
+                Kaplan et al. (2020) showed that LLM loss follows power-law scaling with parameters, data, and compute — with no discontinuities across orders of magnitude. Chinchilla (2022) refined this, revealing that most large models were undertrained. Smooth underlying loss curves are the strongest evidence that emergent jumps are measurement artefacts.
+            </div>
+
+            <h2>THE CURRENT DEBATE</h2>
+
+            <p>
+                Where does this leave us in 2026? The honest answer is: genuinely uncertain. The Schaeffer critique has been widely accepted as an important corrective — researchers are now much more careful about metric choice, and the field is more sceptical of hockey-stick graphs. The naive version of emergence, where capabilities appear from nowhere at certain parameter counts, is largely discredited.
+            </p>
+
+            <p>
+                But some researchers push back. They argue that even if many of the specific examples in the Wei et al. paper were metric artefacts, there may still be genuine phase transitions — moments where something qualitatively different happens in the model's internal representations, even if the performance curves look smoother when measured correctly. The analogy is to phase transitions in physics: water does not gradually become ice, even though the temperature change is continuous.
+            </p>
+
+            <p>
+                Others point to specific capabilities that seem harder to explain away by metric choice alone. Chain-of-thought reasoning is the classic example. Small models, when prompted to reason step by step, produce incoherent or counterproductive chains. Models above a certain scale produce reasoning that actually helps. Whether this represents a phase transition in internal computation or simply the smooth scaling of a capacity that only becomes useful above a threshold is genuinely unclear.
+            </p>
+
+            <p>
+                The honest position, held by serious researchers across the field, is this: <strong>we do not fully understand the relationship between scale and capability.</strong> We have scaling laws that predict loss. We have empirical observations of performance on tasks. But the mapping from loss to capability is complex, task-dependent, and not well-theorised. We are, to a large degree, flying blind.
+            </p>
+
+            <p>
+                This should be disturbing for anyone who takes AI safety seriously. The safety case for current AI systems rests partly on predictability — the idea that we can anticipate what these models can and cannot do. If genuine emergent abilities exist, that predictability is undermined. If the appearance of emergence is a measurement illusion, our measurement tools are systematically deceiving us. Either way, we know less than we think.
+            </p>
+
+            <blockquote>
+                "The thing that keeps me up at night is not that we're building something dangerous. It's that we're building something we don't understand, and we keep being surprised by what it can do."
+                <cite>— Ilya Sutskever, former Chief Scientist, OpenAI</cite>
+            </blockquote>
+
+            <h2>IN-CONTEXT LEARNING</h2>
+
+            <p>
+                Of all the capabilities attributed to large language models, in-context learning is the one that most resists the measurement-artefact critique. It is also the one that, to me, remains genuinely mysterious.
+            </p>
+
+            <p>
+                In-context learning is the ability of a model to adapt its behaviour based on a small number of examples provided in the prompt — without any gradient updates, without any fine-tuning, without any change to the model's weights. You show the model three examples of a task, and it generalises to perform the task on a new input. This happens entirely at inference time, inside the forward pass.
+            </p>
+
+            <p>
+                Small models largely cannot do this. Very small models will fail completely. Medium-sized models may pattern-match on surface features without genuinely generalising. Large models exhibit something that looks much more like genuine learning from examples. And this property does seem to appear relatively sharply as a function of scale — it is not obvious that a simple metric-choice argument dissolves the discontinuity here.
+            </p>
+
+            <h3>The Implicit Bayesian Inference Hypothesis</h3>
+
+            <p>
+                The most compelling theoretical account of in-context learning comes from a 2022 paper by Xie and colleagues, who proposed that large language models implicitly perform Bayesian inference during in-context learning. The model's pretraining exposed it to documents generated by many different latent processes — different writing styles, different tasks, different domains. At sufficient scale, the model learns to infer from context which latent process is active and to produce outputs consistent with that process.
+            </p>
+
+            <p>
+                On this account, in-context learning is not a separate capability that emerges at scale — it is what happens when a sufficiently large model, trained on sufficiently diverse data, is given evidence about which of the many learned distributions it should be sampling from. The few-shot examples are not teaching the model; they are pointing to a part of the distribution it already models.
+            </p>
+
+            <p>
+                This hypothesis has real explanatory power. It explains why in-context learning works better on tasks and styles that appear in pretraining data than on genuinely novel tasks. It explains why more examples help up to a point and then plateau. It explains why very large models can generalise from a single example. But it does not fully dissolve the mystery of <em>how</em> this inference is being implemented in a feedforward transformer — what circuit, what mechanism, computes this on the fly without weight updates.
+            </p>
+
+            <p>
+                Research on the mechanistic underpinnings of in-context learning remains active and, as of now, incomplete. We have partial answers. We do not have the full picture.
+            </p>
+
+            <hr>
+
+            <p>
+                I have been thinking about what it means to work in a field where the fundamental questions are this unresolved. Not the engineering questions — those are hard but tractable. I mean the scientific questions: what are these models actually doing? Why do they work? What happens as you scale them? We are building systems that hundreds of millions of people use every day, systems that are being integrated into healthcare, education, law — and we genuinely do not have satisfying answers to these questions.
+            </p>
+
+            <p>
+                The emergence debate is, in microcosm, a story about the entire field. We observe something striking — a sudden jump in capability. We build a narrative around it — emergence, phase transitions, intelligence crystallising at scale. Then someone looks more carefully at the measurement instrument and finds that the jump was partly in the ruler, not the thing being measured. The narrative has to be rebuilt, more carefully, with more caveats.
+            </p>
+
+            <p>
+                I find this process genuinely exciting, even when it is humbling. Science is supposed to work this way — claims made, claims tested, understanding refined. What concerns me is the gap between the field's actual epistemic state and the confidence with which these systems are being deployed. The companies shipping these products move faster than the researchers studying them. The applications outpace the theory.
+            </p>
+
+            <p>
+                Whether or not emergent abilities are real in the strong sense, the question they raise is real: <strong>do we understand, well enough, what we are building?</strong> My honest answer, after reading this literature carefully, is no — not yet. That is not a reason to stop building. It is a reason to invest much more seriously in the science of understanding these systems, not just the engineering of deploying them. The measurement illusion debate is a reminder that even our tools for asking the question need to be interrogated.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">LLMs</span>
+                <span class="tag">emergence</span>
+                <span class="tag">scaling laws</span>
+                <span class="tag">in-context learning</span>
+                <span class="tag">AI safety</span>
+                <span class="tag">measurement</span>
+                <span class="tag">BIG-Bench</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="why-llms-hallucinate.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">Why LLMs Hallucinate</span>
+                </a>
+                <a href="neuromorphic-computing.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Neuromorphic Computing</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

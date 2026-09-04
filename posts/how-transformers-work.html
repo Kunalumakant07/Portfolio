@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformers Explained from Zero — What Attention Actually Does — Umakant Kunal</title>
+    <meta name="description" content="In 2017 eight Google researchers replaced recurrence with attention. That decision is now the foundation of every major AI system. Here is what it actually does.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── FORMULA BLOCK ── */
+        .formula-block {
+            margin: 32px 0;
+            padding: 24px 24px 20px;
+            border: 1px solid var(--accent-dim);
+            background: var(--dim);
+            text-align: center;
+            position: relative;
+        }
+
+        .formula-block::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--dim);
+            padding: 0 6px;
+        }
+
+        .formula-block .formula-main {
+            font-family: 'VT323', monospace;
+            font-size: 1.55rem;
+            color: var(--accent);
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .formula-block .formula-note {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+            .formula-block { padding: 18px 14px 16px; }
+            .formula-block .formula-main { font-size: 1.2rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                how-transformers-work
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-01</span>
+                <span class="post-category cat-ai">AI / Machine Learning</span>
+                <span class="post-read-time">12 min read</span>
+            </div>
+
+            <h1 class="post-title">Transformers Explained from Zero —<br>What Attention Actually Does</h1>
+
+            <p class="post-subtitle">
+                In 2017, eight Google researchers published a paper that changed everything. It replaced recurrence with attention — a simple, elegant, almost suspicious idea. That paper is now the load-bearing wall of the AI age. Here is what it actually says, and why it works.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In June 2017, eight researchers at Google Brain and Google Research posted a preprint to arXiv with a title that sounded almost dismissive: <em>Attention Is All You Need</em>. The paper proposed discarding recurrent neural networks entirely — the dominant architecture for sequence modelling at the time — and replacing them with a mechanism called <strong>self-attention</strong>. The AI community's response ranged from sceptical to fascinated. Within two years it was clear the sceptics were wrong. Within five years, the transformer architecture described in that paper had become the foundation of GPT, Claude, Gemini, BERT, Stable Diffusion, Whisper, and virtually every other AI system that matters. Understanding that paper is not optional background reading anymore. <strong>It is understanding the age we live in.</strong>
+            </p>
+
+            <p>
+                This post is an attempt to explain what transformers actually do — not just name the components, but explain the intuition behind each decision, why those decisions work, and what they mean for the capabilities and limits of modern AI. I am going to assume you know roughly what a neural network is but nothing more than that. Let us start from the problem the transformer was built to solve.
+            </p>
+
+            <h2>THE PROBLEM TRANSFORMERS SOLVED</h2>
+
+            <p>
+                Before the transformer, the dominant architecture for processing sequences — sentences, code, audio, time series — was the <strong>Recurrent Neural Network</strong>, and its more capable variant, the <strong>Long Short-Term Memory</strong> network (LSTM). The idea behind both is intuitive: to understand a sequence, read it one element at a time, left to right, maintaining a hidden state that accumulates information as you go. The hidden state at each position is a compressed summary of everything the network has seen so far. Position 5 knows about positions 1 through 4 because that knowledge was compressed into the state passed in from position 4.
+            </p>
+
+            <p>
+                This works, up to a point. The problems are fundamental and they compound with sequence length.
+            </p>
+
+            <p>
+                <strong>Vanishing gradients.</strong> Training a neural network means computing gradients — how much each parameter should change to reduce the error. In an RNN, gradients flow backwards through time: from the final position back through every intermediate position to the beginning. At each step, the gradient is multiplied by a weight matrix. If those weights are even slightly less than 1 in magnitude, the gradient shrinks exponentially over hundreds of steps. By the time it reaches position 1, it has been multiplied by something like 0.9 raised to the power of 500. That is a number so small it is numerically zero. Position 1 gets no useful gradient. The network learns nothing about long-range dependencies. LSTMs mitigated this with gating mechanisms, but did not eliminate the problem.
+            </p>
+
+            <p>
+                <strong>Sequential bottleneck.</strong> An RNN processes tokens one at a time, in order. Position 5 cannot be computed until position 4 is done. Position 4 cannot be computed until position 3 is done. This is inherently sequential — it cannot be parallelised. On modern hardware (GPUs, TPUs) built for massively parallel matrix operations, you are leaving nearly all the compute sitting idle. Training on long sequences is painfully slow.
+            </p>
+
+            <p>
+                <strong>The telephone problem.</strong> Even if gradients do not vanish, information does. The hidden state at position 500 must encode everything relevant from positions 1 through 499 in a fixed-size vector. That is an enormous compression. Information from position 1 has to survive 499 transformations before it can influence position 500. In practice, models forget. A subject mentioned at the start of a long document struggles to influence predictions near the end. The hidden state is a bottleneck, and the bottleneck gets worse the longer your sequence.
+            </p>
+
+            <blockquote>
+                "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks... We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely."
+                <cite>— Vaswani et al., <em>Attention Is All You Need</em> (2017), arXiv:1706.03762</cite>
+            </blockquote>
+
+            <p>
+                The transformer's answer to all three problems is to abandon sequential processing entirely. Instead of passing information through a chain of hidden states, every position computes a direct, weighted relationship with every other position — simultaneously, in a single parallel operation. There is no telephone. Every word can talk directly to every other word, across any distance, in a single step.
+            </p>
+
+            <h2>THE ATTENTION MECHANISM</h2>
+
+            <p>
+                The core of the transformer is the self-attention operation. To understand it, start with a question: when you read the sentence <em>"The trophy didn't fit in the suitcase because it was too big"</em>, how do you know what <em>"it"</em> refers to? You do not scan linearly — you jump to the relevant part of the sentence directly, based on meaning. You attend to the trophy rather than the suitcase because "too big" is more consistent with a trophy than something that fits inside something else. This kind of selective, content-based retrieval is exactly what attention formalises.
+            </p>
+
+            <p>
+                Here is the mechanism. For each token in the sequence, the model learns three projections of that token's embedding:
+            </p>
+
+            <ul>
+                <li><strong>Query (Q)</strong> — "What am I looking for?" A representation of what this position needs from other positions.</li>
+                <li><strong>Key (K)</strong> — "What do I have?" A representation of what this position is advertising to other positions.</li>
+                <li><strong>Value (V)</strong> — "What information do I carry?" The actual content that will be passed along if this position is attended to.</li>
+            </ul>
+
+            <p>
+                Think of it like a soft, differentiable lookup table. Each query reaches out to all keys, computes a similarity score (via dot product), and uses those scores to take a weighted sum of all values. The positions whose keys most closely match the query contribute the most to the output. Every position attends to every other position simultaneously.
+            </p>
+
+            <div class="formula-block" data-label="Scaled Dot-Product Attention">
+                <span class="formula-main">Attention(Q, K, V) = softmax( QKᵀ / √d_k ) · V</span>
+                <span class="formula-note">
+                    Q, K, V ∈ ℝ^(n × d_k) — sequence length n, key dimension d_k<br>
+                    QKᵀ computes pairwise dot-product similarity scores for all n² position pairs<br>
+                    Division by √d_k prevents softmax saturation in high dimensions<br>
+                    softmax normalises scores to a probability distribution (weights sum to 1)<br>
+                    Multiplying by V produces a weighted sum of value vectors
+                </span>
+            </div>
+
+            <p>
+                The <strong>scaling factor √d_k</strong> deserves a note. Dot products grow in magnitude as the dimensionality d_k increases — in high dimensions, the dot product between two random vectors can be very large. Large inputs to softmax produce very peaked distributions (near one-hot), which means nearly zero gradient everywhere except the argmax. Dividing by √d_k keeps the dot products in a range where softmax produces useful, distributed gradients.
+            </p>
+
+            <p>
+                What makes this powerful is what happens when you train it. The Q, K, and V weight matrices are learned. The model discovers, through backpropagation, what kinds of queries and keys produce useful attention patterns for the task. For language, it might learn that verbs attend to their subjects, that pronouns attend to their antecedents, that question words attend to their answers. None of this is hard-coded — it emerges from training on data.
+            </p>
+
+            <div class="callout" data-label="Key Insight">
+                Self-attention has <strong>no built-in notion of position or distance</strong>. Token 1 and token 500 are equally close — the attention score depends entirely on content, not location. This is what makes it so good at long-range dependencies, and also why positional encoding has to be added separately (more on this below).
+            </div>
+
+            <h2>MULTI-HEAD ATTENTION</h2>
+
+            <p>
+                A single attention operation computes one kind of relationship between positions. But language — and any complex sequence — contains many simultaneous kinds of relationships. In a single sentence, you might need to track: which noun is the subject of which verb (syntax), what words cluster thematically (semantics), which pronoun refers to which noun (coreference), and what the overall sentiment trajectory is doing. A single set of Q, K, V matrices cannot specialise for all of these at once.
+            </p>
+
+            <p>
+                Multi-head attention is the solution. Instead of one attention operation in d-dimensional space, you run <strong>h independent attention heads</strong> in parallel, each in a lower-dimensional subspace of size d/h. Each head projects the input into its own Q, K, V matrices and computes its own attention pattern. The outputs of all heads are concatenated and projected back to the original dimension.
+            </p>
+
+            <blockquote>
+                "Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions. With a single attention head, averaging inhibits this."
+                <cite>— Vaswani et al., <em>Attention Is All You Need</em> (2017)</cite>
+            </blockquote>
+
+            <p>
+                Empirically, different heads specialise for different linguistic phenomena. Interpretability research has shown that some heads track syntactic dependencies, others semantic similarity, others positional offset patterns. The model is not told to do this — it learns it because different decompositions of the attention problem are useful for predicting the next token accurately. The multi-head structure provides the capacity to represent multiple relationship types simultaneously without any one type dominating.
+            </p>
+
+            <p>
+                In practice, the original transformer used h = 8 heads with d_model = 512, giving each head d_k = 64 dimensions. Modern large language models use many more heads across much larger models, but the principle is identical. The computational cost of multi-head attention scales as O(n²·d) per layer — the n² term (all pairs of positions) is the reason transformer context lengths were historically limited and why research into efficient attention variants is active.
+            </p>
+
+            <h2>THE FULL ARCHITECTURE</h2>
+
+            <p>
+                Attention is the centrepiece, but the full transformer wraps it in several other critical components. Let us walk through a forward pass from input tokens to output, using the original encoder-decoder design from the 2017 paper.
+            </p>
+
+            <h3>Input Embeddings and Positional Encoding</h3>
+
+            <p>
+                Tokens (words, subwords, or characters) are first converted to continuous vectors via an embedding matrix — a learnable lookup table. But attention, as noted, is entirely permutation invariant: if you shuffle the token order, the attention scores are unchanged. The model has no intrinsic way to know that token 3 comes before token 4. This is a problem, because order matters in language.
+            </p>
+
+            <p>
+                Positional encoding solves this by adding a position-dependent signal to each token embedding before it enters the attention layers. The original paper used fixed sinusoidal encodings: for position pos and dimension i, the encoding is sin(pos / 10000^(2i/d_model)) or cos(pos / 10000^(2i/d_model)). The sinusoidal form was chosen because it allows the model to attend by relative position — the encoding for position pos+k is a linear function of the encoding for position pos, for any fixed k. Modern models often use learned positional embeddings or more sophisticated schemes like RoPE (Rotary Position Encoding), but the principle is the same: inject positional information because attention cannot derive it on its own.
+            </p>
+
+            <h3>The Encoder Stack</h3>
+
+            <p>
+                The encoder takes the full input sequence and builds a rich contextualised representation of it. It consists of N identical layers stacked on top of each other (N = 6 in the original paper). Each layer has two sub-layers:
+            </p>
+
+            <ul>
+                <li><strong>Multi-head self-attention</strong> — every token attends to every other token in the input, building context-aware representations.</li>
+                <li><strong>Position-wise feed-forward network</strong> — a two-layer MLP applied independently and identically to each position. This is where most of the model's representational capacity lives; it is larger than it looks, and ablation studies show it is crucial.</li>
+            </ul>
+
+            <p>
+                Around both sub-layers, two more techniques are applied: <strong>residual connections</strong> and <strong>layer normalisation</strong>. The residual connection (output = LayerNorm(x + sublayer(x))) adds the input back to the output of each sub-layer. This prevents information from being destroyed as it passes through deep stacks — gradients flow through the addition operation without attenuation, solving a deep-network training problem that plagued earlier architectures. Layer normalisation stabilises activation magnitudes across positions, making training more reliable.
+            </p>
+
+            <h3>The Decoder Stack</h3>
+
+            <p>
+                The decoder generates the output sequence, one token at a time. Each decoder layer has three sub-layers: masked self-attention (where each output position can only attend to previous output positions — it cannot peek at the future, since it is generating autoregressively), cross-attention (where the decoder attends to the encoder's output, pulling in information from the full input), and a feed-forward network. The masking in the first sub-layer is what makes the decoder autoregressive — at inference time, it generates token by token, each new token conditioned on all previous outputs.
+            </p>
+
+            <div class="callout" data-label="Forward Pass Summary">
+                Input tokens → Embed + Positional Encoding → <strong>N × [Self-Attention → Add &amp; Norm → FFN → Add &amp; Norm]</strong> (Encoder) → <strong>N × [Masked Self-Attn → Cross-Attn → FFN → Add &amp; Norm]</strong> (Decoder) → Linear + Softmax → Output token probabilities. Residual connections and layer norm wrap every sub-layer throughout.
+            </div>
+
+            <h2>WHY ATTENTION WORKS SO WELL</h2>
+
+            <p>
+                The transformer's dominance is not an accident. Several of its properties align almost perfectly with what makes a learning algorithm scale.
+            </p>
+
+            <p>
+                <strong>No locality bias.</strong> Convolutional neural networks have a strong inductive bias: nearby features matter more than distant ones. This is great for images (nearby pixels are correlated) but limits sequence modelling (the word at position 1 might be critical at position 500). Attention has no such bias — every position is equidistant from every other. The model can learn whatever pattern of relevance the data demands, including long-range ones that no CNN or RNN would naturally discover.
+            </p>
+
+            <p>
+                <strong>Constant path length between any two positions.</strong> In an RNN, information at position 1 must pass through all intermediate positions to reach position N — a path length of N-1. In a transformer, the path length between any two positions is exactly 1 — a direct attention connection. This makes it dramatically easier for the model to learn dependencies across any distance.
+            </p>
+
+            <p>
+                <strong>Massive parallelism.</strong> All attention scores for all positions are computed in a single matrix multiplication. All encoder layers can receive their input simultaneously. This maps onto GPU and TPU hardware efficiently in a way that sequential RNN computation never could. Training that would have taken months on the best RNN hardware became tractable in days.
+            </p>
+
+            <p>
+                <strong>Scaling behaviour.</strong> This is perhaps the most surprising property. Transformers are, in a sense, the first architecture that does not saturate as you add more parameters. Make them wider, deeper, train them on more data with more compute — performance keeps improving on a smooth curve. This is not true of all architectures. CNNs and RNNs both hit diminishing returns earlier. The transformer's permutation to scale-with-resources is what made the last five years of AI progress possible.
+            </p>
+
+            <blockquote>
+                "The thing that surprised me most — that I did not expect — was that the models kept getting better. We thought there would be a wall. There wasn't. The scaling just kept working."
+                <cite>— Ilya Sutskever, co-founder of OpenAI, interview at NeurIPS 2022</cite>
+            </blockquote>
+
+            <h2>FROM TRANSFORMER TO LLM</h2>
+
+            <p>
+                The 2017 paper described a full encoder-decoder transformer for machine translation. What came next was a series of architectural simplifications that turned it into the large language model paradigm we have today.
+            </p>
+
+            <p>
+                <strong>GPT (2018, OpenAI)</strong> discarded the encoder entirely and kept only the decoder stack, trained autoregressively: predict the next token given all previous tokens. This <em>decoder-only</em> design is simpler but enormously capable when scaled. Every GPT model since (GPT-2, GPT-3, GPT-4, and most LLMs including the one that may be reading this to you) uses this design. Claude is a decoder-only transformer. Gemini is a decoder-only transformer.
+            </p>
+
+            <p>
+                <strong>BERT (2018, Google)</strong> took the opposite bet: keep the encoder, discard the decoder, and train with a different objective — masked language modelling, where random tokens are masked and the model learns to predict them using context from both directions. BERT's bidirectionality made it exceptional for tasks requiring deep comprehension of existing text (classification, named entity recognition, question answering). It is the ancestor of most modern text embedding models.
+            </p>
+
+            <p>
+                Then came the scaling laws. In 2020, Kaplan et al. at OpenAI published a paper showing that language model performance scales as a <strong>power law</strong> with three independent variables: the number of parameters, the size of the training dataset, and the amount of compute used. Double any one of these, holding the others fixed, and loss drops by a predictable amount. The relationship is smooth, consistent, and holds across many orders of magnitude with no sign of a wall.
+            </p>
+
+            <blockquote>
+                "Neural language model performance improves smoothly and predictably as we scale up model size, dataset size, and amount of compute. There are no sharp phase transitions."
+                <cite>— Kaplan et al., <em>Scaling Laws for Neural Language Models</em> (2020), arXiv:2001.08361</cite>
+            </blockquote>
+
+            <p>
+                This paper was, in retrospect, an empirical license to spend. If you know that doubling compute reliably improves the model, and you can afford the compute, you just do it. No guesswork, no research breakthroughs required. The cynical version of the last five years of AI progress is: a group of organisations discovered that intelligence was on a log-log curve and decided to run to the right of it as fast as possible. The transformer architecture is what made that curve smooth and predictable. Without it, scaling does not work.
+            </p>
+
+            <h2>THE ATTENTION IS NOT UNDERSTANDING PROBLEM</h2>
+
+            <p>
+                Here is the uncomfortable part. A transformer is, at bottom, a very sophisticated pattern-matching machine operating over tokens. It has been trained on an enormous corpus of human-produced text, and it has learned, to an impressive degree of accuracy, the statistical structure of that text — which tokens tend to follow which other tokens, in which contexts, with what probability. It is exceptionally good at this. The outputs are often indistinguishable from genuine understanding, and sometimes they exceed it.
+            </p>
+
+            <p>
+                But <strong>statistical regularity is not the same as understanding</strong>. A transformer does not model the world. It models the distribution of text that humans produce when they describe the world. When the text distribution and world knowledge align closely — as they do for common facts, clear reasoning, well-documented phenomena — the outputs are reliable. When they diverge, the model has no anchor. It continues generating tokens that are statistically plausible in the context of the conversation, even if they are factually wrong. This is what we call hallucination, and I explore it in more depth in the post on why LLMs hallucinate.
+            </p>
+
+            <p>
+                The deeper version of this problem is sometimes called the <strong>binding problem</strong>. Human understanding involves representing structured, compositional relationships between objects, properties, and events in a way that generalises to novel combinations. "A red cube on a blue sphere" is understood not by pattern-matching to a training distribution of red-cube-on-blue-sphere descriptions, but by composing independently understood concepts. Whether transformers actually do compositional reasoning or whether they are doing very sophisticated pattern matching that mimics it is, genuinely, an open question. Some experiments suggest they can do it; others expose striking failures precisely at novel combinations. The question connects directly to whether what we call "reasoning" in LLMs is real or a statistical shadow — a question I take up in the piece on consciousness and AI.
+            </p>
+
+            <p>
+                Yann LeCun, chief AI scientist at Meta, has been vocal about this distinction:
+            </p>
+
+            <blockquote>
+                "Large language models do not understand the world. They are very good at capturing the distribution of text. But they lack the ability to reason about the physical world, plan, and understand cause and effect in any deep sense. They are missing a world model."
+                <cite>— Yann LeCun, interview at MIT Technology Review AI conference, 2023</cite>
+            </blockquote>
+
+            <p>
+                I take LeCun's point seriously without fully agreeing with his conclusion. It is true that a transformer trained only on text lacks grounded world knowledge in the way a system with sensorimotor experience would have. It is also true that some of what passes for understanding in LLMs is brittle in ways that human understanding is not. But "does not understand" is too strong — there is clearly something non-trivial happening when a model trained to predict tokens can write correct proofs, debug code it has never seen, and translate between languages at near-human quality. What exactly that something is remains an open and fascinating question.
+            </p>
+
+            <hr>
+
+            <p>
+                I want to end on something personal. I work with these models every day. I have fine-tuned them, probed their internals, watched them fail in strange ways and succeed in stranger ones. And yet the more I understand the actual mathematics — the dot products, the softmax, the matrix multiplications, the residual connections — the more I find it remarkable. The transformer is not a mysterious black box. It is a specific, readable piece of mathematics built on linear algebra and a few clean ideas about what information processing should look like. <strong>That something so elegant produces something that feels so much like thought is either the most profound thing that has happened in the history of science, or a very compelling illusion of it.</strong>
+            </p>
+
+            <p>
+                Either way, it is worth understanding how the math works. Because whether transformers are the end of this road or just the beginning, the decisions made in 2017 will shape AI for years to come. Understanding attention is not trivia. It is literacy.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">transformers</span>
+                <span class="tag">attention</span>
+                <span class="tag">deep learning</span>
+                <span class="tag">NLP</span>
+                <span class="tag">LLMs</span>
+                <span class="tag">GPT</span>
+                <span class="tag">BERT</span>
+                <span class="tag">scaling laws</span>
+                <span class="tag">neural networks</span>
+                <span class="tag">AI architecture</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="quantum-cryptography.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">Quantum Cryptography and the End of Secrets</span>
+                </a>
+                <a href="why-llms-hallucinate.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Why LLMs Hallucinate (And Why That Won't Just Go Away)</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

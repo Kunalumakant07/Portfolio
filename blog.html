@@ -260,7 +260,11 @@
         .cat-space     { color: var(--blue);    border-color: #1e3a5f; }
         .cat-code      { color: var(--amber);   border-color: #4a3800; }
         .cat-life      { color: var(--red);     border-color: #4a1010; }
-        .cat-science   { color: #34d399;        border-color: #064e3b; }
+        .cat-science   { color: #34d399;  border-color: #064e3b; }
+        .cat-quantum   { color: #c084fc;  border-color: #4c1d95; }
+        .cat-systems   { color: #fbbf24;  border-color: #78350f; }
+        .cat-theory    { color: #7dd3fc;  border-color: #1e3a5f; }
+        .cat-security  { color: #fb923c;  border-color: #7c2d12; }
 
         .post-read-time {
             font-size: 0.7rem;
@@ -397,25 +401,146 @@
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
         ::selection { background: var(--accent); color: var(--bg); }
 
-        /* ── MOBILE ── */
+        /* ── SEARCH ── */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 0;
+        }
+
+        .search-bar input {
+            flex: 1;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-right: none;
+            color: var(--text);
+            padding: 9px 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar input::placeholder { color: var(--muted); }
+        .search-bar input:focus { border-color: var(--accent-dim); }
+
+        .search-bar .search-icon {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 9px 14px;
+            font-size: 0.82rem;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: default;
+            white-space: nowrap;
+        }
+
+        .search-clear {
+            background: none;
+            border: 1px solid var(--border);
+            border-left: none;
+            color: var(--muted);
+            padding: 9px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.82rem;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .search-clear:hover { color: var(--red); border-color: var(--red); }
+
+        /* ── TOOLBAR ── */
+        .blog-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .blog-toolbar .search-bar { flex: 1; min-width: 200px; }
+
+        .post-count {
+            font-size: 0.75rem;
+            color: var(--muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .post-count span { color: var(--accent); }
+
+
+        /* ── SCROLL TO TOP ── */
+        #scrollTop {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            width: 38px; height: 38px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            transition: all 0.2s;
+        }
+
+        #scrollTop:hover { border-color: var(--accent-dim); color: var(--accent); }
+        #scrollTop.visible { display: flex; }
+
+        @media (max-width: 640px) {
+            .blog-toolbar { flex-direction: column; align-items: stretch; }
+            .blog-toolbar .search-bar { min-width: unset; }
+            #scrollTop { bottom: 18px; right: 18px; }
+        }
+
+
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-card.featured { padding-right: 30px; }
+            .post-card.featured::after { display: none; }
+        }
+
+        /* ── 640px MOBILE ── */
         @media (max-width: 640px) {
             .nav-links { display: none; }
             .nav-links.open {
-                display: flex;
-                flex-direction: column;
-                position: absolute;
-                top: 58px; right: 0;
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-top: none;
-                padding: 16px 24px;
-                gap: 18px;
-                min-width: 180px;
+                display: flex; flex-direction: column;
+                position: absolute; top: 58px; right: 0;
+                background: var(--surface); border: 1px solid var(--border);
+                border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px;
             }
             .nav-toggle { display: block; }
+
+            .page-header { padding: 100px 0 40px; }
+            .page-title { letter-spacing: 2px; }
+
+            .filter-bar { gap: 6px; }
+            .filter-btn { font-size: 0.68rem; padding: 4px 10px; }
+
+            .post-card { padding: 20px 18px; }
+            .post-card.featured { padding-right: 18px; }
+            .post-card.featured::after { display: none; }
+            .post-title { font-size: 1.4rem; }
+            .post-meta { gap: 8px; }
             .post-read-time { display: none; }
+            .post-excerpt { font-size: 0.8rem; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
 
             footer .container { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
         }
     </style>
 </head>
@@ -457,6 +582,16 @@
     <main>
         <div class="container">
 
+            <!-- TOOLBAR: SEARCH + COUNT -->
+            <div class="blog-toolbar fade d2">
+                <div class="search-bar">
+                    <span class="search-icon">&gt; search_</span>
+                    <input type="text" id="searchInput" placeholder="type to search titles, tags..." autocomplete="off" spellcheck="false">
+                    <button class="search-clear" id="searchClear" title="clear">✕</button>
+                </div>
+                <div class="post-count" id="postCount">&gt; <span id="countNum">0</span> posts</div>
+            </div>
+
             <!-- FILTER BAR -->
             <div class="filter-bar fade d2">
                 <span class="filter-label">filter:</span>
@@ -467,6 +602,10 @@
                 <button class="filter-btn" data-cat="code">code</button>
                 <button class="filter-btn" data-cat="life">life</button>
                 <button class="filter-btn" data-cat="science">science</button>
+                <button class="filter-btn" data-cat="quantum">quantum</button>
+                <button class="filter-btn" data-cat="systems">systems</button>
+                <button class="filter-btn" data-cat="theory">theory</button>
+                <button class="filter-btn" data-cat="security">security</button>
             </div>
 
             <!-- BLOG POSTS -->
@@ -658,7 +797,218 @@
                 </a>
 
 
+                <!-- ══ QUANTUM COMPUTING SERIES ══ -->
+                <a href="posts/what-is-a-qubit.html" class="post-card fade" data-cat="quantum">
+                    <div class="post-meta"><span class="post-date">2026-01-05</span><span class="post-category cat-quantum">Quantum</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">What Is a Qubit? (And Why It's Not Just '0 and 1 at the Same Time')</div>
+                    <p class="post-excerpt">The most misunderstood concept in tech, properly explained. Probability amplitudes, the Bloch sphere, superposition as a property of description — and why quantum parallelism is not what the headlines say it is.</p>
+                    <div class="post-tags"><span class="tag">quantum</span><span class="tag">qubits</span><span class="tag">superposition</span><span class="tag">Bloch sphere</span></div>
+                </a>
+
+                <a href="posts/quantum-entanglement.html" class="post-card fade" data-cat="quantum">
+                    <div class="post-meta"><span class="post-date">2026-01-08</span><span class="post-category cat-quantum">Quantum</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">Quantum Entanglement — Einstein's 'Spooky Action' Finally Explained</div>
+                    <p class="post-excerpt">What entanglement actually is, why Einstein was wrong about hidden variables, Bell's theorem and Aspect's experiments, and why it cannot send information faster than light — but can do other remarkable things.</p>
+                    <div class="post-tags"><span class="tag">entanglement</span><span class="tag">Bell's theorem</span><span class="tag">EPR paradox</span><span class="tag">QKD</span></div>
+                </a>
+
+                <a href="posts/quantum-decoherence.html" class="post-card fade" data-cat="quantum">
+                    <div class="post-meta"><span class="post-date">2026-01-12</span><span class="post-category cat-quantum">Quantum</span><span class="post-read-time">8 min read</span></div>
+                    <div class="post-title">Why Quantum Computers Are So Hard to Build — The Decoherence Problem</div>
+                    <p class="post-excerpt">Coherence times, quantum error correction, the surface code, dilution refrigerators colder than deep space, and an honest assessment of where we actually are: NISQ-era with fault tolerance still years away.</p>
+                    <div class="post-tags"><span class="tag">decoherence</span><span class="tag">NISQ</span><span class="tag">error correction</span><span class="tag">surface code</span></div>
+                </a>
+
+                <a href="posts/shors-algorithm.html" class="post-card fade" data-cat="quantum security">
+                    <div class="post-meta"><span class="post-date">2026-01-15</span><span class="post-category cat-quantum">Quantum</span><span class="post-category cat-security">Security</span><span class="post-read-time">11 min read</span></div>
+                    <div class="post-title">Shor's Algorithm — The Math That Could Break the Internet</div>
+                    <p class="post-excerpt">RSA encryption, the Quantum Fourier Transform, why Shor's runs in polynomial time, where we actually are (factoring 15 ≠ factoring 2048-bit keys), and Grover's algorithm as the second quantum threat.</p>
+                    <div class="post-tags"><span class="tag">Shor's algorithm</span><span class="tag">RSA</span><span class="tag">QFT</span><span class="tag">cryptography</span></div>
+                </a>
+
+                <a href="posts/photonic-quantum-computers.html" class="post-card fade" data-cat="quantum">
+                    <div class="post-meta"><span class="post-date">2026-01-18</span><span class="post-category cat-quantum">Quantum</span><span class="post-read-time">8 min read</span></div>
+                    <div class="post-title">PsiQuantum's Bet — Building a Quantum Computer Out of Light</div>
+                    <p class="post-excerpt">The race between superconducting, photonic, trapped-ion, and neutral atom approaches. Why PsiQuantum is betting $900M+ on silicon photonics. Google Willow's December 2024 milestone. The honest assessment.</p>
+                    <div class="post-tags"><span class="tag">photonic QC</span><span class="tag">PsiQuantum</span><span class="tag">Google Willow</span><span class="tag">KLM theorem</span></div>
+                </a>
+
+                <a href="posts/quantum-complexity-theory.html" class="post-card fade" data-cat="quantum theory">
+                    <div class="post-meta"><span class="post-date">2026-01-22</span><span class="post-category cat-quantum">Quantum</span><span class="post-category cat-theory">Theory</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">A New Complexity Theory for the Quantum Age — BQP, QMA and Beyond P vs NP</div>
+                    <p class="post-excerpt">The quantum complexity zoo: BQP, QMA, the shocking MIP*=RE result. Why quantum computers won't solve NP-complete problems in general, and what the structured speedups actually are.</p>
+                    <div class="post-tags"><span class="tag">BQP</span><span class="tag">QMA</span><span class="tag">MIP*=RE</span><span class="tag">complexity theory</span></div>
+                </a>
+
+                <a href="posts/quantum-cryptography.html" class="post-card fade" data-cat="quantum security">
+                    <div class="post-meta"><span class="post-date">2026-01-25</span><span class="post-category cat-quantum">Quantum</span><span class="post-category cat-security">Security</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">Quantum Cryptography — The Unbreakable Lock</div>
+                    <p class="post-excerpt">BB84 protocol step by step, the no-cloning theorem, E91 entanglement-based QKD, China's Micius satellite, and the honest answer: information-theoretically secure in theory, side-channel vulnerable in practice.</p>
+                    <div class="post-tags"><span class="tag">QKD</span><span class="tag">BB84</span><span class="tag">no-cloning</span><span class="tag">quantum networks</span></div>
+                </a>
+
+                <!-- ══ AI / ML SERIES ══ -->
+                <a href="posts/how-transformers-work.html" class="post-card fade" data-cat="ai">
+                    <div class="post-meta"><span class="post-date">2026-02-01</span><span class="post-category cat-ai">AI</span><span class="post-read-time">12 min read</span></div>
+                    <div class="post-title">Transformers Explained from Zero — What Attention Actually Does</div>
+                    <p class="post-excerpt">Query, Key, Value matrices. The attention formula. Multi-head attention, positional encoding, the full forward pass. Scaling laws. Why 'just scale it' worked. And the hard question: is statistical pattern-completion the same as understanding?</p>
+                    <div class="post-tags"><span class="tag">transformers</span><span class="tag">attention</span><span class="tag">LLMs</span><span class="tag">scaling laws</span></div>
+                </a>
+
+                <a href="posts/why-llms-hallucinate.html" class="post-card fade" data-cat="ai">
+                    <div class="post-meta"><span class="post-date">2026-02-05</span><span class="post-category cat-ai">AI</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">Why Large Language Models Hallucinate — And Why It's Not a Bug</div>
+                    <p class="post-excerpt">Next-token prediction has no truth signal. The confidence decoupling problem. RAG and chain-of-thought as partial fixes. Why hallucination is exactly what the model was trained to do — and what would actually fix it.</p>
+                    <div class="post-tags"><span class="tag">hallucination</span><span class="tag">LLMs</span><span class="tag">RAG</span><span class="tag">world models</span></div>
+                </a>
+
+                <a href="posts/emergent-abilities-llms.html" class="post-card fade" data-cat="ai">
+                    <div class="post-meta"><span class="post-date">2026-02-08</span><span class="post-category cat-ai">AI</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">Emergent Abilities in LLMs — Do They Actually Exist?</div>
+                    <p class="post-excerpt">Wei et al. 2022 claimed sharp capability jumps at scale. Schaeffer et al. 2023 called it a measurement mirage. Who's right? The scaling laws underneath, the in-context learning mystery, and what we genuinely don't understand.</p>
+                    <div class="post-tags"><span class="tag">emergence</span><span class="tag">scaling laws</span><span class="tag">in-context learning</span><span class="tag">BIG-Bench</span></div>
+                </a>
+
+                <a href="posts/neuromorphic-computing.html" class="post-card fade" data-cat="ai science">
+                    <div class="post-meta"><span class="post-date">2026-02-12</span><span class="post-category cat-ai">AI</span><span class="post-category cat-science">Science</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">Neuromorphic Computing — Chips That Think Like Brains</div>
+                    <p class="post-excerpt">The von Neumann bottleneck, Intel's Loihi, IBM's NorthPole, spiking neural networks, and why the brain runs on 20 watts while GPT-4 training consumed a small country's annual electricity.</p>
+                    <div class="post-tags"><span class="tag">neuromorphic</span><span class="tag">Loihi</span><span class="tag">spiking NNs</span><span class="tag">NorthPole</span></div>
+                </a>
+
+                <a href="posts/ai-reasoning-wrong-reasons.html" class="post-card fade" data-cat="ai">
+                    <div class="post-meta"><span class="post-date">2026-02-15</span><span class="post-category cat-ai">AI</span><span class="post-read-time">8 min read</span></div>
+                    <div class="post-title">Is AI Reasoning Right for the Wrong Reasons?</div>
+                    <p class="post-excerpt">The X-ray classifier that learned hospital metadata. Cows on beaches. NLP models exploiting dataset artefacts. Shortcut learning, out-of-distribution failure, and Judea Pearl's ladder of causation as the path forward.</p>
+                    <div class="post-tags"><span class="tag">shortcut learning</span><span class="tag">OOD</span><span class="tag">causal AI</span><span class="tag">brittleness</span></div>
+                </a>
+
+                <a href="posts/rlhf-explained.html" class="post-card fade" data-cat="ai">
+                    <div class="post-meta"><span class="post-date">2026-02-18</span><span class="post-category cat-ai">AI</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">RLHF — How ChatGPT Actually Works</div>
+                    <p class="post-excerpt">SFT → reward model → PPO. The KL divergence penalty. Reward hacking and sycophancy. Constitutional AI and RLAIF. Direct Preference Optimisation. And what aligning to human preferences means when humans disagree.</p>
+                    <div class="post-tags"><span class="tag">RLHF</span><span class="tag">PPO</span><span class="tag">DPO</span><span class="tag">Constitutional AI</span></div>
+                </a>
+
+                <!-- ══ CRYPTOGRAPHY / SECURITY SERIES ══ -->
+                <a href="posts/how-rsa-works.html" class="post-card fade" data-cat="security">
+                    <div class="post-meta"><span class="post-date">2026-02-22</span><span class="post-category cat-security">Security</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">How RSA Encryption Works — And Why 2048 Bits Keeps Your Data Safe (For Now)</div>
+                    <p class="post-excerpt">One-way functions, modular arithmetic, Euler's theorem. Key generation step by step with real numbers. Why factoring 617 digits takes the age of the universe. And why 'for now' is doing real work in that title.</p>
+                    <div class="post-tags"><span class="tag">RSA</span><span class="tag">modular arithmetic</span><span class="tag">public key</span><span class="tag">encryption</span></div>
+                </a>
+
+                <a href="posts/post-quantum-cryptography.html" class="post-card fade" data-cat="security quantum">
+                    <div class="post-meta"><span class="post-date">2026-02-25</span><span class="post-category cat-security">Security</span><span class="post-category cat-quantum">Quantum</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">Post-Quantum Cryptography — The Race to Encrypt Before Quantum Breaks Everything</div>
+                    <p class="post-excerpt">NIST's 7-year competition. CRYSTALS-Kyber, Dilithium, FALCON, SPHINCS+. Lattice-based cryptography explained. The harvest-now-decrypt-later threat. SIKE broke in an hour on a laptop — a cautionary tale.</p>
+                    <div class="post-tags"><span class="tag">PQC</span><span class="tag">CRYSTALS-Kyber</span><span class="tag">lattice crypto</span><span class="tag">NIST</span></div>
+                </a>
+
+                <a href="posts/zero-knowledge-proofs.html" class="post-card fade" data-cat="security theory">
+                    <div class="post-meta"><span class="post-date">2026-03-01</span><span class="post-category cat-security">Security</span><span class="post-category cat-theory">Theory</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">Zero-Knowledge Proofs — Proving You Know Something Without Revealing What You Know</div>
+                    <p class="post-excerpt">The Ali Baba cave, graph 3-colouring, Fiat-Shamir, zkSNARKs, zkSTARKs. ZK-rollups scaling Ethereum. Proving age without showing ID. And the emerging frontier: verifiable AI inference without revealing model weights.</p>
+                    <div class="post-tags"><span class="tag">ZKP</span><span class="tag">zkSNARKs</span><span class="tag">ZK-rollups</span><span class="tag">privacy</span></div>
+                </a>
+
+                <!-- ══ THEORY OF COMPUTATION SERIES ══ -->
+                <a href="posts/p-vs-np.html" class="post-card fade" data-cat="theory">
+                    <div class="post-meta"><span class="post-date">2026-03-05</span><span class="post-category cat-theory">Theory</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">P vs NP — The Million Dollar Question No One Can Answer</div>
+                    <p class="post-excerpt">P, NP, NP-complete, Cook-Levin, Karp's 21 problems, the barriers to proof, and what P=NP would actually mean: automated proofs, broken cryptography, and the collapse of the value of human insight.</p>
+                    <div class="post-tags"><span class="tag">P vs NP</span><span class="tag">NP-complete</span><span class="tag">SAT</span><span class="tag">complexity</span></div>
+                </a>
+
+                <a href="posts/godel-turing-limits.html" class="post-card fade" data-cat="theory philosophy">
+                    <div class="post-meta"><span class="post-date">2026-03-08</span><span class="post-category cat-theory">Theory</span><span class="post-category cat-philosophy">Philosophy</span><span class="post-read-time">12 min read</span></div>
+                    <div class="post-title">Gödel, Turing, and the Limits of Mathematics</div>
+                    <p class="post-excerpt">Two theorems, one insight. The Hilbert Programme destroyed in 22 pages. The halting problem proved by self-reference. And the philosophical aftermath: truth outruns provability, and there are things no computer can ever do.</p>
+                    <div class="post-tags"><span class="tag">Gödel</span><span class="tag">Turing</span><span class="tag">incompleteness</span><span class="tag">halting problem</span></div>
+                </a>
+
+                <a href="posts/conways-game-of-life.html" class="post-card fade" data-cat="theory science">
+                    <div class="post-meta"><span class="post-date">2026-03-12</span><span class="post-category cat-theory">Theory</span><span class="post-category cat-science">Science</span><span class="post-read-time">8 min read</span></div>
+                    <div class="post-title">Conway's Game of Life — Complexity from Four Simple Rules</div>
+                    <p class="post-excerpt">A game with no players. Gliders, spaceships, the Gosper gun. Turing completeness from cellular automata. Wolfram's Rule 110. Computational irreducibility. And what all of this implies about the rules of physics and the emergence of mind.</p>
+                    <div class="post-tags"><span class="tag">cellular automata</span><span class="tag">Game of Life</span><span class="tag">emergence</span><span class="tag">Turing completeness</span></div>
+                </a>
+
+                <a href="posts/travelling-salesman.html" class="post-card fade" data-cat="theory">
+                    <div class="post-meta"><span class="post-date">2026-03-15</span><span class="post-category cat-theory">Theory</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">The Travelling Salesman Problem — Why Simple Questions Can Be Impossibly Hard</div>
+                    <p class="post-excerpt">30 cities, more routes than atoms in the universe. NP-hard, yet Concorde solved an 85,900-city instance. Christofides' 3/2 bound, the 2021 improvement after 44 years. Deep RL for TSP. And what it teaches about the nature of difficulty.</p>
+                    <div class="post-tags"><span class="tag">TSP</span><span class="tag">NP-hard</span><span class="tag">approximation</span><span class="tag">Christofides</span></div>
+                </a>
+
+                <!-- ══ BIOLOGY × COMPUTING SERIES ══ -->
+                <a href="posts/dna-computing.html" class="post-card fade" data-cat="science">
+                    <div class="post-meta"><span class="post-date">2026-03-18</span><span class="post-category cat-science">Science</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">DNA Computing — Storing Data in Molecules</div>
+                    <p class="post-excerpt">Adleman solved a graph problem in a test tube in 1994. 215 petabytes per gram of DNA. Microsoft's molecular computer. Genetic logic gates in E. coli. And the philosophical dimension: life as computation, evolution as search algorithm.</p>
+                    <div class="post-tags"><span class="tag">DNA computing</span><span class="tag">molecular storage</span><span class="tag">synthetic biology</span><span class="tag">Adleman</span></div>
+                </a>
+
+                <a href="posts/brain-as-computer.html" class="post-card fade" data-cat="science ai">
+                    <div class="post-meta"><span class="post-date">2026-03-22</span><span class="post-category cat-science">Science</span><span class="post-category cat-ai">AI</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">The Brain as a Computer — And Why the Analogy Is Mostly Wrong</div>
+                    <p class="post-excerpt">Clockwork, telegraph, telephone exchange, digital computer — we've always compared the brain to our best technology. Each analogy revealed something. Each was deeply wrong. What dendritic computation, connectomes, and embodiment tell us about the gap between mind and machine.</p>
+                    <div class="post-tags"><span class="tag">neuroscience</span><span class="tag">connectomes</span><span class="tag">embodied AI</span><span class="tag">Cajal</span></div>
+                </a>
+
+                <a href="posts/alphafold.html" class="post-card fade" data-cat="science ai">
+                    <div class="post-meta"><span class="post-date">2026-03-25</span><span class="post-category cat-science">Science</span><span class="post-category cat-ai">AI</span><span class="post-read-time">9 min read</span></div>
+                    <div class="post-title">AlphaFold and the Protein Folding Revolution</div>
+                    <p class="post-excerpt">50 years of a hard problem. Levinthal's paradox — 10³⁰ conformations, folded in microseconds. How AlphaFold's Evoformer works. 200 million protein structures, free and public. AlphaFold 3. And what it means when a 50-year problem dissolves overnight.</p>
+                    <div class="post-tags"><span class="tag">AlphaFold</span><span class="tag">protein folding</span><span class="tag">DeepMind</span><span class="tag">drug discovery</span></div>
+                </a>
+
+                <!-- ══ SYSTEMS SERIES ══ -->
+                <a href="posts/cap-theorem.html" class="post-card fade" data-cat="systems">
+                    <div class="post-meta"><span class="post-date">2026-03-28</span><span class="post-category cat-systems">Systems</span><span class="post-read-time">8 min read</span></div>
+                    <div class="post-title">The CAP Theorem — Why Your Database Cannot Have Everything</div>
+                    <p class="post-excerpt">Consistency, Availability, Partition Tolerance: pick two. The proof intuition, CP vs AP systems, PACELC refinement, eventual consistency, CRDTs, and Google Spanner's audacious claim to have all three via GPS-synchronised clocks.</p>
+                    <div class="post-tags"><span class="tag">CAP theorem</span><span class="tag">distributed systems</span><span class="tag">eventual consistency</span><span class="tag">CRDTs</span></div>
+                </a>
+
+                <a href="posts/how-internet-works.html" class="post-card fade" data-cat="systems">
+                    <div class="post-meta"><span class="post-date">2026-04-01</span><span class="post-category cat-systems">Systems</span><span class="post-read-time">11 min read</span></div>
+                    <div class="post-title">How the Internet Actually Works — From Your Keyboard to a Server on the Other Side of the World</div>
+                    <p class="post-excerpt">DNS resolution, TCP/IP, BGP routing and its terrifying fragility, TLS handshake, HTTP/3 over QUIC, browser rendering pipeline, CDN edge caching. The full journey of a single request, step by step.</p>
+                    <div class="post-tags"><span class="tag">DNS</span><span class="tag">TCP/IP</span><span class="tag">BGP</span><span class="tag">TLS</span><span class="tag">HTTP/3</span></div>
+                </a>
+
+                <a href="posts/moores-law-is-dead.html" class="post-card fade" data-cat="systems science">
+                    <div class="post-meta"><span class="post-date">2026-04-05</span><span class="post-category cat-systems">Systems</span><span class="post-category cat-science">Science</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">Moore's Law Is Dead — What Comes After</div>
+                    <p class="post-excerpt">60 years of exponential, and it's ending. Dennard scaling, quantum tunnelling at 2nm, $20B fabs. 3D stacking, chiplets, GAAFET, carbon nanotubes, specialised silicon (GPU, TPU, NPU). What the next 50 years of computing looks like without free exponential scaling.</p>
+                    <div class="post-tags"><span class="tag">Moore's Law</span><span class="tag">3D stacking</span><span class="tag">chiplets</span><span class="tag">GAAFET</span></div>
+                </a>
+
+                <!-- ══ FRONTIER / PHILOSOPHY SERIES ══ -->
+                <a href="posts/simulation-hypothesis.html" class="post-card fade" data-cat="philosophy science">
+                    <div class="post-meta"><span class="post-date">2026-04-08</span><span class="post-category cat-philosophy">Philosophy</span><span class="post-category cat-science">Science</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">The Simulation Hypothesis — Is It Even a Scientific Question?</div>
+                    <p class="post-excerpt">Bostrom's trilemma. The computational cost argument. Planck length as a pixel size, speed of light as a clock limit. Silas Beane's lattice test. Karl Popper on unfalsifiability. And why the Fermi paradox and the simulation hypothesis might be the same question.</p>
+                    <div class="post-tags"><span class="tag">simulation</span><span class="tag">Bostrom</span><span class="tag">falsifiability</span><span class="tag">metaphysics</span></div>
+                </a>
+
+                <a href="posts/kolmogorov-complexity.html" class="post-card fade" data-cat="theory philosophy">
+                    <div class="post-meta"><span class="post-date">2026-04-12</span><span class="post-category cat-theory">Theory</span><span class="post-category cat-philosophy">Philosophy</span><span class="post-read-time">10 min read</span></div>
+                    <div class="post-title">Kolmogorov Complexity — The Deepest Definition of Information</div>
+                    <p class="post-excerpt">K(x) = the length of the shortest program that outputs x. Randomness defined rigorously. The invariance theorem. KC is uncomputable. Solomonoff induction as mathematical Occam's razor. Shannon entropy as its average. The universe's laws as the shortest program that produces the data.</p>
+                    <div class="post-tags"><span class="tag">Kolmogorov complexity</span><span class="tag">randomness</span><span class="tag">MDL</span><span class="tag">Solomonoff</span></div>
+                </a>
+
+                <a href="posts/entropy-and-information.html" class="post-card fade" data-cat="science philosophy">
+                    <div class="post-meta"><span class="post-date">2026-04-15</span><span class="post-category cat-science">Science</span><span class="post-category cat-philosophy">Philosophy</span><span class="post-read-time">11 min read</span></div>
+                    <div class="post-title">Entropy, Information, and Maxwell's Demon</div>
+                    <p class="post-excerpt">Maxwell's demon sorted molecules for 90 years without resolution. Landauer's principle: erasing one bit costs k_BT ln(2) of heat. Bennett's 1982 resolution. Shannon entropy and Boltzmann entropy as the same concept. Information is physical. Computation has thermodynamic cost. Wheeler's 'it from bit'.</p>
+                    <div class="post-tags"><span class="tag">entropy</span><span class="tag">Shannon</span><span class="tag">Landauer</span><span class="tag">Maxwell's demon</span><span class="tag">thermodynamics</span></div>
+                </a>
+
             </div><!-- /blog-grid -->
+
 
             <div class="empty-state" id="emptyState">
                 <p>&gt; no posts found matching filter_<span style="border-right:2px solid var(--muted);animation:blink 0.8s step-end infinite">&nbsp;</span></p>
@@ -673,7 +1023,7 @@
     <footer>
         <div class="container">
             <p>← <a href="index.html">back to portfolio</a></p>
-            <p>© 2025 Umakant Kunal</p>
+            <p>© 2026 Umakant Kunal</p>
         </div>
     </footer>
 
@@ -681,102 +1031,119 @@
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     </style>
 
+    <!-- SCROLL TO TOP -->
+    <button id="scrollTop" title="back to top">&#8593;</button>
+
     <script>
     'use strict';
 
-    /* ── STARFIELD ── */
+    /* STARFIELD */
     (function () {
         const canvas = document.getElementById('starfield');
         const ctx = canvas.getContext('2d');
         let W, H, stars = [];
-
-        function resize() {
-            W = canvas.width  = window.innerWidth;
-            H = canvas.height = window.innerHeight;
-        }
-
+        function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
         function initStars() {
             stars = [];
             const count = Math.min(180, Math.floor(W * H / 8000));
-            for (let i = 0; i < count; i++) {
-                stars.push({
-                    x: Math.random() * W,
-                    y: Math.random() * H,
-                    r: Math.random() * 1.1 + 0.1,
-                    speed: Math.random() * 0.2 + 0.03,
-                    opacity: Math.random() * 0.5 + 0.08,
-                    twinkle: Math.random() * Math.PI * 2
-                });
-            }
+            for (let i = 0; i < count; i++) stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.1+0.1, speed: Math.random()*0.2+0.03, opacity: Math.random()*0.5+0.08, twinkle: Math.random()*Math.PI*2 });
         }
-
         let frame = 0;
         function draw() {
-            ctx.clearRect(0, 0, W, H);
-            frame += 0.008;
+            ctx.clearRect(0,0,W,H); frame += 0.008;
             stars.forEach(s => {
-                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
-                ctx.fill();
-                s.y += s.speed;
-                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+                const alpha = s.opacity*(0.75+0.25*Math.sin(frame+s.twinkle));
+                ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+                ctx.fillStyle=`rgba(205,214,244,${alpha})`; ctx.fill();
+                s.y += s.speed; if (s.y > H+2) { s.y=-2; s.x=Math.random()*W; }
             });
             requestAnimationFrame(draw);
         }
-
-        window.addEventListener('resize', () => { resize(); initStars(); });
+        window.addEventListener('resize', ()=>{ resize(); initStars(); });
         resize(); initStars(); draw();
     })();
 
-    /* ── FADE IN ── */
+    /* FADE IN */
     (function () {
         const io = new IntersectionObserver(entries => {
-            entries.forEach(e => {
-                if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
-            });
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
         }, { threshold: 0.06 });
         document.querySelectorAll('.fade').forEach(el => io.observe(el));
     })();
 
-    /* ── FILTER ── */
+    /* BLOG ENGINE: search + filter */
     (function () {
-        const btns  = document.querySelectorAll('.filter-btn');
-        const cards = document.querySelectorAll('.blog-grid .post-card[data-cat]');
-        const empty = document.getElementById('emptyState');
+        const grid        = document.getElementById('blogGrid');
+        const emptyState  = document.getElementById('emptyState');
+        const countNum    = document.getElementById('countNum');
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+        const filterBtns  = document.querySelectorAll('.filter-btn');
+        const allCards    = Array.from(grid.querySelectorAll('.post-card[data-cat]'));
+        let activeCat = 'all', searchQuery = '';
 
-        btns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                btns.forEach(b => b.classList.remove('active'));
+        function getCardText(card) {
+            const title   = card.querySelector('.post-title') ? card.querySelector('.post-title').textContent : '';
+            const excerpt = card.querySelector('.post-excerpt') ? card.querySelector('.post-excerpt').textContent : '';
+            const tags    = Array.from(card.querySelectorAll('.tag')).map(function(t){ return t.textContent; }).join(' ');
+            return (title + ' ' + excerpt + ' ' + tags + ' ' + (card.dataset.cat||'')).toLowerCase();
+        }
+
+        function render() {
+            var visible = 0;
+            allCards.forEach(function(c) {
+                var catOk  = activeCat === 'all' || (c.dataset.cat||'').includes(activeCat);
+                var srchOk = !searchQuery || getCardText(c).includes(searchQuery);
+                var show   = catOk && srchOk;
+                c.style.display = show ? 'block' : 'none';
+                if (show) visible++;
+            });
+            countNum.textContent = visible;
+            emptyState.style.display = visible === 0 ? 'block' : 'none';
+        }
+
+        filterBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                filterBtns.forEach(function(b){ b.classList.remove('active'); });
                 btn.classList.add('active');
-
-                const cat = btn.dataset.cat;
-                let visible = 0;
-
-                cards.forEach(card => {
-                    const cats = card.dataset.cat || '';
-                    const show = cat === 'all' || cats.includes(cat);
-                    card.style.display = show ? 'block' : 'none';
-                    if (show) visible++;
-                });
-
-                empty.style.display = visible === 0 ? 'block' : 'none';
+                activeCat = btn.dataset.cat; render();
             });
         });
-    })();
 
-    /* ── NAV TOGGLE ── */
-    (function () {
-        const toggle = document.getElementById('navToggle');
-        const links  = document.getElementById('navLinks');
-        toggle.addEventListener('click', () => links.classList.toggle('open'));
-        document.querySelectorAll('.nav-links a').forEach(a => {
-            a.addEventListener('click', () => links.classList.remove('open'));
+        searchInput.addEventListener('input', function() {
+            searchQuery = searchInput.value.trim().toLowerCase();
+            searchClear.style.display = searchQuery ? 'block' : 'none';
+            render();
         });
+
+        searchClear.addEventListener('click', function() {
+            searchInput.value = ''; searchQuery = '';
+            searchClear.style.display = 'none';
+            searchInput.focus(); render();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement !== searchInput) { e.preventDefault(); searchInput.focus(); }
+            if (e.key === 'Escape' && document.activeElement === searchInput) searchInput.blur();
+        });
+
+        render();
     })();
 
+    /* NAV TOGGLE */
+    (function () {
+        var toggle = document.getElementById('navToggle');
+        var links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', function(){ links.classList.toggle('open'); });
+        document.querySelectorAll('.nav-links a').forEach(function(a){ a.addEventListener('click', function(){ links.classList.remove('open'); }); });
+    })();
 
+    /* SCROLL TO TOP */
+    (function () {
+        var btn = document.getElementById('scrollTop');
+        window.addEventListener('scroll', function() { btn.classList.toggle('visible', window.scrollY > 400); }, { passive: true });
+        btn.addEventListener('click', function(){ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    })();
 
     </script>
 </body>

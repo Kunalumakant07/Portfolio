@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PsiQuantum's Bet — Building a Quantum Computer Out of Light — Umakant Kunal</title>
+    <meta name="description" content="PsiQuantum is betting $900M+ that the future of quantum computing is photonic — built on standard silicon chip fabs, at room temperature. Here's what that bet actually means.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-space     { color: var(--blue);    border-color: #1e4a6e; }
+        .cat-quantum   { color: var(--amber);   border-color: #7a5a10; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* comparison table */
+        .approach-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0 28px;
+            font-size: 0.78rem;
+        }
+
+        .approach-table th {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--accent-dim);
+            color: var(--accent);
+            letter-spacing: 1px;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+        }
+
+        .approach-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+            vertical-align: top;
+        }
+
+        .approach-table tr:last-child td { border-bottom: none; }
+
+        .approach-table td:first-child { color: var(--text); }
+
+        .approach-table tr.highlight td { background: var(--dim); }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+            .approach-table { font-size: 0.72rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            .approach-table { display: block; overflow-x: auto; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                photonic-quantum-computers
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-01-18</span>
+                <span class="post-category cat-quantum">Quantum Computing</span>
+                <span class="post-read-time">8 min read</span>
+            </div>
+
+            <h1 class="post-title">PsiQuantum's Bet —<br>Building a Quantum<br>Computer Out of Light</h1>
+
+            <p class="post-subtitle">
+                Most quantum computers are buried in dilution refrigerators near absolute zero. PsiQuantum is betting nearly a billion dollars that the winning approach uses photons — particles of light — manufactured on standard semiconductor fab lines. Either this is the most elegant engineering insight in the history of computing, or it is the most expensive dead end.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                If you visit a Google or IBM quantum computing lab, you'll see something that looks less like a computer and more like a chandelier designed by a mad scientist — layers of vacuum-jacketed cylinders, coaxial cables threaded with surgical precision, superconducting chips cooled to temperatures colder than outer space. We're talking 15 millikelvin. That is roughly 273 degrees colder than a comfortable room, 100 times colder than interstellar space, colder than anywhere in the observable universe except other dilution refrigerators.
+            </p>
+
+            <p>
+                PsiQuantum's founders looked at that infrastructure and said: <em>there has to be a better way.</em> Their answer is photonic quantum computing — using single particles of light, manufactured on existing silicon photonics fabs, potentially at room temperature. They've raised over $900 million to prove it. The audacity of that bet is what I want to pull apart here.
+            </p>
+
+            <h2>THE QUANTUM COMPUTING LANDSCAPE</h2>
+
+            <p>
+                Before we can understand what makes PsiQuantum's approach unusual, we need a map of the terrain. Quantum computing is not one technology — it's several competing bets on fundamentally different physical substrates, each with its own qubits, temperature requirements, gate fidelities, and scalability nightmares.
+            </p>
+
+            <table class="approach-table">
+                <thead>
+                    <tr>
+                        <th>Approach</th>
+                        <th>Key players</th>
+                        <th>Qubit type</th>
+                        <th>Temperature</th>
+                        <th>Main challenge</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Superconducting</td>
+                        <td>Google (Willow), IBM (Heron)</td>
+                        <td>Josephson junction circuits</td>
+                        <td>~15 mK</td>
+                        <td>Decoherence, wiring at scale</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>Trapped ions</td>
+                        <td>IonQ, Quantinuum</td>
+                        <td>Individual ions in EM traps</td>
+                        <td>Room temp (vacuum)</td>
+                        <td>Slow gate speeds, hard to scale trap size</td>
+                    </tr>
+                    <tr>
+                        <td>Photonic</td>
+                        <td>PsiQuantum, Xanadu</td>
+                        <td>Single photons / squeezed light</td>
+                        <td>Room temp (mostly)</td>
+                        <td>Non-deterministic gates, photon loss</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>Neutral atoms</td>
+                        <td>QuEra, Pasqal</td>
+                        <td>Arrays of neutral atoms</td>
+                        <td>Laser cooling (~μK)</td>
+                        <td>Reconfiguration speed, connectivity</td>
+                    </tr>
+                    <tr>
+                        <td>Topological</td>
+                        <td>Microsoft</td>
+                        <td>Majorana zero modes</td>
+                        <td>~50 mK</td>
+                        <td>Qubit existence disputed; enormous fabrication difficulty</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                The superconducting approach — championed by Google and IBM — has moved fastest and accumulated the most hardware demonstrations. Superconducting qubits are made using standard microfabrication techniques and can be controlled with microwave pulses. The problem is that superconductivity requires extremely low temperatures, and scaling the cryogenic infrastructure to handle millions of qubits — which fault-tolerant quantum computing will require — is a genuinely unsolved engineering problem. You can't just make a bigger fridge.
+            </p>
+
+            <p>
+                Trapped ion systems from IonQ and Quantinuum have achieved the highest gate fidelities of any platform — their two-qubit gates can exceed 99.9% accuracy. Ions are perfect qubits: they're identical by nature, well-isolated from the environment, and manipulable with laser pulses. The catch is speed and scale. Gates take microseconds to milliseconds rather than nanoseconds, and building traps that can hold and connect thousands of ions without degradation is an open problem.
+            </p>
+
+            <p>
+                Neutral atom arrays from QuEra and Pasqal showed dramatic recent progress: you can arrange hundreds of qubits in arbitrary 2D or 3D patterns using optical tweezers, and reconfigure the topology mid-computation. Microsoft's topological bet is the longest of long shots — Majorana modes would give inherently error-protected qubits, but even demonstrating their existence cleanly took until 2023 and remains contested.
+            </p>
+
+            <p>
+                Into this landscape, PsiQuantum inserted a photonic bet. Their claim: scale will be decisive, and scale requires manufacturing.
+            </p>
+
+            <h2>WHY PHOTONS</h2>
+
+            <p>
+                Photons have properties that make them attractive candidates for carrying quantum information. They are, in a word, <em>antisocial</em>. A photon traveling through a fiber optic cable or a silicon waveguide barely interacts with its environment. It doesn't couple to thermal noise the way a superconducting qubit does. It doesn't wiggle when someone walks past the lab. This low decoherence — this reluctance to have its quantum state disturbed — is a primary virtue.
+            </p>
+
+            <p>
+                Photons also travel at the speed of light, which makes them the natural choice for quantum communication and quantum networking. They're already the workhorse of classical telecommunications. The lasers, detectors, modulators, and waveguides needed to create and manipulate single photons are mature, commercially available technology developed over decades for the fiber optic industry. You don't need exotic new hardware from scratch — you need to adapt existing supply chains.
+            </p>
+
+            <blockquote>
+                "The question is not whether photonics can do quantum computing. The question is whether it can do it at the scale and with the error rates required for useful computation. That's still open — but the manufacturing argument is real."
+                <cite>— Stephanie Wehner, Professor of Quantum Internet, TU Delft</cite>
+            </blockquote>
+
+            <p>
+                The problem — and it's a significant one — is that photons are <em>too</em> antisocial. They don't naturally interact with each other. In classical computing, logic gates work because electrons affect each other through transistors. A photon passing through a beamsplitter doesn't care what a different photon is doing. Making a two-qubit quantum gate — the fundamental operation of a quantum computer — requires getting photons to influence each other. Doing that directly requires materials with enormous nonlinear optical effects that introduce noise and loss at exactly the scales you cannot afford.
+            </p>
+
+            <p>
+                This is the central problem that photonic quantum computing spent decades wrestling with. The breakthrough came not from making photons interact directly, but from a 2001 theorem that changed what people thought was required.
+            </p>
+
+            <h2>LINEAR OPTICAL QUANTUM COMPUTING</h2>
+
+            <p>
+                In 2001, Emmanuel Knill, Raymond Laflamme, and Gerard Milburn published a result that shocked the quantum computing community. The <strong>KLM theorem</strong> proved that universal quantum computation is possible using only linear optical elements — beamsplitters and phase shifters — combined with single photon detectors and classical feedforward. No nonlinear materials required. No exotic interactions.
+            </p>
+
+            <p>
+                The catch was overhead. The original KLM scheme required astronomical numbers of ancilla photons and measurements to make a single reliable two-qubit gate. The probability of successfully implementing a gate was low, and making it succeed with certainty required consuming huge numbers of resource states. The theorem was a proof of principle, not a practical blueprint.
+            </p>
+
+            <p>
+                What changed the picture was the development of <strong>measurement-based quantum computing</strong> (MBQC), also called one-way quantum computing. Instead of applying gates sequentially to qubits, you first prepare a large entangled resource state — a cluster state — and then perform all your computation through single-qubit measurements, using classical feedforward to correct for the randomness of measurement outcomes. The entanglement is the computation.
+            </p>
+
+            <div class="callout" data-label="How Measurement-Based QC Works">
+                In a circuit model quantum computer, you evolve qubits by applying gates — like a classical program running instructions. In a measurement-based model, you prepare a highly entangled "cluster state" first, then measure individual qubits in carefully chosen bases. The measurement outcomes — which are random — are classically processed to steer the computation. Crucially, the randomness is correctable: each measurement result tells you which correction to apply to future measurements. The computation is "teleported" forward through the entanglement. PsiQuantum builds these cluster states from photons entangled via fusion — a probabilistic but correctable operation implemented with beamsplitters and detectors.
+            </div>
+
+            <p>
+                PsiQuantum's architecture is built around this paradigm. They generate photons using integrated single-photon sources on-chip, entangle them using <em>fusion gates</em> — probabilistic operations implemented with beamsplitters and photon number-resolving detectors — and assemble fault-tolerant logical qubits from the resulting resource states. The probabilistic nature of the fusion gates is handled through redundancy and error correction: you generate many attempts, discard the failures, and stitch the successes into the logical structure you need.
+            </p>
+
+            <blockquote>
+                "Fusion-based quantum computing allows us to build a fault-tolerant quantum computer using only the resources that can be manufactured at scale. The architecture is specifically designed around the capabilities of silicon photonics fabrication."
+                <cite>— Jeremy O'Brien, CEO and co-founder of PsiQuantum</cite>
+            </blockquote>
+
+            <p>
+                This fusion-based approach was detailed in a 2021 Nature paper by PsiQuantum's founders. The architecture accepts the probabilistic nature of linear optical gates as a given and designs around it, rather than trying to fight it. The cost is resource overhead — you need many more physical photons per logical qubit than a superconducting architecture might need per physical qubit. But if you can manufacture photons and detectors cheaply at scale, that overhead may be acceptable.
+            </p>
+
+            <h2>THE MANUFACTURING ARGUMENT</h2>
+
+            <p>
+                PsiQuantum's core thesis is not primarily about photonics — it's about manufacturing. The argument goes like this: a fault-tolerant quantum computer capable of breaking RSA encryption or simulating drug-molecule interactions at commercially useful scales will require somewhere between one million and ten million physical qubits. Current state-of-the-art machines have around 100 to 1,000.
+            </p>
+
+            <p>
+                Making a million of anything requires a production line that can be optimized, audited, and run at scale. The only industry in human history that has reliably manufactured billions of nanoscale devices is the semiconductor industry. Silicon fabs have spent sixty years developing the tools, processes, quality controls, and supply chains to do this. PsiQuantum's argument is that the only realistic path to a million-qubit machine runs through those fabs — not through custom cryogenic hardware hand-assembled by physicists.
+            </p>
+
+            <p>
+                Their partnership with <strong>GlobalFoundries</strong> is central to this thesis. GlobalFoundries operates fabs using 300mm silicon wafers and established CMOS-compatible processes. PsiQuantum's photonic chips — containing waveguides, beamsplitters, phase modulators, and single-photon detectors — are designed to be manufactured using these standard processes. The goal is a chip that comes off the same kind of production line as the processor in your phone, at similar yields and similar costs.
+            </p>
+
+            <p>
+                The silicon photonics platform allows light to be guided through nanoscale silicon waveguides etched into a chip. Silicon has a high refractive index and excellent transparency at telecom wavelengths (around 1550 nm), enabling tight waveguide bends and dense integration. Single-photon detectors based on superconducting nanowire single-photon detectors (SNSPDs) can be integrated on-chip, though they still require cryogenic cooling — a partial concession that PsiQuantum acknowledges while arguing it's a much simpler cryogenic challenge than cooling an entire quantum processor.
+            </p>
+
+            <div class="callout" data-label="Silicon Photonics vs. Superconducting Qubits — The Scale Comparison">
+                A modern superconducting quantum processor requires the entire chip to sit at 15 mK inside a dilution refrigerator. Scaling from 1,000 to 1,000,000 qubits means a proportionally larger fridge — and the wiring, control electronics, and thermal isolation become intractable. PsiQuantum's silicon photonic chips generate and route photons at room temperature; only the single-photon detectors need cooling, and to less extreme temperatures (~4K, achievable with standard liquid helium cryostats). The control and routing infrastructure — the lasers, modulators, and fiber interconnects — scales with existing telecom manufacturing. It's a very different scaling curve.
+            </div>
+
+            <h2>GOOGLE WILLOW'S MILESTONE</h2>
+
+            <p>
+                In December 2024, Google announced results from their <strong>Willow chip</strong>: a 105-qubit superconducting processor that achieved two milestones simultaneously. First, it solved a specific computational benchmark — random circuit sampling — in approximately five minutes. Second, and more striking, the claimed runtime for a classical supercomputer to match that result was 10 septillion years. That's 10<sup>25</sup> years, roughly 10<sup>15</sup> times the current age of the universe.
+            </p>
+
+            <p>
+                This number generated headlines. It's worth unpacking what it actually means — and what it doesn't.
+            </p>
+
+            <p>
+                Random circuit sampling is not a useful computation. It's a task specifically designed to be easy for quantum computers and hard for classical ones — a benchmark, not an application. The classical simulation time estimate depends heavily on the algorithm used and the available classical computing resources; some classical algorithms may do better than the worst-case estimate. No drug was discovered. No encryption was broken. No optimization problem that a logistics company cares about was solved.
+            </p>
+
+            <p>
+                What the Willow result <em>does</em> demonstrate is scientifically important: as they increased the number of qubits in the Willow chip, the error rate of the logical computation <em>decreased</em>. This is the signature of <strong>below-threshold error correction</strong> — the regime where adding more physical qubits to your error correction code actually makes the logical qubit better, rather than just adding more noise. This had been the central theoretical requirement for scalable quantum computing, and Willow was the first time it was convincingly demonstrated at this scale.
+            </p>
+
+            <blockquote>
+                "The main scientific result is that error correction is working. The noise is going down as the code size goes up. That's the thing that matters for the future of the field — not the septillion years number."
+                <cite>— John Preskill, Richard P. Feynman Professor of Theoretical Physics, Caltech</cite>
+            </blockquote>
+
+            <p>
+                For PsiQuantum, Willow's result is both validating and pressuring. Validating because it confirms that quantum error correction at scale is achievable — which is necessary for PsiQuantum's architecture too. Pressuring because Google is demonstrating momentum on the superconducting path that PsiQuantum is explicitly betting against.
+            </p>
+
+            <h2>THE HONEST ASSESSMENT</h2>
+
+            <p>
+                PsiQuantum was founded in 2016. It has raised over $900 million in private capital, including large investments from the Australian and US governments who view fault-tolerant quantum computing as a strategic technology. As of early 2026, the company has not publicly demonstrated a working quantum computer — photonic or otherwise. They have demonstrated components: photon sources, detectors, waveguide circuits. But the full architecture remains undemonstrated at scale.
+            </p>
+
+            <p>
+                This is not unusual for deep-tech companies building infrastructure at this level of difficulty. But it's important context. PsiQuantum's bet is a long bet. Jeremy O'Brien has publicly said that he believes a fault-tolerant quantum computer will be demonstrated in the early 2030s, and that it will be photonic. Critics point out that this timeline has slipped before, and that competitors on the superconducting path are making faster visible progress.
+            </p>
+
+            <p>
+                The photonic approach faces real technical challenges beyond the resource overhead of fusion-based computing. Photon loss is a persistent problem: every optical component — every waveguide bend, every beamsplitter, every detector — introduces loss, and quantum error correction requires loss rates to fall below strict thresholds. Single-photon sources are not perfectly on-demand; they produce photons probabilistically. Integrating all the required components — sources, waveguides, switches, detectors — on a single chip at the density needed for a useful processor is a fabrication challenge of enormous complexity.
+            </p>
+
+            <p>
+                Critics also question the overhead argument. The overhead of fusion-based quantum computing — the ratio of physical photons to logical qubits — may be high enough that even with cheap manufacturing, the total system cost is prohibitive. Architectural analyses suggest that a million logical qubits using fusion-based photonic computing might require orders of magnitude more photonic components than a superconducting processor with equivalent logical qubit count. At some point the manufacturing advantage gets swamped by the resource overhead disadvantage.
+            </p>
+
+            <p>
+                PsiQuantum's counter-argument is that these analyses assume the current state of the art in fusion gate success rates and error thresholds. Their thesis is that improvements in component quality — better sources, lower-loss waveguides, higher-efficiency detectors — will push the overhead down to manageable levels, and that the manufacturing advantage will then be decisive. This is a plausible argument. It is also difficult to evaluate from the outside.
+            </p>
+
+            <p>
+                What's not in dispute is the seriousness of the effort. PsiQuantum has assembled a world-class team of physicists, engineers, and computer architects. Their published architecture papers are rigorous and detailed. The GlobalFoundries partnership is real and represents genuine progress in silicon photonics fabrication. The question is not whether the approach is technically coherent — it is. The question is whether it will win the race.
+            </p>
+
+            <hr>
+
+            <h2>A PERSONAL NOTE</h2>
+
+            <p>
+                I've been following quantum computing for long enough to have watched several "this changes everything" announcements arrive, generate a week of breathless coverage, and then quietly settle into the larger story of a technology that is genuinely advancing but not on anyone's original schedule. The honest truth is that nobody knows which architecture will win. There may not be one winner — different approaches may dominate for different use cases.
+            </p>
+
+            <p>
+                What I find compelling about PsiQuantum's bet specifically is that it's an engineering argument, not just a physics argument. Most quantum computing narratives are about qubit quality and gate fidelity — the physics. PsiQuantum is making a claim about <em>production</em>: that the governing constraint is not what's possible in a lab, but what can be manufactured consistently, cheaply, and in volume. That's a different kind of reasoning, and it's the kind of reasoning that tends to be right over long time horizons.
+            </p>
+
+            <p>
+                Transistors won over vacuum tubes not because transistors had better physics — early transistors were noisy, fragile, and limited. They won because you could make them smaller and cheaper every two years. The manufacturing curve was the winning argument. PsiQuantum is betting that quantum computing will follow a similar logic: not that photons are the best possible qubits in some abstract sense, but that photons are the qubits you can eventually build a billion of.
+            </p>
+
+            <p>
+                That bet might be wrong. The overhead might be too high. The fusion gates might never reach the fidelity required. Some other platform might solve its scaling problem first. But the audacity of staking nearly a billion dollars on a manufacturing argument for a technology that doesn't fully exist yet — that's a kind of engineering faith I find genuinely interesting. It's the same faith that built the first commercial transistor fabs when vacuum tubes still dominated, and the first cable internet infrastructure when 56K modems were considered fast enough.
+            </p>
+
+            <p>
+                <strong>The most expensive bets in computing history have usually been right.</strong> That's not a prediction. It's just a pattern worth knowing about.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">quantum computing</span>
+                <span class="tag">photonics</span>
+                <span class="tag">PsiQuantum</span>
+                <span class="tag">silicon photonics</span>
+                <span class="tag">KLM theorem</span>
+                <span class="tag">error correction</span>
+                <span class="tag">Google Willow</span>
+                <span class="tag">fault tolerance</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="shors-algorithm.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Shor's Algorithm and the End of Modern Cryptography</span>
+                </a>
+                <a href="quantum-complexity-theory.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">BQP, NP, and the Shape of Quantum Complexity</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

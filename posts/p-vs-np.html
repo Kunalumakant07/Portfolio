@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P vs NP — The Million Dollar Question No One Can Answer — Umakant Kunal</title>
+    <meta name="description" content="In 2000 the Clay Mathematics Institute offered $1 million for a proof. Over 50 years later P vs NP remains open — and the stakes are far higher than the prize.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-space     { color: var(--blue);    border-color: #1e4a6e; }
+        .cat-quantum   { color: var(--purple);  border-color: #3d2d6e; }
+        .cat-theory    { color: #7dd3fc;        border-color: #1e3a5f; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                p-vs-np
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-05</span>
+                <span class="post-category cat-theory">Theory of Computation</span>
+                <span class="post-read-time">10 min read</span>
+            </div>
+
+            <h1 class="post-title">P vs NP — The Million<br>Dollar Question No One<br>Can Answer</h1>
+
+            <p class="post-subtitle">
+                In 2000 the Clay Mathematics Institute listed seven problems worth a million dollars each. One of them is a computer science question. It has been open for over 50 years. Most researchers believe the answer is no. No one can prove it. And the stakes are higher than any prize money.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In the year 2000, the Clay Mathematics Institute published a list of seven unsolved problems, each carrying a prize of one million dollars. The problems were chosen to represent the deepest open questions in mathematics — the Riemann Hypothesis, the Navier-Stokes existence and smoothness problem, the Yang-Mills existence and mass gap. Problems that had resisted the best mathematical minds for decades or centuries.
+            </p>
+
+            <p>
+                One of the seven is a computer science question. It asks: does P equal NP? The question is brief enough to fit in a single line. The implications, if resolved in either direction, would reshape cryptography, scientific research, artificial intelligence, and our understanding of what computation is fundamentally capable of. It has been formally open since 1971. The consensus view — held informally but nearly universally — is that the answer is no. No one can prove it.
+            </p>
+
+            <p>
+                What follows is an attempt to explain what the question actually asks, why the answer matters so much, and why proving anything at all has turned out to be so extraordinarily hard.
+            </p>
+
+            <h2>WHAT P MEANS</h2>
+
+            <p>
+                P stands for <strong>Polynomial time</strong>. A problem is in P if there exists an algorithm that solves it in time proportional to some polynomial function of the input size. If your input has <em>n</em> elements, the algorithm runs in time proportional to <em>n<sup>k</sup></em> for some fixed constant <em>k</em> — whether that is n, n², n³, or n¹⁰⁰. The key feature is that the exponent <em>k</em> stays constant as the input grows.
+            </p>
+
+            <p>
+                Why does polynomial time matter? Because it scales. If you double the input size of a polynomial-time algorithm, the runtime grows by at most a polynomial factor. Compare this to exponential-time algorithms, where doubling the input can square or cube the runtime — making problems that take a second with 50 inputs take years with 100 inputs, and longer than the age of the universe with 1000.
+            </p>
+
+            <p>
+                The canonical examples of P problems: <strong>sorting</strong> (merge sort runs in O(n log n), barely above linear), <strong>shortest paths</strong> (Dijkstra's algorithm runs in polynomial time on a graph), <strong>matrix multiplication</strong> (the naïve algorithm is O(n³); the Strassen algorithm beats that), <strong>primality testing</strong> (the AKS algorithm, 2002, proved this is in P). These are all tractable — scale them up and they remain manageable.
+            </p>
+
+            <p>
+                The intuition: <strong>P = the set of problems we can efficiently solve.</strong> Not just in theory but in practice. A polynomial-time algorithm is not always fast in absolute terms — n¹⁰⁰ is technically polynomial but practically useless — but the classification captures something deep about computational structure that has proved remarkably robust.
+            </p>
+
+            <h2>WHAT NP MEANS</h2>
+
+            <p>
+                NP stands for <strong>Non-deterministic Polynomial time</strong>. This name is historically accurate but deeply misleading to anyone encountering it for the first time. <em>NP does not mean "not polynomial."</em> All P problems are also NP problems. NP is a larger class that contains P.
+            </p>
+
+            <p>
+                The cleaner way to understand NP is through verification. A problem is in NP if, given a <em>proposed solution</em> — a certificate, a witness, a candidate answer — you can <strong>verify whether that solution is correct in polynomial time</strong>. Finding the solution may be hard. Checking it is easy.
+            </p>
+
+            <p>
+                The canonical examples of NP problems:
+            </p>
+
+            <ul>
+                <li><strong>Boolean Satisfiability (SAT)</strong> — given a logical formula with variables that can be true or false, is there an assignment of values that makes the whole formula true? Checking a proposed assignment is easy: plug in the values and evaluate. Finding one is believed to be hard.</li>
+                <li><strong>Travelling Salesman (decision version)</strong> — given a set of cities and distances, does a route exist that visits all cities and returns to the start with total distance below some threshold L? Verifying a proposed route is easy: sum the distances. Finding the shortest route is hard.</li>
+                <li><strong>Graph colouring</strong> — can the vertices of a graph be coloured with k colours such that no two adjacent vertices share a colour? Verifying a proposed colouring is easy. Finding one is hard.</li>
+                <li><strong>Subset sum</strong> — given a set of integers and a target T, does any subset sum to exactly T? Verifying a proposed subset is trivial. Finding it is not.</li>
+            </ul>
+
+            <p>
+                The alternative, formal definition uses non-deterministic Turing machines — hypothetical machines that can simultaneously explore all possible paths of computation and accept if any path succeeds. A problem is in NP if a non-deterministic Turing machine can solve it in polynomial time. The verification-based definition is equivalent and more intuitive.
+            </p>
+
+            <blockquote>
+                "The class NP consists of those problems for which, once we have a solution, we can verify that it is correct in polynomial time. It is not the class of 'hard' problems — it is the class of problems with easily-checkable answers."
+                <cite>— Stephen Cook, Turing Award Lecture, 1982</cite>
+            </blockquote>
+
+            <h2>THE QUESTION</h2>
+
+            <p>
+                The P vs NP question asks: <strong>if you can verify a solution quickly, can you always find one quickly?</strong>
+            </p>
+
+            <p>
+                Stated that way, it almost sounds mundane. A question about algorithms and efficiency. But the consequences of either answer are so vast that it is worth pausing on each separately.
+            </p>
+
+            <p>
+                <strong>If P = NP:</strong> every problem whose solution can be efficiently checked can also be efficiently solved. The entire class of NP problems — SAT, travelling salesman, graph colouring, protein folding, theorem proving — collapses into P. This would mean:
+            </p>
+
+            <ul>
+                <li>Most modern <strong>cryptography breaks</strong>. RSA, elliptic-curve cryptography, and most public-key systems depend on the assumed hardness of problems like integer factorisation and discrete logarithm — problems believed to be in NP but not in P. If P = NP, these problems have efficient solutions. Every encrypted message becomes decryptable. Every secure channel becomes insecure.</li>
+                <li><strong>Drug discovery and protein folding</strong> become tractable optimisation problems. Currently these rely on expensive simulations and heuristics because the underlying combinatorial problem is NP-hard. Efficient algorithms would transform medicine.</li>
+                <li><strong>Mathematical proofs can be found automatically</strong>. Proof verification is in NP — given a proof, checking it is polynomial. If P = NP, finding proofs becomes polynomial too. The entire enterprise of mathematics would be computable by machine.</li>
+                <li><strong>Optimisation at every scale</strong> — logistics, scheduling, financial modelling, machine learning architecture search — becomes exactly solvable, not approximately heuristic.</li>
+            </ul>
+
+            <p>
+                <strong>If P ≠ NP:</strong> the status quo is confirmed. Hard problems are genuinely hard. Cryptography retains its theoretical foundation. Human creativity and insight retain a domain that algorithms cannot automatically replicate. But here is the uncomfortable truth: <em>we have never proved it.</em> After more than fifty years, we still cannot rule out the possibility that some clever polynomial-time algorithm exists for SAT, waiting to be discovered.
+            </p>
+
+            <div class="callout" data-label="// the formal question">
+                P vs NP asks whether P = NP, where P is the class of decision problems solvable in deterministic polynomial time, and NP is the class of decision problems where a proposed solution can be verified in deterministic polynomial time. All P problems are in NP; the question is whether NP ⊆ P — equivalently, whether NP = P. The question was formalised independently by Stephen Cook (1971) and Leonid Levin (1973).
+            </div>
+
+            <h2>NP-COMPLETE PROBLEMS</h2>
+
+            <p>
+                Within NP, there is a special subset called <strong>NP-complete</strong>: the hardest problems in the class. A problem X is NP-complete if (1) X is in NP, and (2) every problem in NP can be efficiently reduced to X. This second condition is the profound one. It means NP-complete problems are, in a precise sense, <em>universal representatives of NP</em>: solve any one of them efficiently and you solve them all.
+            </p>
+
+            <p>
+                The first NP-complete problem was identified by Stephen Cook in 1971: <strong>Boolean satisfiability (SAT)</strong>. The Cook-Levin theorem proved that every problem in NP can be efficiently reduced to SAT. If you can solve SAT in polynomial time, you can solve any NP problem in polynomial time. SAT was the first domino.
+            </p>
+
+            <blockquote>
+                "I showed that satisfiability is NP-complete. This means that if satisfiability can be solved in polynomial time, then every problem in NP can be solved in polynomial time — and P would equal NP."
+                <cite>— Stephen Cook, "The Complexity of Theorem-Proving Procedures," 1971</cite>
+            </blockquote>
+
+            <p>
+                Within a year, Richard Karp published a landmark 1972 paper demonstrating that 21 other natural, practically important combinatorial problems — problems arising independently in operations research, graph theory, and scheduling — are also NP-complete. Karp's 21 problems included:
+            </p>
+
+            <ul>
+                <li>Satisfiability</li>
+                <li>0-1 Integer Programming</li>
+                <li>Clique (does a graph contain a clique of size k?)</li>
+                <li>Vertex Cover</li>
+                <li>Hamiltonian Circuit</li>
+                <li>Graph Colouring</li>
+                <li>Exact Cover</li>
+                <li>Subset Sum</li>
+            </ul>
+
+            <p>
+                The web of reductions connecting these problems is one of the most beautiful structures in theoretical computer science. Each NP-complete problem can be transformed into any other in polynomial time. They form a kind of equivalence class at the top of NP — a set of problems that are all, in a deep sense, the same problem wearing different clothes. Today there are thousands of known NP-complete problems.
+            </p>
+
+            <blockquote>
+                "The reductions between NP-complete problems are not just a technical trick. They reveal a genuine structural kinship between problems that look completely different on the surface. The travelling salesman and graph colouring and satisfiability — they are all shadows of the same underlying hardness."
+                <cite>— Richard Karp, Turing Award Lecture, 1985</cite>
+            </blockquote>
+
+            <p>
+                The practical consequence: decades of researchers trying to find efficient algorithms for any of these problems have failed. Not because of lack of effort or cleverness. The best exact algorithms for NP-complete problems still run in exponential time on worst-case instances. This is the empirical evidence — not a proof, but a strong signal — that they are genuinely hard.
+            </p>
+
+            <h2>WHY IT'S SO HARD TO PROVE</h2>
+
+            <p>
+                If P ≠ NP — as nearly everyone believes — why hasn't anyone proved it? The answer is that the proof community has repeatedly run into fundamental barriers that rule out entire families of proof strategies. These barriers don't tell us the answer. They tell us what techniques cannot work.
+            </p>
+
+            <p>
+                <strong>Relativisation (1975).</strong> Baker, Gill, and Solovay showed that there exist oracles — black-box subroutines — relative to which P = NP, and other oracles relative to which P ≠ NP. This means any proof technique that "relativises" — that works equally well whether or not you have access to the oracle — cannot resolve P vs NP, because it would give contradictory answers depending on the oracle. Most classical proof techniques in complexity theory relativise. The relativisation barrier rules out essentially all diagonalisation-based approaches.
+            </p>
+
+            <p>
+                <strong>Natural proofs (Razborov-Rudich, 1994).</strong> Razborov and Rudich formalised a class of proof strategies called "natural proofs" — roughly, proof techniques that work by exhibiting a combinatorial property that hard functions have and easy functions lack, and which can themselves be computed efficiently. They showed that if sufficiently strong pseudorandom function generators exist (which we believe they do), then natural proofs cannot prove superpolynomial lower bounds for circuits. This rules out another enormous category of approaches that had been the dominant paradigm in circuit complexity.
+            </p>
+
+            <p>
+                <strong>Algebrisation (Aaronson-Wigderson, 2009).</strong> The few proof techniques that had escaped the relativisation barrier — notably the IP = PSPACE proof and the PCP theorem — used algebraic extensions of problems rather than just oracle access. Aaronson and Wigderson showed that these techniques also hit a barrier: they cannot resolve P vs NP either, because there are algebrising oracles relative to which P = NP and others relative to which P ≠ NP.
+            </p>
+
+            <p>
+                These three barriers together — relativisation, natural proofs, algebrisation — cover almost every proof technique we know how to use in complexity theory. They don't prove P ≠ NP is unprovable. But they establish that a proof will require genuinely new mathematics, ideas that fall outside every major paradigm developed in the last fifty years.
+            </p>
+
+            <div class="callout" data-label="// the scale of what's unknown">
+                We cannot currently prove that any problem requires more than linear time to solve on a multi-tape Turing machine. The P vs NP problem asks for a superpolynomial lower bound. We cannot even prove a quadratic lower bound unconditionally for any natural problem. The gap between what we want to prove and what we can prove is not a small one — it is a chasm. P vs NP sits on the far side.
+            </div>
+
+            <h2>WHAT MOST RESEARCHERS BELIEVE</h2>
+
+            <p>
+                The informal consensus in theoretical computer science is essentially unanimous: <strong>P ≠ NP</strong>. Surveys of the community consistently find more than 80–90% of respondents believe the answer is no. Some prominent researchers put it higher.
+            </p>
+
+            <blockquote>
+                "I'm 99.9% confident that P ≠ NP. If P = NP, it would be the most incredible and surprising result in the history of science. I think nature is simply not that generous."
+                <cite>— Scott Aaronson, Professor of Computer Science, UT Austin</cite>
+            </blockquote>
+
+            <p>
+                The evidence for P ≠ NP is not a proof. It is a convergence of signals:
+            </p>
+
+            <ul>
+                <li><strong>Empirical failure.</strong> Decades of brilliant researchers — motivated by the Clay prize, by practical applications, by academic ambition — have tried to find efficient algorithms for NP-complete problems and failed. The best known algorithms for SAT, travelling salesman, and graph colouring still run in exponential time on worst-case instances. This failure is itself evidence, though not proof.</li>
+                <li><strong>Structural intuition.</strong> Problems in P have a characteristic feel — they exploit some structure in the problem (linearity, monotonicity, matroid properties, polynomial algebra) that allows efficient solution. NP-complete problems in their worst case appear to require exhaustive search over an exponentially large space. The structures feel fundamentally different.</li>
+                <li><strong>Cryptographic assumptions.</strong> Modern cryptography is built entirely on assumptions that certain problems are hard — that factoring, discrete log, and their relatives are not in P. These assumptions have held against sustained, motivated attacks for decades. If P = NP, every cryptographic hardness assumption would collapse simultaneously.</li>
+                <li><strong>Philosophical argument.</strong> P = NP would mean that <em>finding</em> is never harder than <em>verifying</em>. At a deep level, this seems to violate an intuition about creativity and search: that discovering a proof, a composition, a design is genuinely harder than checking one. Whether this intuition is reliable is itself a hard question.</li>
+            </ul>
+
+            <p>
+                But intuition, empirical failure, and philosophical plausibility are not a proof. The history of mathematics is full of conjectures that seemed obviously true for a century before being disproved. "Everyone believes it" is not a proof. This is precisely what makes the problem so unsettling and so fascinating.
+            </p>
+
+            <h2>P=NP WOULD MEAN</h2>
+
+            <p>
+                It is worth taking the P = NP scenario seriously rather than dismissing it as obviously impossible. If a polynomial-time algorithm for SAT were discovered tomorrow — even one that ran in time n¹⁰⁰⁰, technically polynomial but practically useless — the implications for the theoretical landscape would be immediate and complete. And it is possible, at least in principle, that a practical polynomial-time algorithm exists. What world would that create?
+            </p>
+
+            <p>
+                <strong>Cryptography must be entirely rebuilt.</strong> Every public-key cryptographic system currently in use — RSA, elliptic-curve, Diffie-Hellman — would be broken. Post-quantum cryptography, which is already being deployed in anticipation of quantum computers, would also be broken if P = NP (since those problems are also NP-hard). We would need cryptography based on some other foundation — information-theoretic security, perhaps, which exists but requires key material as long as the message. The internet as we know it would require fundamental re-engineering.
+            </p>
+
+            <p>
+                <strong>Mathematical discovery becomes automated.</strong> Verifying a mathematical proof is in NP — given a proof and a theorem, checking whether the proof is valid is polynomial. If P = NP, finding proofs is polynomial too. A computer could, in principle, search for proofs of open mathematical conjectures — the Riemann Hypothesis, Goldbach's conjecture, whatever you like — and find them as efficiently as it could verify them. The boundary between "open problem" and "solved problem" would collapse.
+            </p>
+
+            <p>
+                <strong>Creative work becomes optimisation.</strong> Art, music, protein design, drug discovery, engineering optimisation — all of these involve finding a solution among a vast combinatorial space that satisfies constraints and maximises quality. Many of these problems are NP-hard. If P = NP, they become tractable. A system could generate the optimal drug molecule, the optimal bridge design, the optimal musical composition for a given emotional profile — not approximately, but exactly, in polynomial time.
+            </p>
+
+            <p>
+                <strong>The value of human insight collapses</strong> in a very specific domain. Wherever human expertise currently consists of navigating complex combinatorial search spaces — legal reasoning over case space, strategic planning, scientific hypothesis generation — the algorithmic approach would match or exceed it. This wouldn't make humans obsolete in every sense, but it would fundamentally change what kinds of thinking are uniquely human versus what can be automated.
+            </p>
+
+            <p>
+                Scott Aaronson has pointed out that P = NP with a practical (not merely polynomial in theory) algorithm would be among the most transformative events in human history — more consequential than the industrial revolution in terms of intellectual disruption. The fact that we consider this possibility remote does not mean we should consider it lightly.
+            </p>
+
+            <hr>
+
+            <p>
+                I come back to P vs NP not because I expect to solve it — I don't — but because living with open questions of this kind does something useful to how you think. The problem has been studied for over fifty years by some of the sharpest minds in the history of mathematics and computer science. The barriers to proof are not obstacles waiting for the right clever trick. They are deep structural features of mathematical knowledge itself: statements about what kinds of arguments can and cannot work. Engaging with them seriously is a lesson in epistemic humility.
+            </p>
+
+            <p>
+                There is something I find genuinely beautiful in the fact that a question this simple — <em>if you can check, can you find?</em> — opens into this depth. The question is not just about algorithms. It is about the relationship between discovery and verification, between creativity and confirmation. It asks whether the universe is the kind of place where finding things is really harder than recognising them, or whether that difficulty is an illusion we haven't yet seen through.
+            </p>
+
+            <p>
+                We don't know. That's the honest answer. And the honest answer is, sometimes, the most interesting thing you can say.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">P vs NP</span>
+                <span class="tag">complexity theory</span>
+                <span class="tag">NP-complete</span>
+                <span class="tag">Cook-Levin</span>
+                <span class="tag">algorithms</span>
+                <span class="tag">cryptography</span>
+                <span class="tag">theoretical CS</span>
+                <span class="tag">Clay Prize</span>
+                <span class="tag">satisfiability</span>
+                <span class="tag">computation</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="zero-knowledge-proofs.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Zero-Knowledge Proofs</span>
+                </a>
+                <a href="godel-turing-limits.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Gödel, Turing & the Limits of Logic</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

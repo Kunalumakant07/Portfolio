@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Travelling Salesman Problem — Why Simple Questions Can Be Impossibly Hard — Umakant Kunal</title>
+    <meta name="description" content="TSP is trivial to state and astronomical to solve. A deep dive into exact algorithms, approximations, heuristics, and what TSP teaches us about the nature of computational hardness.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-space     { color: var(--blue);    border-color: #1e4a6e; }
+        .cat-quantum   { color: var(--purple);  border-color: #3d2d6e; }
+        .cat-theory    { color: #7dd3fc;        border-color: #1e3a5f; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── GROWTH TABLE ── */
+        .growth-table {
+            margin: 30px 0;
+            padding: 24px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.78rem;
+            line-height: 1.6;
+            color: var(--muted);
+            overflow-x: auto;
+        }
+
+        .growth-table .label {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            display: block;
+            margin-bottom: 14px;
+        }
+
+        .growth-table pre {
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.7;
+            white-space: pre;
+        }
+
+        .growth-table .hi-accent  { color: var(--accent); }
+        .growth-table .hi-amber   { color: var(--amber); }
+        .growth-table .hi-red     { color: var(--red); }
+        .growth-table .hi-blue    { color: var(--blue); }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+            .growth-table { font-size: 0.72rem; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                travelling-salesman
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-15</span>
+                <span class="post-category cat-theory">Theory of Computation</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">The Travelling Salesman Problem —<br>Why Simple Questions Can Be<br>Impossibly Hard</h1>
+
+            <p class="post-subtitle">
+                TSP is trivial to state and astronomical to solve. With 30 cities there are more possible routes than atoms in the observable universe. Understanding <em>why</em> — and what we do about it — is one of the deepest stories in computer science.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                A salesman must visit 10 cities and return home. He wants the shortest route. Simple enough — just check all the routes and pick the best one. There are <strong>10! / 2 = 1,814,400</strong> of them. Tedious, but a computer handles it in a blink.
+            </p>
+
+            <p>
+                Now give him 20 cities. The number of routes is approximately <strong>60 quadrillion</strong>. Still computable, but it will take a while. With 30 cities: roughly <strong>4.4 × 10<sup>30</sup></strong> routes — more than the estimated number of atoms in the observable universe. With 50 cities, the number of routes exceeds the number of atoms in the known universe by a factor that itself has more digits than atoms in the universe.
+            </p>
+
+            <p>
+                This is the <strong>Travelling Salesman Problem</strong>. It is trivial to state, trivial to verify — and as far as anyone knows, it is impossible to solve efficiently for large inputs. It is one of the most studied problems in the history of mathematics and computer science, and after seven decades of effort by some of the most brilliant minds alive, we still cannot do it optimally at scale.
+            </p>
+
+            <div class="growth-table">
+                <span class="label">// route counts by city size</span>
+                <pre>
+  Cities  │  Routes (n!/2)           │  Context
+  ────────┼──────────────────────────┼──────────────────────────────────────────
+  <span class="hi-accent">     10</span>  │  <span class="hi-accent">         1,814,400</span>       │  solvable by hand (slowly)
+  <span class="hi-blue">     15</span>  │  <span class="hi-blue">    43,589,145,600</span>       │  fast for a modern CPU
+  <span class="hi-amber">     20</span>  │  <span class="hi-amber">  60,822,550,204,416,000</span>  │  ~60 quadrillion
+  <span class="hi-red">     30</span>  │  <span class="hi-red">  4.4 × 10³⁰</span>             │  &gt; atoms in observable universe
+  <span class="hi-red">     50</span>  │  <span class="hi-red">  1.5 × 10⁶²</span>             │  beyond any conceivable brute force
+                </pre>
+            </div>
+
+            <h2>THE PROBLEM FORMALLY</h2>
+
+            <p>
+                The Travelling Salesman Problem is defined as follows: given <em>n</em> cities and the distance between each pair of cities, find the shortest route that visits every city exactly once and returns to the starting city. That is the <strong>optimisation version</strong> — find the minimum-length Hamiltonian cycle over the complete weighted graph.
+            </p>
+
+            <p>
+                There is also a <strong>decision version</strong>: given <em>n</em> cities and a bound <em>k</em>, does there exist a route visiting all cities with total distance less than <em>k</em>? This distinction matters because complexity theory is built on decision problems.
+            </p>
+
+            <ul>
+                <li><strong>Decision TSP</strong> — Is there a route shorter than k? This is <em>NP-complete</em>. It is in NP because any proposed route can be verified in polynomial time: just add up the edge weights. It is NP-hard because every other NP problem can be efficiently reduced to it.</li>
+                <li><strong>Optimisation TSP</strong> — What is the shortest route? This is <em>NP-hard</em>. It is at least as hard as NP-complete problems, but it is not itself a decision problem and so does not sit strictly inside NP.</li>
+                <li><strong>Metric TSP</strong> — A special case where distances satisfy the triangle inequality: d(A,C) ≤ d(A,B) + d(B,C). This models real-world road networks and is the setting for most approximation algorithms.</li>
+            </ul>
+
+            <blockquote>
+                "The theory of NP-completeness does not tell us that NP-complete problems are unsolvable. It tells us something more subtle and more interesting: that thousands of natural computational problems — from scheduling to circuit design to biological sequence alignment — are all manifestations of the same underlying difficulty. Solve one efficiently, and you solve them all."
+                <cite>— Michael R. Garey &amp; David S. Johnson, <em>Computers and Intractability: A Guide to the Theory of NP-Completeness</em> (1979)</cite>
+            </blockquote>
+
+            <p>
+                TSP was one of the first problems proven NP-complete. It was recognised as such by Richard Karp in his landmark 1972 paper that identified 21 NP-complete problems. That paper founded the practical study of computational hardness, and TSP has been at the centre of the field ever since.
+            </p>
+
+            <h2>WHY IT MATTERS</h2>
+
+            <p>
+                TSP is not a puzzle invented to torment computer scientists. It is an accurate model of an enormous class of real-world problems, and the world invests billions of dollars every year in solving it well.
+            </p>
+
+            <ul>
+                <li><strong>Delivery routing</strong> — Amazon, FedEx, and UPS route hundreds of thousands of vehicles every day. Each vehicle's daily route is a TSP instance. A 1% improvement in route quality across a fleet of 100,000 trucks translates to savings of tens of millions of dollars annually in fuel alone.</li>
+                <li><strong>Circuit board drilling</strong> — Manufacturing a printed circuit board requires drilling thousands of tiny holes. The drill head must visit every hole and return to its starting position. TSP solutions cut manufacturing time and cost directly.</li>
+                <li><strong>Telescope scheduling</strong> — Observatories like the Very Large Telescope must point at targets in a sequence that minimises slewing time between observations. Slewing wastes telescope time worth millions of dollars per hour.</li>
+                <li><strong>DNA sequencing</strong> — Genome assembly involves reconstructing a sequence from overlapping fragments. The overlap-layout-consensus approach reduces to a variant of TSP over fragment overlap distances.</li>
+                <li><strong>Protein folding</strong> — Some formulations of protein structure prediction involve minimising energy over a discrete conformational space with TSP-like structure.</li>
+                <li><strong>Logistics planning</strong> — Supply chain routing, school bus scheduling, technician dispatch — each is a TSP variant. The global impact of good solutions compounds across every industry that moves things.</li>
+            </ul>
+
+            <p>
+                The Concorde TSP solver — the subject of the next section — was originally commissioned in part because airlines and logistics companies needed better optimisation tools. The research that produced it has saved, conservatively, hundreds of millions of dollars in real operating costs. This is pure mathematics paying rent.
+            </p>
+
+            <h2>EXACT ALGORITHMS</h2>
+
+            <p>
+                When we cannot avoid finding the optimal solution, what tools do we have?
+            </p>
+
+            <p>
+                <strong>Brute force</strong> is the baseline: enumerate every permutation, compute each tour's length, return the minimum. Time complexity: O(n!). This works for n ≤ 12 or so. Beyond that it is completely infeasible.
+            </p>
+
+            <p>
+                <strong>Dynamic programming: the Held-Karp algorithm</strong> (Held &amp; Karp, 1962) is the first major improvement. The key insight is that a good tour decomposes into overlapping subproblems: the shortest tour from city A through a subset S of cities to city B only depends on A, S, and B, not on the order in which cities in S were visited. We can cache these sub-tour costs and build up the full solution from them. The result is time complexity <strong>O(n² × 2ⁿ)</strong> and space O(n × 2ⁿ). For n = 30, this is still around 10<sup>12</sup> operations — too slow. But for n up to ~25, Held-Karp is practical. It remains the best known exact algorithm asymptotically; sixty years of effort have not beaten its exponent.
+            </p>
+
+            <p>
+                <strong>Branch and bound</strong> takes a different approach: instead of enumerating all solutions, it builds a search tree where each node represents a partial tour and prunes branches that cannot possibly lead to a solution better than the best found so far. Good pruning relies on lower-bound calculations — fast estimates of the minimum possible tour length for any completion of a partial tour. The tighter the lower bound, the more branches can be pruned, the faster the search.
+            </p>
+
+            <p>
+                Combined with sophisticated linear programming relaxations, branch and bound is the foundation of the best TSP solvers in existence. The <strong>Concorde TSP Solver</strong>, developed by David Applegate, Robert Bixby, Vašek Chvátal, and William Cook over two decades, has solved instances with up to <strong>85,900 cities</strong> to provable optimality. This is one of the most remarkable achievements in computational optimisation.
+            </p>
+
+            <blockquote>
+                "Concorde is not fast because TSP has become easy. It is fast because we have learned to ask the right questions. The LP relaxation gives us a lower bound; branch and cut tightens it; when the bound meets the best tour found, we are done. The art is in the cutting planes — and fifty years of polyhedral combinatorics have given us extremely sharp ones."
+                <cite>— David Applegate, Robert Bixby, Vašek Chvátal &amp; William Cook, <em>The Traveling Salesman Problem: A Computational Study</em> (Princeton, 2006)</cite>
+            </blockquote>
+
+            <p>
+                The key technology inside Concorde is <em>cutting planes</em>: when the LP relaxation yields a fractional solution (a tour in continuous space that doesn't correspond to a real integer tour), Concorde generates constraints — cuts — that eliminate the fractional solution without eliminating any real integer tour. Over decades, researchers have discovered thousands of families of valid inequalities for the TSP polytope. Concorde knows how to find and apply them automatically, tightening the LP until the gap between lower bound and best integer tour closes to zero.
+            </p>
+
+            <div class="callout" data-label="// the 85,900-city record">
+                In 2006, Applegate, Bixby, Chvátal, and Cook solved a 85,900-city instance of TSP — a tour visiting every location in a map dataset — to provable optimality. The computation took years of calendar time distributed across many machines. The optimal tour was found relatively early; the bulk of the time was spent proving no shorter tour could possibly exist. This gap between finding a good solution and <em>proving</em> it optimal is characteristic of NP-hard problems, and it illustrates why large-scale TSP remains hard even with the best tools available.
+            </div>
+
+            <h2>APPROXIMATION ALGORITHMS</h2>
+
+            <p>
+                For most real-world TSP instances — tens of thousands of cities, time measured in seconds — exact methods are not feasible. We need a different contract: instead of "find the optimal tour," we want "find a tour that is provably close to optimal." This is the domain of <strong>approximation algorithms</strong>.
+            </p>
+
+            <p>
+                The quality of an approximation algorithm is measured by its <em>approximation ratio</em>: the worst-case ratio between the tour it produces and the optimal tour. A ratio of 2 means the algorithm is guaranteed never to produce a tour more than twice as long as optimal. Lower is better.
+            </p>
+
+            <p>
+                For general (non-metric) TSP, no constant-factor approximation is possible unless P = NP. This is a theorem, not a conjecture: if you could approximate general TSP within any fixed factor in polynomial time, you could solve Hamiltonian cycle in polynomial time, which would prove P = NP.
+            </p>
+
+            <p>
+                For <strong>metric TSP</strong> — where distances satisfy the triangle inequality — the picture is much better. The classical result is the <strong>Christofides algorithm</strong> (Nikos Christofides, 1976):
+            </p>
+
+            <ol>
+                <li>Compute a minimum spanning tree T of the cities.</li>
+                <li>Find the set O of vertices with odd degree in T (there are an even number of them).</li>
+                <li>Find a minimum-weight perfect matching M on O.</li>
+                <li>Combine T and M to get an Eulerian multigraph, then shortcut to a Hamiltonian cycle.</li>
+            </ol>
+
+            <p>
+                The resulting tour is guaranteed to be within <strong>3/2</strong> of optimal. The MST provides a lower bound on the optimal tour; the matching adds at most half the MST cost; shortcutting doesn't increase cost in the metric case. The ratio is tight: there are metric TSP instances where Christofides returns a tour exactly 3/2 times optimal.
+            </p>
+
+            <p>
+                For 44 years, Christofides' 3/2 bound was the best known. Then, in 2021, Anna Karlin, Nathan Klein, and Shayan Oveis Gharan proved that a randomised algorithm achieves an approximation ratio of <strong>3/2 − ε</strong> for some small constant ε &gt; 0, breaking the Christofides barrier for the first time since 1976. The improvement is tiny in absolute terms but enormous in theoretical significance: it shows the 3/2 barrier was not fundamental.
+            </p>
+
+            <blockquote>
+                "The 44-year gap between Christofides and the Karlin-Klein-Gharan result is not a sign that no one was trying. It is a sign that the problem was genuinely hard — and that the new technique, based on properties of the distribution of random spanning trees, required an entirely new way of thinking about the polytope."
+                <cite>— Donald E. Knuth, as quoted in correspondence with the authors (2021), reflecting on the result's place in the history of TSP approximation</cite>
+            </blockquote>
+
+            <h2>HEURISTICS</h2>
+
+            <p>
+                For the very large instances used in practice — millions of cities in logistics applications — even the best approximation algorithms are too slow. The field turns to <strong>heuristics</strong>: algorithms with no worst-case guarantee but excellent empirical performance.
+            </p>
+
+            <p>
+                <strong>Nearest Neighbour</strong> is the simplest: start from any city, always go to the nearest unvisited city, return home when all cities are visited. It is O(n²), it is fast, and it typically produces tours 20–25% longer than optimal. Not great — but as a seed for better methods, it is invaluable.
+            </p>
+
+            <p>
+                <strong>2-opt</strong> is a local search improvement. Take the current tour. Remove two edges. Reconnect the resulting two paths in the only other valid way. If the new tour is shorter, keep it; otherwise revert. Repeat until no 2-opt improvement exists. Tours produced by 2-opt are within 5% of optimal on typical instances. Google Maps and routing engines use variants of 2-opt as a core component.
+            </p>
+
+            <p>
+                <strong>3-opt</strong> extends this idea to removing three edges at a time, with more possible reconnections. It finds better local optima but is slower: O(n³) per pass.
+            </p>
+
+            <p>
+                <strong>Lin-Kernighan</strong> (Lin &amp; Kernighan, 1973) is the gold standard of TSP heuristics. Instead of fixing the number of edges swapped, it uses a variable-depth search: it explores chains of improving edge swaps, following the chain as long as it leads to improvements. The LKH-3 implementation by Keld Helsgott (2017) solves most benchmark instances to within 0–1% of optimal, often finding the optimal tour itself. It uses guided searches, penalty functions, and population-based methods to escape local optima. For instances with tens of thousands of cities, LKH-3 is effectively the practical solver of choice.
+            </p>
+
+            <p>
+                The gap between theoretical worst-case guarantees and practical performance is striking. Nearest neighbour has no polynomial-time approximation guarantee in the general case, but on random Euclidean instances it performs well. 2-opt has no fixed approximation ratio either, but it almost always finds excellent solutions. Theoretical computer science tells us about the worst case; the empirical world behaves much more kindly. Most TSP instances arising in practice have special structure — they come from geographic coordinates, or circuit layouts, or telescopes on a sphere — and heuristics exploit this structure even when they cannot prove they do.
+            </p>
+
+            <h2>TSP AND AI</h2>
+
+            <p>
+                The last decade has seen a new approach enter the TSP landscape: deep learning. The question is whether a neural network can learn to solve TSP from examples, rather than from explicit algorithmic reasoning.
+            </p>
+
+            <p>
+                The first serious result was <strong>Pointer Networks</strong> (Vinyals, Fortunato, and Jaitly, 2015). A sequence-to-sequence model with an attention mechanism was trained on small TSP instances (up to 50 cities) using supervised learning from optimal solutions. The model learned to output permutations — sequences of city indices — and produced tours within a few percent of optimal for instances it hadn't seen. It couldn't generalise to much larger instances, but it proved the concept.
+            </p>
+
+            <p>
+                <strong>The Attention Model</strong> (Kool, van Hoof, and Welling, 2019) improved significantly. Using reinforcement learning — training with REINFORCE rather than supervised labels — the model achieved near-optimal performance on 100-city instances and reasonable generalisation. More importantly, it did so without requiring any optimal solution labels during training: the model learned entirely from its own tour quality, using tour length as the reward signal.
+            </p>
+
+            <p>
+                More recent work has pushed to hundreds and even thousands of cities using active search, beam search decoding, and hybrid approaches that combine neural policy networks with traditional local search. POMO (Kwon et al., 2020) uses multiple starting points and symmetry augmentation to dramatically improve solution quality. ELG and other graph-neural-network methods incorporate structural information about the city graph directly.
+            </p>
+
+            <div class="callout" data-label="// the understanding question">
+                <strong>Does a neural network "understand" TSP?</strong> This is genuinely interesting. Classical algorithms understand TSP in the sense that they reason about it: Held-Karp reasons about sub-tour costs; Concorde reasons about polyhedral structure; Christofides reasons about spanning trees and matchings. A neural network does something different — it has learned a compressed statistical model of what good TSP solutions look like, encoded in the weights of its attention layers. It does not construct a proof that its tour is near-optimal; it produces a tour that <em>tends to be</em> near-optimal because the tour length gradient shaped its parameters during training. Whether this counts as understanding, or as a different kind of shortcut that resembles understanding, is an open philosophical question about the nature of learned computation.
+            </div>
+
+            <p>
+                The current state of the art is nuanced. Neural solvers are fast and scalable — once trained, they produce tours in milliseconds even for large instances. But they do not consistently match the best classical heuristics. LKH-3 still dominates on standard benchmarks. The most promising direction is hybrid: use a neural network to make local search decisions — which edges to consider swapping, which neighborhoods to explore — guided by learned intuition about promising moves. This combination captures the speed and adaptability of learned policies while retaining the quality guarantees of structured local search.
+            </p>
+
+            <h2>THE DEEPER LESSON</h2>
+
+            <p>
+                TSP is the canonical example of why <strong>finding and verifying are fundamentally different operations</strong>. Given a tour, you can verify its length in O(n) time — just add up the edges. But finding the shortest tour requires, as far as we know, searching through a space that grows faster than any polynomial. The asymmetry between checking a solution and constructing one is the heart of the P vs NP question, and TSP makes it viscerally concrete.
+            </p>
+
+            <p>
+                There is also a deeper lesson about the nature of combinatorial complexity. TSP starts with something utterly simple: cities and distances. Nothing mysterious, nothing quantum, nothing continuous. Just discrete points and numbers. And yet the space of possible routes explodes so catastrophically as n grows that no conceivable amount of computing power — classical, quantum, or otherwise — can search it directly. The complexity does not come from the problem being difficult to describe; it comes from the combinatorics of simple choices interacting with each other.
+            </p>
+
+            <p>
+                Every time you choose the next city, you foreclose possibilities for the remaining cities. Every local choice has global consequences you cannot fully anticipate. This is not a property of TSP specifically — it is a property of any combinatorial structure where decisions interact. Scheduling, protein folding, drug design, compiler optimisation: the same explosion underlies them all. TSP is simply the cleanest place to see it.
+            </p>
+
+            <p>
+                What the field has learned from seven decades of TSP research is not how to tame the explosion — you cannot. It is how to be clever enough that you don't need to search the whole space. Lower bounds let you prune branches you don't need to explore. Structure lets you decompose a hard global problem into tractable subproblems. Approximation lets you settle for good-enough when optimal is out of reach. Heuristics let you exploit empirical regularity even when you can't prove it. These are not workarounds — they are the deep intellectual content of the field.
+            </p>
+
+            <hr>
+
+            <p>
+                I first encountered TSP in an algorithms course, listed as an example of NP-completeness alongside graph colouring and bin packing. It took me a while to appreciate what distinguished it from the others — not that it is harder or easier (all NP-complete problems are equivalent in the reduction sense), but that it sits at a crossroads. It is the point where theory, practice, operations research, combinatorics, machine learning, and logistics all meet. No other problem has been studied so intensely from so many different directions by so many different communities.
+            </p>
+
+            <p>
+                The Concorde result — 85,900 cities solved optimally — is one of those achievements that should be more famous than it is. It represents decades of accumulated mathematical knowledge, implemented carefully and run patiently. It did not happen because the problem became easier. It happened because humans found clever ways to see through the combinatorial fog. That, I think, is what good algorithms research actually is: not computing power, but insight.
+            </p>
+
+            <p>
+                And yet, for all of that, a salesman with 100 cities is still on his own.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">TSP</span>
+                <span class="tag">NP-complete</span>
+                <span class="tag">combinatorial optimisation</span>
+                <span class="tag">algorithms</span>
+                <span class="tag">approximation</span>
+                <span class="tag">Christofides</span>
+                <span class="tag">Concorde</span>
+                <span class="tag">held-karp</span>
+                <span class="tag">heuristics</span>
+                <span class="tag">deep learning</span>
+                <span class="tag">theory of computation</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="conways-game-of-life.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Conway's Game of Life</span>
+                </a>
+                <a href="dna-computing.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">DNA Computing</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

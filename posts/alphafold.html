@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaFold and the Protein Folding Revolution — Umakant Kunal</title>
+    <meta name="description" content="In 2020, DeepMind's AlphaFold 2 solved a 50-year open problem in biology. Here's how it works, why it matters, and what comes next.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-science   { color: #34d399;        border-color: #064e3b; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                alphafold
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-25</span>
+                <span class="post-category cat-science">Biology × AI</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">AlphaFold and the Protein<br>Folding Revolution</h1>
+
+            <p class="post-subtitle">
+                For 50 years, predicting a protein's three-dimensional shape from its sequence was one of the hardest open problems in biology. In 2020, DeepMind's AlphaFold 2 solved it. The implications for medicine and drug discovery are still unfolding.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                For fifty years, the protein folding problem sat at the top of biology's most wanted list. Researchers spent careers on it. Supercomputers were dedicated to it. Progress was measured in ångströms and decades. Then, in December 2020, DeepMind's AlphaFold 2 walked into the CASP14 competition and achieved a median accuracy that matched experimental methods — methods that sometimes take years and millions of dollars per protein. <em>Science</em> magazine called it the "method of the decade." The broader scientific community called it, with only slight exaggeration, a solved problem. <strong>Fifty years of effort, resolved in a matter of months of deep learning training.</strong> The implications for medicine, drug discovery, and our understanding of life itself are still, quietly, unfolding.
+            </p>
+
+            <h2>THE PROTEIN FOLDING PROBLEM</h2>
+
+            <p>
+                A protein is, at its most basic, a chain of amino acids. There are 20 standard types, and they link together in sequences of anywhere from a few dozen to several thousand residues. That sequence is encoded by DNA — reading the gene gives you the string. But the string is not the thing. <strong>A protein's function is determined almost entirely by its three-dimensional shape</strong> — the precise way the chain coils, twists, and folds back on itself in space. An enzyme's active site has to be exactly the right shape to hold its substrate. A receptor must fit its ligand like a lock matches a key. A misfolded protein doesn't just fail to work — it can actively cause disease.
+            </p>
+
+            <p>
+                The problem: given only the amino acid sequence, predict the 3D structure. This sounds tractable until you consider the numbers. A protein with just 100 amino acids has — conservatively — around 10<sup>30</sup> possible conformations if each residue has a few rotational degrees of freedom. That's more configurations than there are atoms in the observable universe. Yet in a living cell, the protein folds to its native, functional shape in microseconds to milliseconds, reliably, every time. This apparent paradox — christened <strong>Levinthal's paradox</strong> by biophysicist Cyrus Levinthal in 1969 — is the heart of the problem. The protein isn't searching randomly through conformational space. It's following a free-energy landscape, guided by the physics of electrostatics, hydrophobicity, hydrogen bonds, and van der Waals forces. But reconstructing that landscape computationally, from sequence alone, remained beyond reach for half a century.
+            </p>
+
+            <div class="callout" data-label="Key concept">
+                Levinthal's paradox: if a 100-residue protein tested one conformation per nanosecond, a random search would take longer than the age of the universe. Instead, it folds in microseconds. The protein is not searching — it is falling down a funnel-shaped energy landscape toward the native state. The question was always: can we predict where the bottom of that funnel is?
+            </div>
+
+            <h2>WHY IT MATTERS</h2>
+
+            <p>
+                It is hard to overstate how central proteins are to biology — and therefore to disease and medicine. <strong>Virtually every pathological process you can name involves proteins behaving badly.</strong> HIV's protease enzyme cleaves viral proteins to produce infectious viral particles; blocking it (which requires knowing its shape) is the basis of antiretroviral therapy. Cancer is, at its core, a story of driver mutations in proteins like p53, KRAS, and EGFR — mutations that subtly alter structure and lock the protein into a permanently active or permanently inactive state. Alzheimer's disease involves the pathological misfolding and aggregation of amyloid-beta and tau proteins into plaques and tangles that strangle neurons. SARS-CoV-2's spike protein, whose structure structural biologists rushed to determine in early 2020, was the target of every successful vaccine developed against COVID-19.
+            </p>
+
+            <p>
+                Drug discovery is, at its mechanical core, a shape-matching exercise. You want a small molecule that binds to a specific pocket on a specific protein — activating it, blocking it, or degrading it. To design that molecule, you need to know the shape of the pocket. Historically, getting that shape required X-ray crystallography, cryo-electron microscopy, or NMR spectroscopy — techniques that are slow, expensive, and in many cases simply impossible for proteins that resist crystallisation or are too large for NMR. <em>Knowing the structure is the prerequisite for everything downstream.</em> For the vast majority of the roughly 200 million proteins catalogued by science, that structure was simply unknown. AlphaFold changed that arithmetic entirely.
+            </p>
+
+            <h2>CASP</h2>
+
+            <p>
+                Since 1994, the biennial Critical Assessment of Protein Structure Prediction (CASP) competition has served as the field's benchmark. The setup is elegant: organisers identify proteins whose structures have been determined experimentally but not yet published. Groups around the world submit structure predictions for those proteins, blind — without knowing the answer. The predictions are then scored against the experimentally determined structures using metrics like the GDT_TS score and, later, the TM-score (Template Modelling score), where 1.0 is a perfect match and scores above 0.5 are generally considered the same fold.
+            </p>
+
+            <p>
+                For 25 years, progress at CASP was real but incremental. The dominant approach — threading, homology modelling, fragment assembly — improved steadily. At CASP13 in 2018, AlphaFold 1 appeared and caused a stir: it outperformed all other groups by a significant margin, using deep learning to predict inter-residue distances and angles. Researchers took notice. At CASP14 in 2020, AlphaFold 2 achieved a median GDT_TS score of 92.4 — a number that would have been unimaginable two years earlier. <strong>The second-best group scored around 75.</strong> It wasn't an improvement; it was a discontinuity.
+            </p>
+
+            <blockquote>
+                "This is a stunning advance on the protein structure prediction problem, one that will transform structural biology and has occurred decades before many people in the field expected."
+                <cite>— Venki Ramakrishnan, Nobel Laureate and President of the Royal Society, on AlphaFold 2's CASP14 result</cite>
+            </blockquote>
+
+            <p>
+                The reaction from the structural biology community was a mixture of awe and mild existential vertigo. Labs that had spent decades building experimental pipelines to determine protein structures began asking what, exactly, their pipelines were now for. The answer — validating predictions, studying dynamics, determining structures AlphaFold is uncertain about — is a real one, but the landscape shifted irreversibly.
+            </p>
+
+            <h2>HOW ALPHAFOLD WORKS</h2>
+
+            <p>
+                AlphaFold 2 is not a single clever trick. It is a carefully engineered stack of innovations that each address a different part of the prediction problem. Understanding the architecture — even at a high level — is worth the effort, because each piece reflects a genuine insight about what information is actually required to predict protein structure.
+            </p>
+
+            <h3>1. Multiple Sequence Alignment (MSA)</h3>
+
+            <p>
+                The first key insight is that evolution has already done much of the hard work. When two residues in a protein are spatially close in the folded structure, mutations in one often co-occur with compensating mutations in the other — because the protein needs to maintain function. If position 42 and position 87 are spatially adjacent, a mutation at 42 that disrupts their interaction creates selective pressure for a compensating mutation at 87. Across millions of years of evolution and thousands of related species, these co-evolutionary signals accumulate and are, in principle, readable.
+            </p>
+
+            <p>
+                AlphaFold begins by searching sequence databases for homologous proteins — proteins with related sequences across different organisms — and building a <strong>Multiple Sequence Alignment (MSA)</strong>: a matrix where each row is a related sequence and each column is a position. The co-variation patterns in this matrix encode, in compressed form, which residue pairs are likely to be in contact. This is not a new idea — co-evolutionary approaches to contact prediction date back decades — but AlphaFold uses the MSA in a far more sophisticated way than prior methods.
+            </p>
+
+            <h3>2. The Evoformer Block</h3>
+
+            <p>
+                The MSA and a pairwise representation (a matrix encoding the relationships between every pair of residues) are fed into the <strong>Evoformer</strong>, AlphaFold's central architectural innovation. The Evoformer is a deep transformer-based block that performs a kind of joint message-passing: information flows between the MSA representation and the pairwise representation simultaneously, with each updating the other. Axial attention allows the network to attend along rows and columns of the MSA separately, which is computationally tractable even for long sequences. The pairwise representation, meanwhile, builds up an increasingly refined map of the likely distances and orientations between every pair of amino acids.
+            </p>
+
+            <p>
+                This joint reasoning — <em>the sequence tells you something about the structure, and your current structural beliefs feed back into how you interpret the sequence</em> — is what distinguishes AlphaFold from prior approaches. The Evoformer runs for 48 iterations, each pass refining both representations.
+            </p>
+
+            <h3>3. The Structure Module</h3>
+
+            <p>
+                The refined representations are passed to the <strong>Structure Module</strong>, which produces the actual 3D coordinates. It represents each residue as a rigid body (a "frame" — the backbone nitrogen, alpha-carbon, and carbonyl carbon) and uses <em>invariant point attention</em>, a form of equivariant attention that respects the geometry of 3D space. The module predicts the rotation and translation of each frame iteratively, with a recycling mechanism that feeds the predicted structure back into earlier layers for further refinement.
+            </p>
+
+            <p>
+                The model also outputs a <strong>pLDDT score</strong> (predicted Local Distance Difference Test) for each residue — a per-residue confidence estimate ranging from 0 to 100. Regions with pLDDT above 90 are typically predicted with near-experimental accuracy. Regions with low pLDDT — often loops and disordered regions — are explicitly flagged as uncertain. This built-in uncertainty quantification turned out to be one of AlphaFold's most practically useful features: it tells researchers not just what the structure is predicted to be, but how much to trust each part of the prediction.
+            </p>
+
+            <blockquote>
+                "We were really trying to build something that understood the physics and the biology. Not just pattern-match to known structures, but actually learn the underlying principles — why proteins fold the way they do."
+                <cite>— John Jumper, lead researcher on AlphaFold 2, DeepMind (Nobel Prize in Chemistry, 2024)</cite>
+            </blockquote>
+
+            <h2>ALPHAFOLD DATABASE</h2>
+
+            <p>
+                In July 2021, DeepMind and EMBL's European Bioinformatics Institute (EMBL-EBI) released the AlphaFold Protein Structure Database. The initial release covered the human proteome and 20 other model organisms. By 2022, the database had expanded to <strong>over 200 million protein structure predictions</strong> — covering virtually the entire UniProt protein sequence database, the most comprehensive catalogue of known proteins in existence.
+            </p>
+
+            <p>
+                This was free. This was instant. A researcher who would previously have spent months and significant grant money to determine a single protein structure could now open a browser, type in a protein name or ID, and download a high-confidence structure prediction in seconds. The database has already enabled:
+            </p>
+
+            <ul>
+                <li><strong>Drug repurposing</strong> — identifying existing approved drugs that might bind to newly characterised protein targets, because the binding pockets are now known.</li>
+                <li><strong>Neglected tropical diseases</strong> — proteins from parasites like <em>Plasmodium falciparum</em> (malaria) and <em>Leishmania</em>, long intractable to structural biology due to limited research funding and experimental difficulty, now have predicted structures accessible to any lab in the world.</li>
+                <li><strong>Dark proteome illumination</strong> — proteins in regions of sequence space with few known structures, previously impossible to model by homology, are now approachable. In 2022, researchers used AlphaFold to identify a new class of virus-encoded proteins with no sequence similarity to any known protein yet clear structural homologs in existing databases.</li>
+                <li><strong>Accelerated hypothesis generation</strong> — structural biologists who previously designed years of experiments around a single protein can now generate and prioritise hypotheses computationally before a single experiment is run.</li>
+            </ul>
+
+            <div class="callout" data-label="Impact stat">
+                By 2024, the AlphaFold database had been accessed by researchers in over 190 countries. More than one million unique users had queried structures since launch. Papers citing AlphaFold doubled year-over-year through 2023. John Jumper and Demis Hassabis received the 2024 Nobel Prize in Chemistry alongside David Baker, whose work on protein design (using related methods) completed what many called the structural biology revolution.
+            </div>
+
+            <h2>ALPHAFOLD 3 AND BEYOND</h2>
+
+            <p>
+                In May 2024, DeepMind published AlphaFold 3 in <em>Nature</em>. The new model extended AlphaFold's scope dramatically: it could now predict the structures of <strong>complexes involving not just proteins but also DNA, RNA, small molecules (ligands), and modified residues</strong>. This matters enormously for drug discovery — most drugs bind to protein-ligand complexes, and predicting how a small molecule docks into a protein pocket is one of the central computational challenges in pharmaceutical research. AlphaFold 3 replaced the Evoformer-based architecture with a diffusion model applied to the full atomic representation, producing predictions of entire molecular assemblies in a single pass.
+            </p>
+
+            <p>
+                The release was accompanied by controversy. Unlike AlphaFold 2, whose model weights were released openly under a permissive licence, <strong>DeepMind did not release the weights for AlphaFold 3</strong>. Access was provided through a web server with usage restrictions, drawing sharp criticism from the scientific community about reproducibility, independent validation, and the limits of commercial-academic partnerships in fundamental science.
+            </p>
+
+            <blockquote>
+                "There is a world where AlphaFold 3's capabilities are fully available to the research community, and a world where they aren't. We should be very deliberate about which world we choose to build."
+                <cite>— Demis Hassabis, CEO of DeepMind, in response to reproducibility concerns around the AlphaFold 3 release</cite>
+            </blockquote>
+
+            <p>
+                The open-source ecosystem responded quickly. <strong>OpenFold</strong> (Columbia/Princeton) reproduced AlphaFold 2 from scratch with fully open weights and training code. Meta AI's <strong>ESMFold</strong> took a different approach — using a large language model pre-trained on protein sequences alone (no MSA), achieving near-AlphaFold accuracy with far faster inference. The University of Washington's <strong>RoseTTAFold</strong> (David Baker's group) produced its own high-accuracy model and extended it to multimers and protein-nucleic acid complexes. The field after AlphaFold is not a monopoly — it is a Cambrian explosion of architectures, each making different tradeoffs between accuracy, speed, and the kinds of molecules they can handle.
+            </p>
+
+            <h2>THE LIMITS</h2>
+
+            <p>
+                AlphaFold is not done. It is a tool, and like all tools it has a scope. Understanding what it cannot do is as important as understanding what it can.
+            </p>
+
+            <p>
+                <strong>AlphaFold predicts static structures.</strong> It gives you the lowest free-energy conformation — the shape a protein settles into under idealized conditions. But many proteins are <em>conformationally flexible</em>: they exist in multiple states, transitioning between them as they carry out their function. Kinases switch between active and inactive conformations. Ion channels open and close. Allosteric proteins change shape when a small molecule binds somewhere far from the active site. These dynamics are invisible to AlphaFold.
+            </p>
+
+            <p>
+                <strong>Intrinsically disordered regions (IDRs)</strong> — segments of protein that don't fold into a stable 3D structure under any conditions — are a genuine blind spot. AlphaFold's low pLDDT scores correctly identify them as uncertain, but the model has no mechanism for predicting their functional behaviour, which is often mediated by transient interactions and context-dependent folding. Roughly 30–40% of the human proteome contains significant disordered regions.
+            </p>
+
+            <p>
+                <strong>Protein-protein interactions in full generality</strong> remain hard. AlphaFold Multimer extended the model to predict complex structures, but prediction accuracy falls off as complex size and structural novelty increase. The full interactome — the complete map of which proteins bind to which, and how — is orders of magnitude more complex than the structural prediction problem alone.
+            </p>
+
+            <p>
+                Finally — and this is perhaps the deepest limit — <strong>structure is not function.</strong> Knowing where the atoms are is not the same as understanding what the protein does, how it does it, or how a mutation will change its behaviour. A variant that causes disease might differ from the healthy form by a single atom in a single residue. The structural change might be invisible at the resolution of AlphaFold's predictions. Connecting structure to mechanism, and mechanism to phenotype, remains a long and mostly unsolved chain of inference.
+            </p>
+
+            <hr>
+
+            <p>
+                I keep coming back to the timeline. The protein folding problem was first clearly articulated in the 1960s. For the next 50 years, progress was real but incremental — a few ångströms of improvement per decade, a handful of structures per year. Then, in the span of roughly 18 months between the publication of AlphaFold 2's CASP14 result and the release of the full database, the landscape changed entirely.
+            </p>
+
+            <p>
+                This is what it looks like when deep learning is applied to a domain where the training signal is rich, the problem is well-specified, and the human community has spent decades curating the data. It doesn't always look like this — many problems in biology are not well-specified enough, or data-poor, or require types of reasoning that current architectures struggle with. But the protein folding problem had all the properties that made AlphaFold possible, and the field was ready, even if it didn't know it.
+            </p>
+
+            <p>
+                What stays with me is the question of what that means for the way we think about hard problems. Science has a way of normalising its own pace — we assume that if something has resisted attack for 50 years, it will probably resist attack for another 50. Sometimes that assumption is correct. And sometimes a new tool arrives that doesn't chip away at the problem but simply dissolves it. <strong>The uncomfortable implication is that there might be other 50-year problems in biology — in neuroscience, in immunology, in developmental biology — that are one architectural insight away from falling.</strong> We don't know which ones. That uncertainty is both humbling and, if you let yourself feel it, genuinely exciting.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">AlphaFold</span>
+                <span class="tag">protein folding</span>
+                <span class="tag">structural biology</span>
+                <span class="tag">DeepMind</span>
+                <span class="tag">deep learning</span>
+                <span class="tag">drug discovery</span>
+                <span class="tag">CASP</span>
+                <span class="tag">Evoformer</span>
+                <span class="tag">biology × AI</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="brain-as-computer.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">The Brain Is Not a Computer</span>
+                </a>
+                <a href="cap-theorem.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">CAP Theorem and the Limits of Distributed Systems</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The CAP Theorem — Why Your Database Cannot Have Everything — Umakant Kunal</title>
+    <meta name="description" content="Eric Brewer's conjecture, proved in 2002: a distributed system can only guarantee two of three properties — Consistency, Availability, and Partition Tolerance. The foundational constraint of every database and cloud service.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai         { color: #00ff9f;  border-color: #00885a; }
+        .cat-philosophy { color: var(--purple); border-color: #3d2d6e; }
+        .cat-systems    { color: #fbbf24;  border-color: #78350f; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                cap-theorem
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-28</span>
+                <span class="post-category cat-systems">Distributed Systems</span>
+                <span class="post-read-time">8 min read</span>
+            </div>
+
+            <h1 class="post-title">The CAP Theorem —<br>Why Your Database Cannot<br>Have Everything</h1>
+
+            <p class="post-subtitle">
+                In 2000, Eric Brewer proposed a conjecture that would reshape how we think about distributed systems: you can only ever guarantee two of three properties — Consistency, Availability, and Partition Tolerance. Two years later it was formally proved. Every database, every distributed system, every cloud service you have ever used lives inside this constraint.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Eric Brewer stood up at PODC — the ACM Symposium on Principles of Distributed Computing — in the summer of 2000 and proposed a conjecture. Not a proof. A conjecture. A distributed system, he said, can only guarantee two of three properties: <strong>Consistency</strong>, <strong>Availability</strong>, and <strong>Partition Tolerance</strong>. Two years later, Seth Gilbert and Nancy Lynch published a formal proof. The conjecture became a theorem. It became the CAP theorem — and it is now the foundational constraint of every database, every distributed system, every cloud service you have ever used.
+            </p>
+
+            <p>
+                This is not an academic curiosity. Every time you choose a database, you are implicitly choosing where to sit on the CAP triangle. Every time a service goes down during a network incident, the CAP theorem is the reason why. Every time you see a shopping cart that remembers your items even when part of Amazon's infrastructure is degraded, CAP is the design decision that made that possible. Understanding CAP is understanding why the systems we build are shaped the way they are.
+            </p>
+
+            <h2>THE THREE PROPERTIES</h2>
+
+            <p>
+                Before you can understand the theorem, you need to understand what the three properties actually mean — precisely, not casually. The casual definitions cause most of the confusion.
+            </p>
+
+            <h3>Consistency</h3>
+
+            <p>
+                In the CAP context, consistency means <strong>linearizability</strong>: every read sees the most recent write, or returns an error. If you write a value to the system and then immediately read it — from anywhere, from any node — you either get that new value or you get an error. You never get stale data silently served as if it were current.
+            </p>
+
+            <p>
+                Concretely: your bank account balance. If you withdraw £100 and your partner simultaneously checks the balance from a different device on a different continent, they should see the post-withdrawal balance. Not the pre-withdrawal one. Consistency means the system behaves as if there is a single, authoritative copy of the data, even if there are physically thousands of replicas spread across data centres.
+            </p>
+
+            <h3>Availability</h3>
+
+            <p>
+                Availability means <strong>every request receives a response</strong> — not an error. Not a timeout. A response. It may not be the most current data, but the system will answer. Every node that hasn't crashed will respond to every request within a bounded time.
+            </p>
+
+            <p>
+                Concretely: your social media feed. When you open Twitter during a partial outage, you see <em>something</em> — old tweets, cached content, whatever the healthy nodes can provide. The app doesn't show you a blank screen with "database unavailable." It keeps serving. That is availability prioritised over consistency.
+            </p>
+
+            <h3>Partition Tolerance</h3>
+
+            <p>
+                A network partition is when nodes in a distributed system cannot communicate with each other — messages are dropped, delayed, or corrupted. Partition tolerance means the system continues operating correctly even when this happens.
+            </p>
+
+            <p>
+                This is the property everyone wishes they could drop, and no one can. Network partitions are not edge cases in real distributed systems — they are a fundamental property of networks. Cables get cut. Routers get overloaded. Data centre switches fail. Cloud provider availability zones lose connectivity to each other. The question is not whether you will experience partitions; the question is what happens when you do.
+            </p>
+
+            <blockquote>
+                "The CAP theorem states that any networked shared-data system can have at most two of three desirable properties: consistency, high availability, and tolerance to network partitions."
+                <cite>— Eric Brewer, "Towards Robust Distributed Systems," PODC Keynote, 2000</cite>
+            </blockquote>
+
+            <h2>WHY YOU MUST CHOOSE TWO</h2>
+
+            <p>
+                Here is the proof intuition, stripped to its core. It is not hard to understand once you see it clearly.
+            </p>
+
+            <p>
+                Imagine a distributed database with two nodes: <strong>Node A</strong> and <strong>Node B</strong>. They are connected by a network, and they replicate data between each other. Now imagine a network partition occurs — A and B cannot communicate. They are isolated.
+            </p>
+
+            <p>
+                A client writes a new value — say, a bank balance update — to Node A. Node A accepts the write. Now a different client sends a read request to Node B. What can Node B do?
+            </p>
+
+            <p>
+                You have exactly three options, and only three:
+            </p>
+
+            <ol>
+                <li><strong>Return the stale data</strong> it has locally — the pre-write value. This keeps the system available (B responded), but it sacrifices consistency (B returned data it knows might be outdated). <em>You gave up C.</em></li>
+                <li><strong>Return an error</strong> or refuse to answer until the partition resolves. This preserves consistency (B won't serve stale data), but it sacrifices availability (B is not responding). <em>You gave up A.</em></li>
+                <li><strong>Prevent the partition from happening</strong>. Make the network reliable enough that A and B always stay in sync. This is not an option. You cannot guarantee a network is partition-free. The internet was not designed to be. Physics prevents it over long distances. <em>You cannot give up P.</em></li>
+            </ol>
+
+            <p>
+                There is no fourth option. You cannot return the correct data (C) from a node that cannot see the write (due to partition) while also returning a successful response (A). The math is airtight. The theorem is not a design guideline; it is a formal impossibility result.
+            </p>
+
+            <div class="callout" data-label="Key Insight">
+                Because network partitions are unavoidable in any real distributed system, the practical choice is always between CP and AP — not between CA, CP, and AP. A "CA system" that claims to sacrifice partition tolerance is really just a single-node system, or one that fails catastrophically during partitions rather than handling them gracefully.
+            </div>
+
+            <h2>CP SYSTEMS — CONSISTENCY + PARTITION TOLERANCE</h2>
+
+            <p>
+                A CP system chooses to maintain consistency even when a network partition occurs. When the partition happens and a node cannot guarantee it has the latest data, it refuses to serve the request. It goes offline. It returns an error. It waits. It will not serve stale data under any circumstances.
+            </p>
+
+            <p>
+                <strong>Examples:</strong> HBase, Apache ZooKeeper, MongoDB in strong consistency mode, Etcd, Consul, Apache Cassandra configured with quorum reads and writes.
+            </p>
+
+            <p>
+                ZooKeeper is the canonical CP system. It is used as a coordination service — for distributed locks, leader election, configuration management. Imagine what happens if ZooKeeper told two different services they were both the leader simultaneously. Catastrophe. So ZooKeeper simply refuses to answer when it cannot guarantee consistency. During a partition, a minority partition of ZooKeeper nodes will stop serving reads and writes entirely, waiting for the majority to be reachable again.
+            </p>
+
+            <p>
+                <strong>When CP is the right choice:</strong>
+            </p>
+            <ul>
+                <li><strong>Financial transactions.</strong> You cannot allow two ATMs on opposite sides of a network partition to both approve the same withdrawal. Stale data is worse than no data.</li>
+                <li><strong>Inventory management.</strong> Selling the last item in stock twice is a business problem, not just a technical one.</li>
+                <li><strong>Distributed locks and coordination.</strong> Two nodes believing they hold the same exclusive lock is undefined behaviour at the system level.</li>
+            </ul>
+
+            <p>
+                The cost of CP is unavailability during partitions. Users experience errors or timeouts. For most critical business systems, this is the correct trade-off — a clear error is far less harmful than silently wrong data.
+            </p>
+
+            <h2>AP SYSTEMS — AVAILABILITY + PARTITION TOLERANCE</h2>
+
+            <p>
+                An AP system chooses to keep serving requests even when a network partition occurs. It will return whatever data it has, even if that data might be stale. The system remains available, but it cannot guarantee you are seeing the latest version of the world.
+            </p>
+
+            <p>
+                <strong>Examples:</strong> Apache Cassandra, CouchDB, Amazon DynamoDB (by default), Riak, DNS.
+            </p>
+
+            <p>
+                Cassandra was explicitly designed to be AP. Amazon built it because they needed a system that could accept writes even when parts of their infrastructure were unavailable. A shopping cart that fails to add an item is a worse user experience than a shopping cart that might briefly show a slightly inconsistent item count. Availability was the priority. Consistency was the trade-off.
+            </p>
+
+            <p>
+                <strong>When AP is the right choice:</strong>
+            </p>
+            <ul>
+                <li><strong>Social media feeds.</strong> Seeing a tweet that is 30 seconds old rather than the absolute latest is entirely acceptable.</li>
+                <li><strong>Shopping carts.</strong> Adding an item to your cart should always work, even during degraded conditions.</li>
+                <li><strong>DNS.</strong> The entire Domain Name System is an AP system. DNS records propagate with delays. During that propagation window, different resolvers return different values. The internet accepts this because availability is more important than having every node return the absolute latest record simultaneously.</li>
+                <li><strong>User sessions and preferences.</strong> Seeing your old avatar for a few seconds after updating it is a minor cosmetic issue, not a correctness problem.</li>
+            </ul>
+
+            <blockquote>
+                "We sacrificed consistency for availability and performance. The shopping cart is an AP system. If there's a failure, we err on the side of letting the customer add items to the cart, and we'll sort out the inconsistency later."
+                <cite>— Werner Vogels, CTO of Amazon, on the design of Amazon's Dynamo system</cite>
+            </blockquote>
+
+            <h2>THE PACELC REFINEMENT</h2>
+
+            <p>
+                CAP describes what happens during a partition. But here is the thing: partitions are relatively rare. Most of the time, your distributed system is operating normally — all nodes are up, messages are getting through, everything is connected. What happens then?
+            </p>
+
+            <p>
+                In 2012, Daniel Abadi at Yale proposed an extension to CAP called <strong>PACELC</strong>, which stands for: if there's a Partition (P), choose between Availability (A) and Consistency (C); ELse — when the system is running normally — choose between Latency (L) and Consistency (C).
+            </p>
+
+            <p>
+                The ELC part is often more important in practice than the PAC part. In normal operation, every distributed system has to decide: when a client writes data, do you wait for all replicas to confirm the write before returning success (strong consistency, higher latency), or do you return success as soon as the primary has it and replicate asynchronously (low latency, weaker consistency)?
+            </p>
+
+            <blockquote>
+                "The CAP theorem does not tell us what happens when there is no partition. PACELC does. In the normal case, there is a fundamental trade-off between latency and consistency. You cannot have both."
+                <cite>— Daniel Abadi, "Consistency Tradeoffs in Modern Distributed Database System Design," IEEE Computer, 2012</cite>
+            </blockquote>
+
+            <p>
+                <strong>Examples under PACELC:</strong>
+            </p>
+            <ul>
+                <li><strong>DynamoDB</strong> is PA/EL — available during partitions, low latency in normal operation.</li>
+                <li><strong>Cassandra</strong> is PA/EL — tunable but defaults to availability and low latency.</li>
+                <li><strong>HBase</strong> is PC/EC — consistent during partitions, consistent in normal operation (higher latency).</li>
+                <li><strong>Google Spanner</strong> is PC/EC — it enforces consistency globally, accepting latency as the cost.</li>
+            </ul>
+
+            <p>
+                PACELC doesn't replace CAP — it extends it. CAP is necessary but not sufficient to reason about the full behaviour of a distributed system. The latency-consistency trade-off in the normal case is the one most developers encounter most of the time, because partitions are rare but replication lag is a constant companion.
+            </p>
+
+            <h2>EVENTUAL CONSISTENCY</h2>
+
+            <p>
+                AP systems promise <strong>eventual consistency</strong>: if you stop writing data, eventually all replicas will converge to the same value. "Eventually" is deliberately vague. It might mean milliseconds. It might mean seconds. During that window, different clients reading from different nodes may see different values.
+            </p>
+
+            <p>
+                Amazon's <strong>Dynamo paper</strong> (2007) is the canonical description of an AP system. Dynamo — the internal Amazon key-value store that inspired DynamoDB and Cassandra — was built with a specific set of choices: always-writable (availability over consistency), tunable replication, and a conflict resolution mechanism. The paper is essential reading for anyone building distributed systems.
+            </p>
+
+            <p>
+                The naive conflict resolution strategy is <strong>last write wins (LWW)</strong>: when two replicas disagree, the one with the more recent timestamp wins. This is simple. It is also wrong. Clocks in distributed systems are not perfectly synchronised. A write that arrived "later" by clock time might logically be earlier. LWW silently discards data.
+            </p>
+
+            <p>
+                The more principled approach is <strong>vector clocks</strong>: each update carries a version vector that tracks which nodes have seen which writes. When a conflict arises, the system can detect that two writes are genuinely concurrent (neither happened-before the other) and expose the conflict for resolution rather than silently dropping one.
+            </p>
+
+            <p>
+                The most elegant approach is <strong>CRDTs — Conflict-free Replicated Data Types</strong>. A CRDT is a data structure designed so that any two replicas can be merged and the result is mathematically guaranteed to converge, regardless of the order in which updates were applied. A counter CRDT, for example, tracks increments and decrements separately per node. Merge two CRDT counters and you always get the correct combined total. No conflict resolution needed — the math handles it. Riak, Redis, and several academic systems use CRDTs extensively.
+            </p>
+
+            <div class="callout" data-label="Technical Note">
+                CRDTs (Conflict-free Replicated Data Types) come in two families: state-based CRDTs (CvRDTs), where you merge full state, and operation-based CRDTs (CmRDTs), where you broadcast operations. Both guarantee convergence but have different network requirements. The key property they all share: the merge function must be commutative, associative, and idempotent. If those three properties hold, concurrent updates always resolve correctly without coordination.
+            </div>
+
+            <h2>HOW THIS CONNECTS TO REAL SYSTEMS</h2>
+
+            <p>
+                Let's bring CAP down to the systems you actually use.
+            </p>
+
+            <p>
+                <strong>Amazon S3</strong> is an AP system. For most of its history, S3 offered eventual consistency for read-after-write on overwrite operations — if you uploaded a new version of a file, you might get the old version for a brief window. In December 2020, Amazon upgraded S3 to offer strong read-after-write consistency for all operations. This was a significant engineering achievement, not a free lunch: it required careful coordination work internally while maintaining S3's legendary availability.
+            </p>
+
+            <p>
+                <strong>Amazon DynamoDB</strong> is configurable: by default it is AP (eventually consistent reads), but you can request strongly consistent reads at the cost of higher latency and 2x the read capacity units.
+            </p>
+
+            <p>
+                <strong>Amazon RDS</strong> (relational databases like PostgreSQL and MySQL) is a CP system. It sacrifices availability during failover events to maintain data integrity.
+            </p>
+
+            <p>
+                <strong>Google Spanner</strong> is the most interesting case. Google claims Spanner is effectively a CA system — globally consistent with high availability. How? They built <strong>TrueTime</strong>: a globally synchronised time API backed by GPS receivers and atomic clocks in every data centre. TrueTime allows Spanner to bound clock uncertainty to within a few milliseconds worldwide. With tight enough clock synchronisation, you can implement distributed transactions that are both consistent and highly available without the usual latency penalties. It is a remarkable engineering achievement — but it required Google to build GPS infrastructure into their data centres. Not something most organisations can replicate.
+            </p>
+
+            <p>
+                And then there is the cautionary tale: <strong>Amazon's 2007 shopping cart incident</strong>. Amazon's Dynamo paper described how the shopping cart was built as an AP system — always writable, eventually consistent. During normal operation this was fine. But under specific failure conditions, the merge logic would create shopping carts with deleted items reappearing. A customer would delete an item, it would disappear, and then — after a partition healed — the item would silently reappear. This was not a bug in the traditional sense; it was the exact behaviour the system was designed to exhibit. It was the consequence of prioritising availability over consistency without fully thinking through the semantics of the "merge" operation. The fix was not to change the CAP trade-off, but to improve the conflict resolution logic.
+            </p>
+
+            <hr>
+
+            <p>
+                There is something almost philosophical about the CAP theorem. It tells you that you cannot have everything. Not because of a lack of engineering effort, not because of inadequate hardware, but because the mathematics of distributed systems makes it impossible. Consistency, availability, and partition tolerance form a triangle, and you can only stand on two of its three sides at once.
+            </p>
+
+            <p>
+                Engineering is always about trade-offs, but most trade-offs feel contingent — like they might dissolve with enough cleverness or money. CAP is different. It is a proof. The impossibility is not a limitation of current technology; it is a fundamental constraint of any system that distributes data across a network where communication can fail.
+            </p>
+
+            <p>
+                Understanding this is freeing, in a strange way. When you know you cannot have everything, you stop trying. You stop looking for the database that is perfectly consistent, always available, and partition-tolerant — because that database does not exist and cannot exist. Instead you ask the right question: <em>given what my system actually needs, which two properties matter most?</em>
+            </p>
+
+            <p>
+                That is how every good distributed systems decision gets made. Not by avoiding the trade-off, but by making it consciously.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+
+            <div class="post-tags">
+                <span class="tag">distributed systems</span>
+                <span class="tag">CAP theorem</span>
+                <span class="tag">databases</span>
+                <span class="tag">consistency</span>
+                <span class="tag">availability</span>
+                <span class="tag">PACELC</span>
+                <span class="tag">eventual consistency</span>
+                <span class="tag">CRDTs</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="alphafold.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">AlphaFold & The Protein Folding Problem</span>
+                </a>
+                <a href="how-internet-works.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">How The Internet Actually Works</span>
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>© 2026 Umakant Kunal — <a href="../index.html">portfolio</a></p>
+            <p>built with terminal aesthetics &amp; genuine curiosity</p>
+        </div>
+    </footer>
+
+    <script>
+        // ── STARFIELD ──
+        (function () {
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            function init() {
+                stars = [];
+                for (let i = 0; i < 140; i++) {
+                    stars.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        r: Math.random() * 1.1 + 0.2,
+                        a: Math.random(),
+                        speed: Math.random() * 0.003 + 0.001
+                    });
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                stars.forEach(s => {
+                    s.a += s.speed;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0,255,159,${0.08 + 0.18 * Math.abs(Math.sin(s.a))})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+
+            resize();
+            init();
+            draw();
+            window.addEventListener('resize', () => { resize(); init(); });
+        })();
+
+        // ── READ PROGRESS ──
+        window.addEventListener('scroll', () => {
+            const doc = document.documentElement;
+            const scrolled = doc.scrollTop;
+            const total = doc.scrollHeight - doc.clientHeight;
+            document.getElementById('readProgress').style.width = (scrolled / total * 100) + '%';
+        });
+
+        // ── NAV TOGGLE ──
+        document.getElementById('navToggle').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+    </script>
+
+</body>
+</html>

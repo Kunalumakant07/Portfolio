@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How the Internet Actually Works — Umakant Kunal</title>
+    <meta name="description" content="You type a URL and press Enter. In less than a second, text arrives from a server on the other side of the world. Let's trace every single step of that journey.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-systems { color: #fbbf24; border-color: #78350f; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                how-internet-works
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-04-01</span>
+                <span class="post-category cat-systems">Systems / Networking</span>
+                <span class="post-read-time">11 min read</span>
+            </div>
+
+            <h1 class="post-title">How the Internet Actually Works —<br>From Your Keyboard to a Server on<br>the Other Side of the World</h1>
+
+            <p class="post-subtitle">
+                You type a URL and press Enter. In less than a second, text arrives on your screen from a computer possibly thousands of kilometres away. This is so routine that we forget how extraordinary it is. Every single step involves elegant engineering solutions to genuinely hard problems. Let's trace the whole journey.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Start with the miracle, because it really is one. Right now, hundreds of millions of people are doing exactly the same thing — typing an address into a browser, pressing Enter, and receiving a response from a machine they have never touched, operated by a company they will never meet, routed through infrastructure owned by dozens of different organisations across multiple countries, all within the time it takes to blink. No single engineer designed this. No single company controls it. It emerged from decades of protocol design, competitive pressure, academic collaboration, and sheer accumulated engineering effort. It is, without exaggeration, <strong>the most complex human-built system that has ever existed</strong> — and it works reliably enough that we treat it as a utility, like water from a tap.
+            </p>
+
+            <p>
+                What follows is a trace of every major layer of that journey, from the moment your finger lifts off the Enter key to the moment pixels appear on your screen. We will not skip the hard parts. The hard parts are where the interesting engineering lives.
+            </p>
+
+            <h2>DNS — THE PHONEBOOK</h2>
+
+            <p>
+                Your browser does not know where <code>google.com</code> lives. No one gave it a map. What it has is a name — a human-readable string that means nothing to a router. Routers speak in IP addresses: numbers like <code>142.250.180.46</code> that identify a specific machine on the network. The Domain Name System is the global infrastructure that translates one into the other. Without DNS, you would have to memorise IP addresses for every website you visit. With DNS, you type a name and the system does the lookup for you.
+            </p>
+
+            <p>
+                The resolution process involves several layers, each with its own cache. Your browser checks its own DNS cache first — modern browsers cache recent lookups for a few minutes. If the answer is not there, it asks the operating system, which maintains its own cache and also checks the local <code>hosts</code> file. If neither knows the answer, the request goes to a <strong>recursive resolver</strong> — typically your ISP's DNS server, or a public resolver like <code>1.1.1.1</code> (Cloudflare) or <code>8.8.8.8</code> (Google). The recursive resolver does the heavy lifting: it queries the <strong>root nameservers</strong> (there are 13 logical root servers, operated by organisations like ICANN, NASA, and Verisign), which respond with the address of the <strong>TLD nameserver</strong> responsible for <code>.com</code>, <code>.org</code>, or whatever top-level domain you're querying. The TLD nameserver then points to the <strong>authoritative nameserver</strong> for the specific domain — the server that holds the actual DNS records. That server returns the IP address, and the answer propagates back through the chain to your browser.
+            </p>
+
+            <p>
+                Each record has a TTL — time to live — that tells caches how long to hold the answer before discarding it and asking again. When DNS is slow, everything is slow. A lookup that takes 200ms adds 200ms to every page load for a new domain. This is why DNS performance matters, why large companies run their own authoritative DNS infrastructure, and why browser-side caching is so aggressive. <strong>DNS over HTTPS (DoH)</strong> encrypts DNS queries inside HTTPS, preventing your ISP from seeing which domains you're looking up — a meaningful privacy improvement that is increasingly the default in modern browsers.
+            </p>
+
+            <blockquote>
+                "The internet is not one thing. It's a collection of things — of independently operated networks that have agreed to interconnect and exchange traffic according to common protocols."
+                <cite>— Vint Cerf, co-creator of TCP/IP, often called the Father of the Internet</cite>
+            </blockquote>
+
+            <h2>TCP/IP — THE ENVELOPE</h2>
+
+            <p>
+                Now your browser has an IP address. It needs to send data to that address across a network that has no guaranteed path between any two points, no central dispatcher, and no guarantee that any given link is even up. The solution is <strong>packet switching</strong>: data is broken into small chunks called packets, each labelled with a source and destination IP address, and each routed independently through the network. Different packets in the same request can take different physical paths and arrive out of order. The internet does not guarantee delivery — it just does its best.
+            </p>
+
+            <p>
+                <strong>IP (Internet Protocol)</strong> handles the addressing and routing. Every packet has a header containing source IP, destination IP, TTL (decremented at each hop — a packet that circulates forever gets dropped), and a protocol field indicating what's inside. IP is connectionless and stateless: each packet is routed independently, with no memory of previous packets.
+            </p>
+
+            <p>
+                <strong>TCP (Transmission Control Protocol)</strong> lives on top of IP and provides what IP does not: reliability, ordering, and error detection. Before any data can flow, TCP establishes a connection via the <em>three-way handshake</em>. Your machine sends a <strong>SYN</strong> packet to the server, saying "I want to connect." The server replies with a <strong>SYN-ACK</strong>, acknowledging the request and sending its own synchronisation sequence. Your machine replies with an <strong>ACK</strong>, and the connection is live. From this point, TCP guarantees that packets arrive in order, retransmits anything that gets lost, and adjusts its transmission rate based on network congestion. Every byte sent gets an acknowledgement; anything unacknowledged gets resent.
+            </p>
+
+            <p>
+                <strong>UDP (User Datagram Protocol)</strong> trades all of that reliability for speed. UDP has no handshake, no ordering guarantees, no retransmission. A packet either arrives or it doesn't, and neither side particularly cares about the ones that didn't. This sounds irresponsible until you consider the use cases: video calls, online games, and DNS queries all benefit enormously from low latency. In a video call, a dropped packet is better replayed as silence or a blurry frame than delayed while the system waits for a retransmit. DNS queries are tiny and idempotent — if the answer doesn't arrive, just ask again. UDP is the right tool for these jobs.
+            </p>
+
+            <div class="callout" data-label="technical detail">
+                <strong>TCP's congestion control</strong> is one of the internet's unsung heroes. Without it, the network would routinely collapse into congestion death spirals. Algorithms like CUBIC and BBR continuously probe available bandwidth, increasing send rates when the network is clear and backing off aggressively when packets start getting dropped or delayed. The internet you know — where a hundred people can stream video simultaneously on the same ISP link — exists partly because TCP is designed to be polite about sharing bandwidth it doesn't own.
+            </div>
+
+            <h2>BGP — THE POSTAL SERVICE</h2>
+
+            <p>
+                Your packet has a destination IP and is riding inside TCP. Now it needs to physically travel across the internet — through routers owned by your ISP, other ISPs, backbone providers, and eventually the network that hosts the server you're talking to. <strong>Border Gateway Protocol (BGP)</strong> is the system that tells each router how to reach every other network on the internet. It is, in a very real sense, what makes the internet a single connected system rather than a collection of isolated local networks.
+            </p>
+
+            <p>
+                The internet is organised into <strong>Autonomous Systems (ASes)</strong> — large networks operated by a single administrative entity, such as an ISP, a university, or a large company. Each AS gets a unique number (an ASN) and is responsible for routing within its own network. BGP is the protocol by which ASes announce to each other which IP prefixes (ranges of addresses) they can reach, and by which they propagate that information to the rest of the internet. When Cloudflare announces <code>104.16.0.0/12</code>, it is telling every other AS: "Send packets for these addresses to us."
+            </p>
+
+            <p>
+                BGP is both beautiful and terrifying. Beautiful because it is a genuinely distributed consensus protocol — there is no central authority, no master routing table, no single point of failure. The entire routing infrastructure of the internet emerges from thousands of bilateral agreements between autonomous systems, each sharing what it knows. Terrifying because those agreements are largely based on trust, enforced by business relationships and reputation rather than cryptographic verification. Any AS can announce that it owns any IP prefix, and for a few minutes — sometimes longer — the rest of the internet will believe it.
+            </p>
+
+            <p>
+                This is not hypothetical. In 2008, Pakistan Telecom accidentally (or otherwise) announced ownership of YouTube's IP prefixes to its upstream provider, which propagated the announcement globally. YouTube vanished from the internet for roughly two hours before the error was identified and corrected. Similar incidents happen every year: a misconfigured router announces wrong routes, traffic gets redirected through networks it was never supposed to traverse, and the internet silently reroutes around the problem — or doesn't. <strong>BGPsec</strong> and <strong>RPKI (Resource Public Key Infrastructure)</strong> are efforts to cryptographically verify route announcements, but adoption is slow and the internet's routing infrastructure remains fundamentally designed for cooperation, not adversarial conditions.
+            </p>
+
+            <blockquote>
+                "The internet was designed to be resilient to nuclear attack, but it was not designed to be resilient to a malicious participant who has been given a seat at the table."
+                <cite>— Werner Vogels, CTO of Amazon Web Services, on infrastructure trust assumptions</cite>
+            </blockquote>
+
+            <h2>TLS — THE SEALED ENVELOPE</h2>
+
+            <p>
+                Your packet can now navigate from your machine to the server. But the path crosses networks you do not own, through routers you have never audited, over cables that someone else controls. Without encryption, every intermediary can read every byte. <strong>Transport Layer Security (TLS)</strong> — the protocol behind the padlock icon in your browser — solves this by establishing an encrypted tunnel between your machine and the server before any application data is sent.
+            </p>
+
+            <p>
+                The TLS handshake runs on top of TCP and involves several steps. First, your browser sends a <strong>ClientHello</strong> message listing the TLS version it supports, a list of <strong>cipher suites</strong> it can use (combinations of key exchange, authentication, and encryption algorithms), and a random nonce. The server replies with a <strong>ServerHello</strong>, choosing a cipher suite from the list, and sends its <strong>X.509 certificate</strong> — a document containing the server's public key, its domain name, and a digital signature from a <strong>Certificate Authority (CA)</strong> that vouches for the key's authenticity.
+            </p>
+
+            <p>
+                Your browser verifies the certificate: is it signed by a CA it trusts? Is the domain name in the certificate the one you requested? Has the certificate been revoked? Assuming all checks pass, the two sides perform a <strong>key exchange</strong>. Modern TLS uses <strong>Elliptic Curve Diffie-Hellman (ECDH)</strong>, which lets both sides independently compute the same shared secret without ever sending it across the network. From this shared secret, both sides derive <strong>symmetric session keys</strong> used for the rest of the connection. All data from this point is encrypted with <strong>AES-GCM</strong> — fast, authenticated symmetric encryption that prevents both eavesdropping and tampering.
+            </p>
+
+            <p>
+                <strong>Certificate transparency</strong> is a relatively recent addition to the ecosystem: all issued certificates are logged in public, append-only ledgers, making it possible to detect a CA that has issued a fraudulent certificate for your domain. Browsers increasingly require certificates to be logged before they will trust them. The system is not perfect — CAs have been compromised before — but it has significantly raised the cost of undetected certificate fraud.
+            </p>
+
+            <h2>HTTP — THE LETTER</h2>
+
+            <p>
+                Inside the encrypted TLS tunnel, your browser sends an HTTP request. <strong>HyperText Transfer Protocol</strong> is the application-layer language that web clients and servers speak. An HTTP request consists of a method (<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>), a path (<code>/search?q=hello</code>), HTTP headers (metadata: <code>Accept-Encoding</code>, <code>User-Agent</code>, <code>Cookie</code>, <code>Authorization</code>), and optionally a request body.
+            </p>
+
+            <p>
+                <strong>HTTP/1.1</strong>, standardised in 1997, had a fundamental limitation: one request per TCP connection at a time. A page loading 50 resources needed to either wait for each one sequentially or open many parallel TCP connections (browsers typically opened 6 per domain). <em>Head-of-line blocking</em> meant that a slow resource held up everything behind it in the queue.
+            </p>
+
+            <p>
+                <strong>HTTP/2</strong>, released in 2015, addressed this with <em>multiplexing</em>: multiple requests and responses can be interleaved over a single TCP connection, labelled with stream identifiers so both sides know which bytes belong to which request. Header compression (<strong>HPACK</strong>) reduced the overhead of sending the same headers with every request. Server push allowed the server to proactively send resources the client would need before it had even asked for them. HTTP/2 was a genuine step forward.
+            </p>
+
+            <p>
+                <strong>HTTP/3</strong> goes further by abandoning TCP entirely. Built on <strong>QUIC</strong> — a new transport protocol running over UDP — HTTP/3 eliminates TCP's head-of-line blocking at the transport layer. In HTTP/2, a lost TCP packet stalls all streams on that connection until the packet is retransmitted. In QUIC, each stream is independent: a lost packet only blocks the stream it belongs to. QUIC also builds TLS into the protocol from the start, reducing the number of round trips needed to establish a connection. For mobile users switching between networks — from Wi-Fi to cellular — QUIC's connection migration means the connection survives the network change without needing a new handshake.
+            </p>
+
+            <div class="callout" data-label="practical note">
+                HTTP status codes tell you what the server actually thought of your request. <strong>2xx</strong> means success (200 OK, 201 Created). <strong>3xx</strong> means redirection (301 Moved Permanently, 304 Not Modified — meaning the cached version is still good). <strong>4xx</strong> means client error (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found). <strong>5xx</strong> means the server itself failed (500 Internal Server Error, 503 Service Unavailable). When you get a 503, the server received your request fine — it just can't handle it right now. BGP is working, TLS is working, TCP is working, HTTP is working. The application is broken.
+            </div>
+
+            <h2>THE BROWSER</h2>
+
+            <p>
+                Bytes have arrived. They represent an HTML document — a text file with tags describing the structure and content of a page. What happens next is a pipeline called the <strong>critical rendering path</strong>, and understanding it is what separates developers who write fast pages from developers who wonder why their pages are slow.
+            </p>
+
+            <p>
+                The browser parses HTML top-to-bottom, building the <strong>DOM (Document Object Model)</strong> — a tree of nodes representing every element on the page. When the parser encounters a <code>&lt;link&gt;</code> tag pointing to a CSS file, it must fetch that file and parse it into the <strong>CSSOM (CSS Object Model)</strong> before it can continue rendering — CSS is render-blocking. When it encounters a <code>&lt;script&gt;</code> tag without <code>async</code> or <code>defer</code>, it must fetch, parse, and execute that JavaScript before continuing — scripts can modify the DOM and must run in order. This is why the position of <code>&lt;script&gt;</code> tags matters enormously for page performance.
+            </p>
+
+            <p>
+                With the DOM and CSSOM built, the browser combines them into a <strong>render tree</strong> — a tree of every visible element with its computed styles. It then runs <strong>layout</strong> (also called reflow): calculating the exact pixel dimensions and position of every element. After layout comes <strong>paint</strong>: filling in pixels with colours, text, images, borders. Finally, <strong>composite</strong>: assembling the painted layers in the correct order, handling opacity, transforms, and z-indices.
+            </p>
+
+            <p>
+                <strong>Time to First Byte (TTFB)</strong> measures how long until the first byte of the response arrives. <strong>Time to Interactive (TTI)</strong> measures how long until the page is actually usable — until JavaScript has finished executing and event handlers are attached. These can differ by seconds on a JavaScript-heavy page that downloads fast but executes slowly. Modern performance measurement focuses increasingly on <strong>Core Web Vitals</strong>: Largest Contentful Paint (how long until the main content appears), Cumulative Layout Shift (how much the layout jumps around as it loads), and Interaction to Next Paint (how responsive the page feels to clicks).
+            </p>
+
+            <p>
+                The JavaScript engine — <strong>V8</strong> in Chrome and Node.js, <strong>SpiderMonkey</strong> in Firefox, <strong>JavaScriptCore</strong> in Safari — parses the JavaScript source, compiles it to bytecode, and then uses just-in-time (JIT) compilation to convert hot code paths to native machine code at runtime. Modern JS engines are marvels of optimisation: they inline functions, eliminate dead code, and generate specialised machine code based on the actual types they observe at runtime.
+            </p>
+
+            <blockquote>
+                "The web is more a social creation than a technical one. I designed it for a social effect — to help people work together — and not as a technical toy."
+                <cite>— Tim Berners-Lee, inventor of the World Wide Web, Weaving the Web</cite>
+            </blockquote>
+
+            <h2>CDNs AND THE EDGE</h2>
+
+            <p>
+                There is a hard physical limit on how fast the internet can be: the speed of light. An optical fibre carrying a signal from London to Sydney covers roughly 17,000 kilometres. Light in glass travels at about two-thirds of its speed in vacuum — approximately 200,000 km/s. The theoretical minimum round-trip time is around 170 milliseconds, and in practice it is higher because the path is not a straight line and packets make multiple hops. No amount of software optimisation can overcome this. The only solution is to move the data closer to the user.
+            </p>
+
+            <p>
+                <strong>Content Delivery Networks</strong> do exactly this. Cloudflare, Fastly, and Akamai operate hundreds of <strong>Points of Presence (PoPs)</strong> — data centres distributed across the globe. When you request a static asset — an image, a CSS file, a JavaScript bundle — the CDN serves it from the PoP nearest to you rather than from the origin server. A user in Mumbai requesting a file stored in Virginia might instead receive it from a Cloudflare PoP in Mumbai, with a round-trip time of 5 milliseconds instead of 200.
+            </p>
+
+            <p>
+                <strong>Edge computing</strong> extends this further. Instead of just caching static files, edge platforms like Cloudflare Workers and Fastly Compute@Edge allow you to run code — actual application logic — at the edge. A personalisation layer, an A/B test, an authentication check: all of these can execute at the PoP nearest the user, adding minimal latency to the response. The architecture is a reversal of the traditional model: instead of a central origin handling everything, computation is distributed to wherever the user is.
+            </p>
+
+            <p>
+                CDNs also provide <strong>DDoS protection</strong>, <strong>SSL/TLS termination</strong> at the edge, <strong>HTTP caching</strong>, and <strong>load balancing</strong>. For most web applications, traffic never reaches the origin server for the vast majority of requests — it is served entirely from edge cache. The origin handles only cache misses and dynamic, uncacheable requests.
+            </p>
+
+            <hr>
+
+            <p>
+                When I trace this journey end to end — DNS, TCP/IP, BGP, TLS, HTTP, browser rendering, CDN — what strikes me is not any single clever idea but the sheer accretion of layers, each built by different people at different times to solve different problems, all somehow interoperating. These systems were not designed together. Many were designed in opposition: TCP was designed before TLS existed, HTTP/1.1 before HTTP/2's multiplexing was imagined, BGP before anyone seriously considered adversarial route announcements. Each protocol is a snapshot of the problems that seemed most important at the time, with workarounds bolted on as new problems emerged.
+            </p>
+
+            <p>
+                And yet it works. Every time you press Enter, this entire chain executes — across continents, across organisations, across protocols designed by people who will never meet each other — and delivers a response in milliseconds. We have built an infrastructure layer so reliable that we treat failures as aberrations rather than the norm. We trust it with banking, with healthcare, with the communication that binds people separated by oceans. We barely think about it.
+            </p>
+
+            <p>
+                <strong>That invisibility is the highest compliment infrastructure can receive.</strong> The engineers who built this were not trying to make something you would notice. They were trying to make something that would disappear — that would be so dependable, so fast, so ubiquitous that you would stop thinking about it entirely. By that measure, they succeeded beyond anything they could have imagined in the 1970s when the first packets were exchanged. The internet is not finished — HTTP/3, QUIC, encrypted DNS, BGP security, and whatever comes next are all still in motion. But the bones of it are extraordinary. It deserves, occasionally, to be seen.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">networking</span>
+                <span class="tag">DNS</span>
+                <span class="tag">TCP/IP</span>
+                <span class="tag">BGP</span>
+                <span class="tag">TLS</span>
+                <span class="tag">HTTP</span>
+                <span class="tag">CDN</span>
+                <span class="tag">systems</span>
+                <span class="tag">infrastructure</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="cap-theorem.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">The CAP Theorem and Why You Can't Have It All</span>
+                </a>
+                <a href="moores-law-is-dead.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Moore's Law Is Dead. What Comes Next?</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

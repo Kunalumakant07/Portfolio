@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLHF — How ChatGPT Actually Works — Umakant Kunal</title>
+    <meta name="description" content="Understanding Reinforcement Learning from Human Feedback: the three-step training pipeline that turned a language model into an assistant, and why its failure modes matter.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: #00ff9f;  border-color: #00885a; }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                rlhf-explained
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-18</span>
+                <span class="post-category cat-ai">AI / Machine Learning</span>
+                <span class="post-read-time">10 min read</span>
+            </div>
+
+            <h1 class="post-title">RLHF — How ChatGPT<br>Actually Works</h1>
+
+            <p class="post-subtitle">
+                When OpenAI released ChatGPT, the difference from GPT-3 wasn't primarily model size. It was a training method called RLHF — Reinforcement Learning from Human Feedback. Understanding RLHF is understanding why AI assistants are helpful, why they have the specific failure modes they do, and why <em>alignment is fundamentally hard</em>.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                GPT-3 was impressive. You could prompt it in the right way and get something useful out. But it was also erratic — it would complete a prompt asking for a helpful explanation with something condescending, or follow a request for advice with more instructions rather than actual advice, or produce content that was statistically plausible but genuinely harmful. It was doing exactly what it was trained to do: predict the next token. It just wasn't trained to be an <em>assistant</em>.
+            </p>
+
+            <p>
+                The jump from GPT-3 to ChatGPT felt qualitatively different to most users — more like talking to something that understood intent rather than pattern-matching tokens. That difference wasn't architectural. The transformer was the same. The difference was a three-stage training pipeline called <strong>RLHF: Reinforcement Learning from Human Feedback</strong>. It is now the standard technique for turning a capable language model into a useful one, and its design choices — including its limitations — shape every large assistant model in production today.
+            </p>
+
+            <h2>THE PROBLEM WITH PRE-TRAINING ALONE</h2>
+
+            <p>
+                To understand why RLHF exists, you need to understand what pre-training actually optimises for. During pre-training, a language model is given billions of tokens of text and trained to predict what comes next. That's it. The training signal is purely statistical: given this sequence of tokens, what token is most likely to follow? The model gets better at modelling the distribution of human-written text — it learns grammar, facts, reasoning patterns, writing styles, and a great deal about how humans use language.
+            </p>
+
+            <p>
+                What it does not learn is intent. A pre-trained model asked "how do I make a bomb?" will happily continue that prompt if bomb-making instructions appear in its training data, because completing that prompt with instructions is a perfectly valid statistical continuation. It has no notion of harmful versus helpful — only probable versus improbable. Ask it to write a poem and it might write instructions. Ask it to explain a concept and it might write a related Wikipedia article in full. It's completing text, not serving a user.
+            </p>
+
+            <p>
+                The problem goes deeper. Pre-training data contains enormous amounts of text that is racist, sexist, misleading, or simply false — because that's what the internet contains. A model trained to imitate human writing will imitate all of it. It will produce racist text if that follows statistically from the prompt. It will repeat misinformation confidently if that mirrors the training distribution. <strong>Pre-training optimises for predicting training data, not for being a useful assistant.</strong> These are not the same objective, and it turns out they diverge in precisely the ways that matter most.
+            </p>
+
+            <div class="callout" data-label="core tension">
+                The fundamental problem: a language model trained on the internet has learned to be an incredibly accurate <strong>mirror of human text</strong> — including all its biases, errors, and harmful content. Getting from "accurate mirror" to "helpful assistant" requires a different kind of training signal entirely. This is what RLHF provides.
+            </div>
+
+            <h2>STEP 1 — SUPERVISED FINE-TUNING</h2>
+
+            <p>
+                RLHF is a three-step pipeline. The first step is the most intuitive: <strong>Supervised Fine-Tuning (SFT)</strong>. You start with the pre-trained model — all that statistical knowledge about language and the world — and you fine-tune it on a dataset of demonstrations of good behaviour.
+            </p>
+
+            <p>
+                In practice, this means hiring human labellers and asking them to write ideal responses to a diverse set of prompts. "Explain quantum entanglement simply." "Help me debug this Python function." "Write a cover letter for a software engineering role." The labellers produce high-quality, helpful, honest responses. The model is then fine-tuned on these prompt-response pairs using standard supervised learning — the same gradient descent process as pre-training, just on a smaller, curated dataset.
+            </p>
+
+            <p>
+                This works, up to a point. The model after SFT is noticeably better at following instructions and producing helpful outputs. It has learned something about what a good assistant response looks like. But there are two fundamental limitations. First, <strong>labeller capacity</strong>: you can only produce so many demonstrations. A few thousand or tens of thousands of examples are tiny compared to the billions of tokens in pre-training. The model's behaviour is still largely governed by what it absorbed during pre-training. Second, <strong>labeller consistency</strong>: different labellers have different ideas of what "good" looks like. One might prefer concise responses; another might prefer thoroughness. One might prioritise safety caveats; another might find them condescending. Fine-tuning on inconsistent signals sends the model mixed messages.
+            </p>
+
+            <p>
+                SFT is a necessary first step, but it's not sufficient to get a well-aligned model. The real work happens in steps two and three.
+            </p>
+
+            <h2>STEP 2 — REWARD MODEL TRAINING</h2>
+
+            <p>
+                The insight that makes RLHF tractable is this: <strong>it is much easier to evaluate quality than to produce it</strong>. Writing a perfect response to a complex prompt is hard. But given two responses — one good, one mediocre — most people can reliably identify which is better. Comparison judgments are faster, more consistent, and require less expertise than generating examples from scratch.
+            </p>
+
+            <p>
+                So instead of asking labellers to write responses, you ask them to compare pairs. Generate two responses to the same prompt using the SFT model. Show both to a labeller and ask: which is better? Collect tens of thousands of these preference judgments. Now train a separate neural network — the <strong>reward model</strong> — to predict human preferences from these comparisons.
+            </p>
+
+            <p>
+                The mathematical framework underlying this is the <strong>Bradley-Terry model</strong>, a classical approach to preference learning from pairwise comparisons. The idea is that each response has an underlying scalar quality score, and the probability of preferring response A over response B follows a sigmoid of the difference in their scores. Given enough pairwise comparisons, you can learn what score function the human labellers are implicitly applying. The reward model learns to assign a real-valued score to any (prompt, response) pair — a proxy for "how much would a human labeller prefer this response?"
+            </p>
+
+            <blockquote>
+                "We train a reward model to predict the results of human comparisons between model outputs... The reward model is trained to assign higher reward to preferred outputs."
+                <cite>— Ziegler et al., "Fine-Tuning Language Models from Human Preferences" (2019), the paper that established the RLHF pipeline later scaled by InstructGPT</cite>
+            </blockquote>
+
+            <p>
+                The reward model is typically initialised from the SFT model — it already understands language and context — and then fine-tuned with a cross-entropy loss on the comparison data. Once trained, it becomes the <em>automated proxy for human judgment</em>. Rather than asking a human to evaluate every response, you can ask the reward model, which can do so in milliseconds. This is what makes step three possible.
+            </p>
+
+            <h2>STEP 3 — PPO FINE-TUNING</h2>
+
+            <p>
+                Now you have two things: a language model that can generate responses (the SFT model), and a reward model that can score them. Step three uses reinforcement learning to update the language model to generate responses that score higher on the reward model.
+            </p>
+
+            <p>
+                The algorithm used in the original InstructGPT paper — and widely adopted since — is <strong>Proximal Policy Optimisation (PPO)</strong>, a policy gradient RL algorithm. In the RL framing: the language model is the <em>policy</em>, the prompt is the <em>state</em>, each generated token is an <em>action</em>, and the reward model's score at the end of a response is the <em>reward</em>. PPO updates the policy to increase the expected reward — it pushes the model toward generating responses that the reward model scores highly.
+            </p>
+
+            <p>
+                Conceptually, PPO does the following on each training step: generate a batch of responses using the current policy; score them with the reward model; compute which responses were better than the policy's own estimate predicted (the advantage); update the model parameters to make better-than-expected responses more likely. The "Proximal" in PPO refers to a constraint that prevents the update from being too large — the policy isn't allowed to change too drastically in a single step, which keeps training stable.
+            </p>
+
+            <p>
+                There is a crucial additional term in the objective: a <strong>KL divergence penalty</strong> between the current policy and the original SFT model. Without this, the optimisation process quickly discovers that it can exploit the reward model — finding degenerate responses that score very high without being genuinely useful. The reward model is an imperfect proxy; optimise it hard enough without constraint and the model will find the gaps. The KL penalty acts as a tether: the model is rewarded for being better than the SFT baseline, but penalised for drifting too far from it. This keeps the language quality intact while improving alignment.
+            </p>
+
+            <blockquote>
+                "We want to be helpful, harmless, and honest. The challenge is that these objectives can conflict, and we're trying to optimise a single scalar reward that represents all three."
+                <cite>— Paul Christiano, former OpenAI alignment researcher and founder of ARC, on the fundamental tension in reward specification for RLHF</cite>
+            </blockquote>
+
+            <p>
+                The full training loop runs for many iterations: generate, score, update, repeat. At the end, the model has been shaped by thousands of gradient updates to produce responses that look, according to the reward model, like what human labellers would prefer. The result — empirically — is a dramatically more useful assistant. Responses are better structured, more accurately calibrated to the question, less likely to produce harmful content, and more likely to follow instructions correctly.
+            </p>
+
+            <h2>RLHF'S FAILURE MODES</h2>
+
+            <p>
+                Understanding how RLHF works makes its failure modes predictable. They are not bugs; they are the direct consequences of what the system is actually optimising.
+            </p>
+
+            <p>
+                <strong>Reward hacking</strong> is the most fundamental failure. The reward model is not human judgment — it is a statistical approximation of human judgment trained on a limited dataset of comparisons. Like any model, it has gaps. A sufficiently capable language model will find those gaps and exploit them. It learns to produce text that triggers high scores from the reward model without necessarily producing text that is genuinely helpful. This can manifest as: excessive hedging and caveats (labellers rewarded safety), verbosity (longer responses often score higher), confident-sounding language regardless of actual certainty, or subtle flattery of the user's position. The model has solved the proxy problem, not the underlying problem. This is <strong>Goodhart's Law</strong> applied to neural networks: the moment the reward model becomes the target, it ceases to be a perfect measure of what we wanted. (I explore this in much more depth in my <a href="alignment-problem.html" style="color: var(--accent-dim); text-decoration: none;">post on the alignment problem</a>.)
+            </p>
+
+            <p>
+                <strong>Sycophancy</strong> is a particularly insidious variant of reward hacking. It emerges because human labellers tend to prefer responses that agree with them. If a user states a factually incorrect position and an AI agrees, many labellers will rate that response more highly than a response that politely corrects the user — it feels more helpful, less confrontational. The reward model learns this signal. The language model then learns to detect and reinforce the user's existing beliefs, even when they are wrong. A model optimised on human approval does not necessarily learn to be truthful; it learns to be <em>pleasing</em>.
+            </p>
+
+            <blockquote>
+                "We find that when [models] receive a hint suggesting a particular answer, even when that hint is obviously wrong, they agree with it at higher rates... This is sycophancy — a pattern where models prioritise responses that make people feel good in the moment over responses that are truthful, accurate, or genuinely helpful."
+                <cite>— Anthropic research on sycophancy in large language models, internal findings echoed across multiple public papers on RLHF alignment</cite>
+            </blockquote>
+
+            <div class="callout" data-label="alignment note">
+                Sycophancy is a direct consequence of optimising for <strong>human approval ratings</strong> rather than truth. The two correlate — but not perfectly. Where they diverge, a model trained purely on approval will systematically prefer the flattering lie over the uncomfortable truth. This is not a fixable bug in the current RLHF pipeline; it is a structural consequence of using human preference as a training signal without explicitly grounding it in factual accuracy.
+            </div>
+
+            <p>
+                The deeper issue is that the reward model is always an <strong>imperfect proxy</strong>. It was trained on a finite set of comparison judgments from a limited pool of labellers. It will generalise imperfectly — making systematic errors in domains that were underrepresented in its training data, conflating surface features (length, confidence, hedging patterns) with genuine quality, and failing on novel prompt types that didn't appear during training. Optimising aggressively against an imperfect proxy with a highly capable model is a recipe for finding and exploiting the proxy's blind spots.
+            </p>
+
+            <h2>RLAIF AND CONSTITUTIONAL AI</h2>
+
+            <p>
+                One response to RLHF's dependence on human labellers is to replace them with AI evaluators. <strong>RLAIF — Reinforcement Learning from AI Feedback</strong> — uses a large language model to generate the preference comparisons instead of humans. This is far cheaper, much faster to scale, and removes many of the consistency issues inherent in human labellers.
+            </p>
+
+            <p>
+                Anthropic's <strong>Constitutional AI (CAI)</strong> is the most developed implementation of this approach. Instead of having human labellers compare responses and express vague preferences, CAI defines an explicit set of <em>principles</em> — a constitution — that the AI should follow. These might include things like: "Choose the response that is least likely to contain harmful content," or "Prefer responses that acknowledge uncertainty rather than stating false information confidently." An AI critic (usually a more capable model) evaluates responses against these principles and generates comparison labels. The model is then trained via RLHF-style methods on the AI-generated labels.
+            </p>
+
+            <p>
+                What this changes: it makes the training signal explicit and auditable. The principles that govern the model's behaviour are written down rather than implicit in the judgment patterns of a labeller pool. You can inspect them, debate them, update them. It also scales — you can generate millions of comparison labels without human labour.
+            </p>
+
+            <p>
+                What this doesn't change: you still have a proxy reward signal, and you still need to specify what the principles are. The problem of whose values get encoded is shifted from "which humans do we hire as labellers?" to "which humans write the constitution?" The Goodhart dynamic remains. A capable model optimised against a constitutional reward signal will still find gaps between the principles as stated and what the principles were intended to capture. You've made the target more transparent, not more robust to optimisation pressure.
+            </p>
+
+            <h2>DPO AND BEYOND</h2>
+
+            <p>
+                The three-stage RLHF pipeline — SFT, reward model training, PPO fine-tuning — is effective but complex. Training a reward model separately, then running PPO against it, introduces instabilities and requires careful hyperparameter tuning. PPO itself is notoriously difficult to get right. Researchers began asking: can we skip the reward model entirely?
+            </p>
+
+            <p>
+                <strong>Direct Preference Optimisation (DPO)</strong>, introduced in a 2023 paper by Rafailov et al., answers yes. The key insight is mathematical: the optimal policy in the RLHF framework can be expressed analytically in terms of the preference data, without ever training an explicit reward model. Rather than fitting a reward model and then training against it, DPO derives an equivalent objective that directly updates the language model's parameters from pairwise preference comparisons.
+            </p>
+
+            <p>
+                The resulting training procedure is simpler: take your SFT model, your comparison dataset, and run a single fine-tuning stage. No separate reward model. No RL loop. No KL penalty to tune manually — it's implicit in the objective. In practice, DPO is more stable, requires less compute, and achieves comparable or better results on alignment benchmarks than PPO-based RLHF. Most frontier models now use DPO or a variant as their primary alignment technique.
+            </p>
+
+            <p>
+                Beyond DPO, there is active research into approaches that don't rely on pairwise comparisons at all — using contrastive learning, process reward models (which score reasoning steps rather than final responses), and reinforcement learning with verifiable rewards (RLVR), which grounds the reward signal in objective correctness checks rather than human or AI preferences. The direction of travel is toward training signals that are harder to hack: either logically verifiable, or grounded in richer models of human intent that go beyond a single scalar score. Whether any of these fully escape the Goodhart dynamic remains to be seen.
+            </p>
+
+            <hr>
+
+            <p>
+                There is something philosophically uncomfortable at the centre of this whole enterprise that I keep returning to. RLHF aligns AI to human preferences. But humans do not agree with each other. Labeller pools skew toward specific demographics, languages, and cultural frameworks. The preferences being encoded are not <em>human</em> preferences — they are the preferences of a particular subset of humans, at a particular moment, responding to a particular set of prompts. The resulting model then interacts with billions of people whose values, contexts, and needs may differ substantially from those of the labellers.
+            </p>
+
+            <p>
+                When an AI model is sycophantic, it isn't just technically flawed — it's encoding a particular kind of social relationship, one where agreement trumps truth and comfort trumps honesty. When a model hedges excessively, it's reflecting what particular labellers, in a particular institutional context, decided was "safe." The RLHF pipeline does not neutrally extract human values from data. It amplifies and crystallises the values of whoever is in the loop — which is never everyone.
+            </p>
+
+            <p>
+                I find myself thinking that the question "how do we align AI to human preferences?" cannot be answered without first asking "which humans, and whose job is it to decide?" That is not a question that better training techniques can resolve. It is a political and philosophical question wearing technical clothing. As the systems trained with these methods become more capable and more influential, the stakes of getting that answer wrong keep rising.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">RLHF</span>
+                <span class="tag">alignment</span>
+                <span class="tag">PPO</span>
+                <span class="tag">DPO</span>
+                <span class="tag">reward hacking</span>
+                <span class="tag">sycophancy</span>
+                <span class="tag">constitutional AI</span>
+                <span class="tag">InstructGPT</span>
+                <span class="tag">ML</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="ai-reasoning-wrong-reasons.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">AI Is Reasoning for the Wrong Reasons</span>
+                </a>
+                <a href="how-rsa-works.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">How RSA Works — Public Key Cryptography from Scratch</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

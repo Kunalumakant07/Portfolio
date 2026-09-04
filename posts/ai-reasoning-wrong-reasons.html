@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Is AI Reasoning Right for the Wrong Reasons? — Umakant Kunal</title>
+    <meta name="description" content="Shortcut learning, spurious correlations, and the brittleness problem: why AI models often get the right answer for entirely the wrong reasons.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                ai-reasoning-wrong-reasons
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-15</span>
+                <span class="post-category cat-ai">AI / Machine Learning</span>
+                <span class="post-read-time">8 min read</span>
+            </div>
+
+            <h1 class="post-title">Is AI Reasoning Right for<br>the Wrong Reasons?</h1>
+
+            <p class="post-subtitle">
+                Shortcut learning and the brittleness problem: why AI systems routinely achieve remarkable accuracy by latching onto spurious correlations rather than understanding anything at all — and why that gap between performance and comprehension matters enormously when you try to deploy them in the real world.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In 2019, a research team at Stanford published a study on a deep learning model trained to classify chest X-rays. It achieved 95% accuracy — better than the radiologists it was benchmarked against. The headlines wrote themselves. AI outperforms doctors. Medicine would never be the same. Then someone asked an uncomfortable follow-up question: <em>what features was the model actually using to make its predictions?</em>
+            </p>
+
+            <p>
+                The answer was not what anyone wanted. The model had learned that different hospitals used different X-ray equipment, and that certain patient populations — with certain disease prevalences — tended to cluster at certain hospitals. The visual signature of the equipment, the metadata embedded in the images, the subtle systematic differences between institutions: all of this was a better predictor of the label than the pathology itself, within the training set. The model was not reading the X-ray. It was reading the hospital. It achieved extraordinary performance on a benchmark while being <strong>essentially useless as a diagnostic tool</strong> for any X-ray it had not already encountered in training. It was right, every time, for entirely the wrong reasons.
+            </p>
+
+            <p>
+                This is the shortcut learning problem. It is not a niche failure mode. It is, I have come to believe, one of the most fundamental open questions in the field — and one that gets far less attention than it deserves, because shortcuts are invisible until you go looking for them.
+            </p>
+
+            <h2>WHAT SHORTCUT LEARNING IS</h2>
+
+            <p>
+                Shortcut learning occurs when a model exploits spurious correlations in training data rather than the true causal structure of the problem it is ostensibly solving. The training set contains a signal that is predictive of the label — because of how the data was collected, annotated, or curated — but that signal has nothing to do with what you actually want the model to learn. The model is doing exactly what you asked: minimising loss on the training distribution. It is just doing it via a route you did not anticipate and would not endorse.
+            </p>
+
+            <p>
+                The canonical illustration comes from a 19th-century horse named Clever Hans. Hans was famous throughout Germany for apparently performing arithmetic — his owner would pose a problem, and Hans would tap out the answer with his hoof. Investigators were baffled. The horse seemed to actually understand mathematics. Eventually, a psychologist named Oskar Pfungst ran a controlled test: he had questioners who did not know the answer ask Hans the question. Hans's accuracy collapsed to chance. He had been reading the involuntary muscle tension in the people around him — the slight forward lean, the held breath, the infinitesimal relaxation when the correct number was reached. He was not doing arithmetic. He was doing something far more sophisticated, and far less useful: reading a shortcut that happened to be present in his training environment but vanished the moment the environment changed.
+            </p>
+
+            <blockquote>
+                "A system trained on data can learn to exploit any feature that is predictive in that data. The question is never whether it has found a shortcut. The question is which shortcut it has found, and whether that shortcut survives contact with the real world."
+                <cite>— Robert Geirhos, shortcut learning researcher, Max Planck Institute for Intelligent Systems</cite>
+            </blockquote>
+
+            <p>
+                The pattern appears everywhere. Image classifiers trained on datasets where wolves appear in snow and huskies appear indoors learn to use snow as a feature for wolf classification. Language models trained on text corpora that overrepresent certain demographics learn to associate competence with male pronouns and domesticity with female ones — not because the model is biased in any intentional sense, but because the training data was, and the model found it. The shortcut was there. The model used it. It would be irrational not to, from a pure loss-minimisation perspective.
+            </p>
+
+            <h2>THE COWS ON BEACHES PROBLEM</h2>
+
+            <p>
+                The distribution shift failure — the moment a shortcut-reliant model encounters data outside its training distribution — has a name in ML folklore: the cows on beaches problem. A model trained on ImageNet, the dominant image classification benchmark, learns to associate the label <em>cow</em> with green grass, open pasture, and the particular visual texture of rural Northern European farmland. This is not unreasonable: that is where most training cows live. But the feature <em>cow</em> is now entangled with the feature <em>green background</em> in ways the model cannot disentangle, because the training data never forced it to.
+            </p>
+
+            <p>
+                Show that model a cow on a beach — brown sand, blue sea, no grass — and it fails. Not with a low confidence score that signals uncertainty. It fails confidently, misclassifying the cow as something else entirely. The feature it was using to identify cows has disappeared. The underlying object is identical. The model has no representation that cleanly separates the concept <em>cow</em> from the context in which cows typically appear.
+            </p>
+
+            <div class="callout" data-label="adversarial probing">
+                Adversarial probing experiments systematically expose these entanglements. Researchers construct test sets where the spurious correlation is deliberately reversed: animals in unusual backgrounds, textures applied to unexpected objects, scene contexts swapped. Across nearly every standard benchmark, models trained on natural data distributions show dramatic performance degradation on these probes — often collapsing to near-random accuracy. The gap between in-distribution and out-of-distribution performance is not a minor calibration issue. It is an indicator of how much of the model's apparent competence rested on features it was never supposed to be using.
+            </div>
+
+            <p>
+                What makes this genuinely disturbing is the confidence calibration failure. A model that does not know what it does not know cannot flag the cases where its shortcuts have run out. It was trained to produce confident predictions; it produces confident predictions. The beach cow does not trigger any alarm. The model is not uncertain. It is wrong in exactly the way a system is wrong when it has confused performance on a proxy task for understanding of the underlying problem.
+            </p>
+
+            <h2>SPURIOUS CORRELATIONS IN NLP</h2>
+
+            <p>
+                If you think this is a computer vision problem — that language models are somehow more rigorous because language is abstract — the NLP literature will disabuse you of that notion quickly. The benchmark contamination problem in natural language inference (NLI) is one of the clearest demonstrations that high accuracy and genuine understanding are not the same thing.
+            </p>
+
+            <p>
+                NLI is the task of determining whether one sentence logically entails, contradicts, or is neutral with respect to another. It is supposed to require understanding of meaning, logical structure, and the relationship between propositions. Datasets like MNLI (Multi-Genre Natural Language Inference) were constructed to test exactly this. Models trained on MNLI began achieving scores that approached human-level performance. Researchers were impressed.
+            </p>
+
+            <p>
+                Then came HANS — the Heuristic Analysis for NLI Systems dataset, constructed by McCoy, Pavlick, and Linzen in 2019 specifically to probe the shortcuts that MNLI models might have learned. The results were stark. Models that achieved near-human accuracy on MNLI dropped to barely above chance on HANS. What had they been doing? They had learned dataset artefacts: surface-level patterns in how the MNLI benchmark was constructed that happened to be predictive of the labels without requiring any actual understanding of entailment.
+            </p>
+
+            <p>
+                The <strong>negation heuristic</strong> is one of the most studied. Many NLI models learn that sentences containing negation words — "not", "never", "no" — are more likely to be contradictions. This is a reasonable prior based on the training distribution. It leads to catastrophic failures on examples where negation appears in the hypothesis but the relationship is still entailment. The model has not learned negation; it has learned that negation is a label predictor, which is a completely different thing.
+            </p>
+
+            <blockquote>
+                "NLP models have a distressing tendency to do better than chance on benchmarks for the wrong reason. They find whatever pattern in the dataset labels is cheapest to exploit, and they exploit it. The task was designed to test one capability; the model found a proxy for that capability and learned the proxy instead."
+                <cite>— Tom McCoy, co-author of HANS, Princeton NLP Group</cite>
+            </blockquote>
+
+            <p>
+                The same dynamic appears in reading comprehension benchmarks, commonsense reasoning tasks, and question-answering datasets. In each case, the benchmark was designed to be hard. In each case, careful analysis revealed that models were finding and using annotation artefacts — systematic biases in how the dataset was constructed — rather than developing the competence the benchmark was meant to measure.
+            </p>
+
+            <h2>WHY IT'S HARD TO FIX</h2>
+
+            <p>
+                The intuitive response is: identify the shortcuts and remove them. Retrain without the spurious features. Augment the data to break the correlation. This works — for the specific shortcuts you have identified. It does not work for the shortcuts you have not thought of yet, which is most of them.
+            </p>
+
+            <p>
+                A large training corpus contains a combinatorial explosion of potential spurious correlations. Any feature that is systematically associated with a label, even for accidental reasons rooted in how the data was collected, is a potential shortcut. You cannot enumerate them. The dataset is too large, the correlations too numerous, the space of possible shortcuts too vast for exhaustive search. Regularisation techniques — dropout, weight decay, data augmentation — reduce the model's reliance on any single feature, which helps. But regularisation does not distinguish between genuinely causal features and spurious ones. It just spreads the reliance more evenly. The model may learn to use ten weak shortcuts instead of one strong one, which is not obviously better.
+            </p>
+
+            <p>
+                <strong>Causal representation learning</strong> offers a more principled approach: instead of learning statistical associations between features and labels, learn representations that capture the causal structure of the domain — the variables that actually cause outcomes, not the ones that merely correlate with them. The theoretical framework is compelling. Judea Pearl's do-calculus and the structural causal model framework provide the mathematical tools. In practice, applying causal learning to large-scale models in messy real-world domains remains profoundly difficult. You need to know, or be able to infer, something about the causal graph of the domain — which usually requires exactly the kind of domain understanding that the model is failing to learn.
+            </p>
+
+            <div class="callout" data-label="the unknown unknowns problem">
+                The deepest challenge is that interventions against known shortcuts can actually worsen the unknown-shortcut problem. When you construct adversarial examples to break a known spurious correlation, the model learns to avoid that shortcut — and often finds another one in its place. Shortcut pressure is not eliminated; it is redirected. A model with a hard constraint against using background colour as a feature for animal classification will find some other cheap predictive signal that was lurking in the training data. The model is always doing what you asked. The problem is that what you asked is not the same as what you wanted.
+            </div>
+
+            <h2>OUT-OF-DISTRIBUTION GENERALISATION</h2>
+
+            <p>
+                The clearest way to see whether a model has learned genuine structure or merely exploited the training distribution is to evaluate it out-of-distribution: on data from a different domain, a different time period, a different demographic, a different experimental condition. If the model has learned the shortcuts of its training set, OOD performance will degrade — sometimes catastrophically. If it has learned something more robust, OOD performance will remain closer to in-distribution performance.
+            </p>
+
+            <p>
+                The consistent finding across domains is that most models degrade substantially out-of-distribution. The gap between in-distribution and OOD performance is large enough, and consistent enough, to constitute strong evidence that shortcut reliance is the norm rather than the exception. This is not a finding about a specific model or task. It is a systematic property of how gradient descent on a finite dataset works.
+            </p>
+
+            <p>
+                The implication for deployment is severe. Real-world data is almost always out-of-distribution relative to the training set. <strong>Training distributions are snapshots — of a particular time, a particular data collection pipeline, a particular set of choices about what to label and how.</strong> The world does not stay still. Populations shift. Equipment changes. Vocabularies evolve. The patient population at one hospital is not the patient population at another. The X-ray from 2018 carries different statistical regularities than the X-ray from 2026. Every deployment is a distribution shift. The question is only how large.
+            </p>
+
+            <p>
+                In low-stakes settings, this is a quality issue. In high-stakes settings — medical diagnosis, financial underwriting, criminal justice risk assessment, autonomous vehicles — it is a safety issue. A model that performs at 95% accuracy in controlled evaluation and 65% accuracy in real deployment has not failed in any way that its benchmark scores predicted. It has done exactly what a shortcut-reliant model does when the shortcuts run out.
+            </p>
+
+            <h2>LARGE MODELS AND SHORTCUTS</h2>
+
+            <p>
+                The obvious question is whether scale helps. If GPT-4 sees effectively the entire internet during training, the specific spurious correlations of any particular curated benchmark dataset should be diluted to irrelevance. And there is some evidence for this: large models trained on diverse data do show better OOD robustness on many benchmarks than smaller models trained on narrower data. The sheer volume and diversity of pretraining data means the model cannot rely on a single strong shortcut that happens to pervade the entire corpus.
+            </p>
+
+            <p>
+                But this is not the same as saying large models do not use shortcuts. It means their shortcuts are distributed more evenly across a larger, more varied set of correlations — which makes any individual shortcut smaller and harder to identify, but does not make the fundamental reliance on statistical association rather than causal structure go away. When researchers construct carefully designed probing datasets for large language models, they still find systematic failures that look exactly like shortcut exploitation. The shortcuts are just harder to find.
+            </p>
+
+            <blockquote>
+                "Scale does not solve the alignment problem between benchmark performance and real-world understanding. It makes the benchmark harder to distinguish from real understanding, which is a different thing — and potentially more dangerous."
+                <cite>— Paul Christiano, AI safety researcher, former OpenAI alignment lead</cite>
+            </blockquote>
+
+            <p>
+                The safety implication is the one that keeps me thinking. If a model appears to be reasoning correctly, achieves strong benchmark performance across a wide range of evaluations, and still has underlying shortcut reliance that only reveals itself in specific distributional conditions — how would we know? The model's behaviour, from the outside, looks exactly like genuine understanding. The shortcuts are not visible until the test conditions are precisely crafted to expose them. This is the deceptive alignment concern in its practical, non-conspiratorial form: not a model that is strategically hiding its real objectives, but a model whose apparent competence is partially built on correlational scaffolding that we have not yet tested to destruction.
+            </p>
+
+            <h2>WHAT GENUINE REASONING WOULD LOOK LIKE</h2>
+
+            <p>
+                Judea Pearl's work on causality offers the clearest framework I know for describing what is missing. Pearl distinguishes three rungs on a ladder of causal reasoning. The first rung is <em>association</em> — observing correlations in data, predicting what we will see. The second rung is <em>intervention</em> — reasoning about what would happen if we changed something, the do-calculus. The third rung is <em>counterfactual</em> — reasoning about what would have happened if things had been different, even in situations that never occurred.
+            </p>
+
+            <p>
+                Current statistical learning models — including the most capable large language models — operate primarily at the first rung. They are extraordinary associational engines. They can predict what comes next, correlate features with labels, and generalise those correlations across a vast training distribution with remarkable precision. What they cannot do, without architectural additions that explicitly encode causal structure, is climb to the second or third rung. They cannot reliably answer interventional questions — "what would happen if we changed X?" — because the intervention breaks the statistical associations the model has learned. They cannot reason about counterfactuals in the strong sense, because counterfactuals require representing possible worlds that are causally downstream of a hypothetical change, not just nearby points in observed data space.
+            </p>
+
+            <blockquote>
+                "All the impressive achievements of deep learning amount to just curve fitting. I am not diminishing curve fitting — it is an impressive engineering feat. But it is not the same as understanding. Understanding requires the ability to reason about interventions. That requires a model of cause and effect that statistical learning, on its own, cannot provide."
+                <cite>— Judea Pearl, Turing Award laureate, author of The Book of Why</cite>
+            </blockquote>
+
+            <p>
+                This is not a criticism that can be answered by training larger models on more data. The gap is architectural. Statistical learning on observational data, however vast and diverse that data is, does not provide leverage on interventional or counterfactual questions — because those questions require reasoning about distributions that differ from any observed distribution in a principled, structured way. A model that has seen ten billion sentences cannot derive from those sentences alone what would happen if you removed the property of negation from the English language. That requires a causal model of language, not a statistical model of text.
+            </p>
+
+            <p>
+                What genuine causal reasoning would look like in a learning system: the model maintains an explicit representation of variables and their causal relationships, distinct from the statistical associations in the training data. It can answer do-queries by simulating interventions on that graph. It can trace the downstream effects of hypothetical changes. It can distinguish correlation from causation operationally, not just as a slogan. These are not science fiction capabilities — they exist in narrowly scoped causal inference systems. The challenge is integrating them with the representational richness and generality of large-scale deep learning, which remains an open research problem.
+            </p>
+
+            <h2>A PERSONAL NOTE</h2>
+
+            <p>
+                What does this tell us about what we are building? I think it tells us something genuinely important and genuinely uncomfortable. We have built systems of remarkable apparent competence by optimising for performance on tasks that turn out to be easier than the underlying capability they were designed to measure. The systems are real. Their capabilities are real, within the distributions they were trained on. But the gap between their benchmark performance and their causal understanding is also real, and it is not closing as fast as the benchmark scores are improving.
+            </p>
+
+            <p>
+                I am not pessimistic about this. Identifying the problem precisely is the first step toward solving it, and the shortcut learning research community has done important work making the problem precise. Causal representation learning is advancing. OOD evaluation frameworks are becoming more rigorous. We are, I think, moving from a period of being impressed by the benchmarks to a period of taking seriously the question of what the benchmarks actually measure.
+            </p>
+
+            <p>
+                But I do think it requires honesty about what we have and have not achieved. A system that is right 95% of the time for the wrong reasons is not a safe system to deploy in a hospital. A language model that achieves near-human scores on NLI by learning annotation artefacts has not demonstrated near-human language understanding. The distinction matters. It matters for deployment decisions, for safety analysis, for the kind of trust that is warranted in high-stakes settings, and for the research agenda that will actually produce systems we can rely on rather than systems that merely appear reliable within a narrow range of conditions.
+            </p>
+
+            <p>
+                Clever Hans was not a fraud. He was doing something genuinely impressive — reading human micro-expressions with extraordinary sensitivity. But he was not doing arithmetic, and the people who watched him were wrong to believe he was. The gap between what he appeared to be doing and what he was actually doing was not a detail. It was the whole thing.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">shortcut learning</span>
+                <span class="tag">spurious correlations</span>
+                <span class="tag">OOD generalisation</span>
+                <span class="tag">NLI</span>
+                <span class="tag">causality</span>
+                <span class="tag">Judea Pearl</span>
+                <span class="tag">brittleness</span>
+                <span class="tag">HANS</span>
+                <span class="tag">AI safety</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="neuromorphic-computing.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">Neuromorphic Computing and the Brain-Inspired Chip Race</span>
+                </a>
+                <a href="rlhf-explained.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">RLHF Explained: Training AI on Human Feedback</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

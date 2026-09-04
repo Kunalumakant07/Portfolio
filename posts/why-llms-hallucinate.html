@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Large Language Models Hallucinate — And Why It's Not a Bug — Umakant Kunal</title>
+    <meta name="description" content="ChatGPT invents a court case, a biography, a paper that doesn't exist. Most people think the fix is obvious. It isn't. A technical and philosophical deep-dive into why LLMs hallucinate.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: #00ff9f;  border-color: #00885a; }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                why-llms-hallucinate
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-02-05</span>
+                <span class="post-category cat-ai">AI / Machine Learning</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">Why Large Language Models<br>Hallucinate — And Why<br>It's Not a Bug</h1>
+
+            <p class="post-subtitle">
+                ChatGPT confidently invents a research paper, cites a court case with the wrong judge and wrong outcome, fabricates a biography for a living person. These are called hallucinations. Most people think the fix is obvious. <em>It isn't.</em> The problem goes deeper than data quality or model size — it is structural, and understanding it requires understanding what an LLM actually is.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In 2023, a US lawyer submitted a legal brief that cited six cases as precedent. The cases were real-sounding — proper names, docket numbers, detailed holdings. They were entirely fabricated by ChatGPT. The lawyer had not verified them. The opposing counsel did. The judge was not amused. When asked to explain itself, ChatGPT doubled down, generating fake confirmation that the cases existed. This is the hallucination problem in its most visible, costly form. But most coverage of the incident missed the interesting part: <strong>the model was not malfunctioning</strong>. It was doing exactly what it was designed to do, optimally.
+            </p>
+
+            <p>
+                The word "hallucination" is borrowed from psychology, and like most borrowed terminology, it is both useful and subtly misleading. A human hallucination is a perception in the absence of a stimulus — the brain generating experience not grounded in external reality. An LLM "hallucination" is something structurally different: <strong>confident, fluent, coherent output that is factually wrong</strong>. The commonality is that neither is signalled as unreliable by the system producing it. The difference is that the human brain has mechanisms — however imperfect — for distinguishing believed perceptions from imagined ones. An LLM does not.
+            </p>
+
+            <h2>WHAT AN LLM IS ACTUALLY DOING</h2>
+
+            <p>
+                Strip away the product branding and the conversational interface, and a large language model is a function that takes a sequence of tokens and outputs a probability distribution over what token should come next. That's it. At every step, the model samples from that distribution — or takes the most likely token, depending on decoding strategy — and appends the result, feeding the extended sequence back in. This process is called <strong>autoregressive next-token prediction</strong>, and it is the complete mechanistic description of what GPT-4, Claude, Gemini, and every other mainstream LLM is doing when it answers your question.
+            </p>
+
+            <p>
+                What this means, precisely, is that the model has no <em>world model</em> in any meaningful sense. It has no separate representation of "facts" that it checks against text before generating. It has no memory of having learned specific things on specific dates from specific sources. It has no pointer from the word "Napoleon" to an entry in a database that contains verified birth dates. What it has is an extraordinarily dense compression of the statistical patterns in the text it was trained on — billions of parameters that encode, in aggregate, something like: <em>given this context, these tokens tend to follow</em>.
+            </p>
+
+            <p>
+                When the model generates "Napoleon was born on August 15, 1769", it is not retrieving a stored fact. It is producing the token sequence that its training has learned tends to follow that particular context. The fact happens to be correct because the training data overwhelmingly associated that context with that answer. When it generates the name of a judge who presided over a case that doesn't exist, it is doing the same thing — producing a token sequence that <em>plausibly follows</em> in the context of legal documents. There is no internal check that distinguishes these two operations.
+            </p>
+
+            <h2>WHY HALLUCINATION IS STRUCTURALLY INEVITABLE</h2>
+
+            <p>
+                Given that description, hallucination is not a flaw in the implementation of LLMs — it is a direct consequence of what they are. Three structural reasons make this clear.
+            </p>
+
+            <p>
+                <strong>First: the training objective rewards fluency, not truth.</strong> Language models are trained to minimise the loss on predicting the next token in a training corpus. A confident, fluent, coherent sentence gets low loss whether it is true or false. "The capital of Australia is Sydney" and "The capital of Australia is Canberra" are equally fluent. Only the second is true, but the training objective cannot distinguish them — it only knows whether the model predicted the actual next token in the training data. If the training data happened to contain more text incorrectly identifying Sydney as Australia's capital (not hypothetically impossible — popular misconception is well represented in internet text), the model would be trained toward the wrong answer.
+            </p>
+
+            <p>
+                <strong>Second: the model cannot distinguish text that describes reality from text that describes fiction.</strong> Training data contains novels, screenplays, Wikipedia articles, Reddit threads, legal documents, and conspiracy blogs. All of it is text. The model learns patterns across all of it. A sentence structure that appears in a fantasy novel and a sentence structure that appears in a peer-reviewed paper are both represented in the weights. When the model generates a plausible-sounding research citation, it is drawing on patterns learned from both real papers and fanfiction that happens to include fake academic references. There is no metadata attached to training examples that the model can consult at inference time.
+            </p>
+
+            <p>
+                <strong>Third: uncertainty is not represented.</strong> The model has no internal signal — no dedicated circuit, no architectural mechanism — that encodes "I don't know". When a human is uncertain about a fact, they typically experience that uncertainty as a felt sense of low confidence and can report it. The model has token probabilities, but as the next section will make painfully clear, those probabilities do not reliably track factual accuracy. The model will generate "I'm not sure about this" only if such phrasing is statistically likely given the context — not because an uncertainty detector fired.
+            </p>
+
+            <blockquote>
+                "Large language models are not databases. They are not retrieving facts — they are generating plausible continuations. The sooner people internalise this, the sooner we can have a serious conversation about what they are actually useful for."
+                <cite>— Yann LeCun, Chief AI Scientist, Meta (paraphrased from public remarks, 2023)</cite>
+            </blockquote>
+
+            <h2>THE CONFIDENCE DECOUPLING PROBLEM</h2>
+
+            <p>
+                There is a specific failure mode that makes hallucination especially dangerous in practice: <strong>the model's expressed confidence is decoupled from its accuracy</strong>. This is not a subtle statistical effect. It is dramatic, measurable, and consequential.
+            </p>
+
+            <p>
+                Research by Kadavath et al. (2022) at Anthropic examined whether LLMs could reliably indicate when they didn't know the answer to a factual question. The short answer: not reliably. Models showed reasonable calibration in some domains but significant overconfidence in others, particularly for questions about specific entities, dates, and events that appear infrequently in training data. A 2023 study by Xiong et al. found that GPT-4 was confidently wrong — expressing high certainty while producing incorrect answers — on a significant fraction of medical knowledge questions. The problem worsens precisely where it matters most: specialised, high-stakes domains where the model has less training data and users are less equipped to spot errors.
+            </p>
+
+            <p>
+                The token probability that comes out of the softmax layer is a measure of <em>statistical likelihood given context</em>, not a measure of <em>factual correctness</em>. These are correlated for common knowledge but diverge sharply for rare or disputed claims. A model that has seen "Neil Armstrong walked on the moon" ten million times will assign high probability to that completion — correctly. A model asked about an obscure legal case from 1987 will also assign high probability to whatever continuation its patterns generate — because high-probability output is all it knows how to produce.
+            </p>
+
+            <div class="callout" data-label="System 1 vs System 2">
+                Daniel Kahneman's dual-process theory distinguishes between System 1 thinking — fast, automatic, pattern-matching, intuitive — and System 2 thinking — slow, deliberate, logical, effortful. LLMs are, architecturally, pure System 1. They fire instantly from pattern to output with no deliberate verification step. The impressive thing is how far pure pattern-matching gets you. The dangerous thing is that System 1 fails silently and confidently, and at scale, confident silent failure is expensive.
+            </div>
+
+            <blockquote>
+                "The models are fluent in ways that create a powerful illusion of competence. Fluency and accuracy are not the same thing. We conflate them at our peril — and these systems are specifically optimised to produce the former, not the latter."
+                <cite>— Gary Marcus, cognitive scientist and AI critic, "Stochastic Parrots and Their Discontents" (2023)</cite>
+            </blockquote>
+
+            <h2>RETRIEVAL AUGMENTED GENERATION</h2>
+
+            <p>
+                The most widely deployed practical response to hallucination is Retrieval Augmented Generation (RAG), and it is worth understanding both why it helps and why it is not a solution.
+            </p>
+
+            <p>
+                The RAG architecture is conceptually simple: before generating a response, the system retrieves relevant documents from a knowledge base — using vector similarity search over embeddings, or keyword lookup, or hybrid approaches — and appends those documents to the model's context. The model is then instructed to ground its answer in the retrieved material. If you ask a RAG-augmented system about a specific legal case, it can pull the actual case documents and generate a summary grounded in real text rather than statistical pattern-completion.
+            </p>
+
+            <p>
+                This helps substantially for the category of hallucinations caused by absent or underrepresented training data. If the model has access to the right document at the right moment, it does not need to generate from pattern alone. Empirically, RAG reduces hallucination rates meaningfully on knowledge-intensive tasks — enterprise deployments at companies like Databricks and Microsoft report significant improvements in factual accuracy using RAG pipelines over base-model deployment.
+            </p>
+
+            <p>
+                But RAG does not eliminate the problem, for several reasons. <strong>The model must correctly decide when to retrieve.</strong> If it is overconfident about something it actually doesn't know — the confidence decoupling problem again — it may not trigger retrieval at all. <strong>The model must correctly use what it retrieves.</strong> Studies have shown that LLMs can misread, selectively attend to, or contradictorily combine information from retrieved documents, particularly when those documents are long, contain ambiguity, or conflict with each other. <strong>The retrieval itself can be wrong.</strong> Vector similarity over embeddings captures semantic proximity, not factual relevance — you can retrieve documents that sound related but don't contain the needed information, and the model will confabulate from what it has. RAG displaces part of the problem into the retrieval pipeline. It does not dissolve it.
+            </p>
+
+            <h2>CHAIN OF THOUGHT AND REASONING MODELS</h2>
+
+            <p>
+                A second major direction — and the one generating the most research excitement in 2024 and 2025 — is explicit reasoning before answering. Chain-of-thought prompting, originally demonstrated by Wei et al. (2022), showed that asking a model to "think step by step" before producing an answer improved performance on reasoning tasks dramatically. The intuition: give the model context to build on, rather than asking it to compress reasoning and answer into a single forward pass.
+            </p>
+
+            <p>
+                OpenAI's o1 and o3 models, Anthropic's extended thinking mode in Claude 3.5 Sonnet, and Google's Gemini reasoning variants all push this further: they train models to generate extended internal reasoning traces — sometimes thousands of tokens — before producing a final answer. The reasoning trace is effectively a scratchpad, allowing the model to decompose problems, check intermediate steps, and backtrack.
+            </p>
+
+            <p>
+                Does this reduce hallucination? The evidence is promising but nuanced. On structured reasoning problems — mathematics, code, multi-step logic — reasoning models show substantially lower error rates and better calibration. The scratchpad allows something like error correction: the model can notice a contradiction in its own reasoning and revise. On factual recall, the improvement is less consistent. A reasoning model given a factual question it doesn't have solid training signal on will generate a long, plausible-looking reasoning trace that still terminates in a hallucinated answer. The chain of thought can itself be hallucinated — fluent, internally coherent reasoning toward a wrong conclusion. <strong>Process does not guarantee accuracy when the underlying representations are unreliable.</strong>
+            </p>
+
+            <div class="callout" data-label="Note on o3 / extended thinking">
+                OpenAI's o3 benchmark results (early 2025) showed dramatic improvements on professional-level reasoning tests — 88% on ARC-AGI, near-human performance on AIME mathematics, strong results on GPQA (graduate-level science questions). These are real gains. They are also heavily concentrated in domains where reasoning structure helps most. Factual open-domain QA showed more modest gains. The architecture changes how computation is allocated, not what facts are stored.
+            </div>
+
+            <h2>THE DEEPER ISSUE</h2>
+
+            <p>
+                We are now in a position to say something more precise about what hallucination actually reveals. It is not a bug in an otherwise correct system. It is a signal about the fundamental nature of what these systems are.
+            </p>
+
+            <p>
+                Language models are not knowledge stores with a query interface. They are <strong>lossy compression functions</strong> trained on the statistical regularities of human-produced text. When they "know" something, what that means is: patterns associated with that topic are densely represented in the model's weights, because similar text appeared frequently in training. When they "hallucinate", what that means is: the model produced a plausible-looking output because such outputs are statistically consistent with the context, even in the absence of a reliable training signal about the specific fact in question.
+            </p>
+
+            <p>
+                From this angle, hallucination is not the model failing to do its job. It is the model succeeding at its job — producing fluent, contextually appropriate text — applied in a domain where fluency and correctness are expected to coincide but where the model has no mechanism to ensure they do. <strong>The misalignment is between what we are using the tool for and what the tool was built to do.</strong>
+            </p>
+
+            <blockquote>
+                "Current LLMs are stochastic parrots: they produce plausible-sounding text by pattern-matching over training corpora. They do not understand what they say in any sense that grounds that saying in world knowledge or reasoning. Hallucination is not a defect. It is what happens when you take a sophisticated autocomplete system and ask it to be an oracle."
+                <cite>— Emily Bender, Timnit Gebru, et al., "On the Dangers of Stochastic Parrots: Can Language Models Be Too Big?" (FAccT 2021)</cite>
+            </blockquote>
+
+            <p>
+                This reframing matters because it changes where we look for solutions. If hallucination were a data quality problem, the fix would be better data. If it were a model size problem, the fix would be scaling. If it is a structural property of the architecture and training objective, the fix requires rethinking those fundamentals — and that is a much harder problem, one that the field is only beginning to seriously engage.
+            </p>
+
+            <h2>WHAT WOULD ACTUALLY FIX IT</h2>
+
+            <p>
+                Genuine solutions to hallucination are research frontiers, not deployed products. Here is where the serious proposals live:
+            </p>
+
+            <ul>
+                <li><strong>World models:</strong> Rather than learning statistical patterns over text, a world model would learn representations of entities, states, and causal relations that persist across contexts. Facts would be explicitly stored and retrievable, not encoded diffusely in weights. This is closer to how knowledge-based AI systems of the 1980s worked, and combining neural pattern-matching with symbolic fact stores (neurosymbolic integration) is an active research direction. Results so far are promising at small scale; scaling remains unsolved.</li>
+                <li><strong>Explicit episodic memory:</strong> Give the model a mechanism to store and query specific facts separately from its weights — essentially a writable database that the model can update at inference time. Architectures like MemGPT, Memorizing Transformers, and various long-context approaches gesture at this. None has fully solved the problem of reliable, indexed, contradiction-free memory at the scale required for general-purpose use.</li>
+                <li><strong>Uncertainty quantification:</strong> Train models to produce calibrated confidence estimates alongside their outputs — to genuinely know when they don't know, and signal it. Conformal prediction methods and Bayesian approaches to neural networks offer theoretical frameworks. In practice, getting large neural networks to be reliably calibrated on out-of-distribution inputs remains a hard open problem.</li>
+                <li><strong>Neurosymbolic integration:</strong> Hybrid architectures that route factual queries to symbolic reasoning components — theorem provers, knowledge graphs, structured databases — while using neural components for language understanding and generation. AlphaCode, Wolfram's integration with GPT-4, and various tool-use frameworks explore this space. The engineering is tractable; the generalisation to arbitrary domains is not.</li>
+            </ul>
+
+            <p>
+                None of these approaches has produced a general-purpose system that reliably doesn't hallucinate. The most honest current position is: we have partial mitigations, better tooling for specific domains, and a clearer understanding of the problem than we did three years ago. The problem itself is not solved.
+            </p>
+
+            <hr>
+
+            <h2>WHAT THIS TELLS US ABOUT WHAT WE'RE BUILDING</h2>
+
+            <p>
+                There is a personal note I want to end on, because hallucination is not only an engineering problem. It is a clarifying lens.
+            </p>
+
+            <p>
+                When I started working seriously with these systems — reading the mechanistic interpretability literature, running experiments, watching production deployments succeed and fail — I noticed something about the conversation around them. There was, and still is, a persistent tendency to anthropomorphise. To treat fluent text as a sign of understanding. To treat confident output as a sign of knowledge. To use words like "reasoning", "knowing", "believing" as if they had the same referent in a transformer as they do in a person.
+            </p>
+
+            <p>
+                Hallucination cuts through that tendency sharply. It forces the question: if the model "knows" things, why does it fabricate court cases with such serene confidence? The answer — that it is not "knowing" in any robust sense, that it is pattern-completing over a vast compression of human text — is uncomfortable if you have been using the systems as a knowledge oracle. It is clarifying if you want to understand what they actually are.
+            </p>
+
+            <p>
+                We are building systems of extraordinary capability that are, at their core, extraordinarily good at producing plausible-sounding text. In many domains, plausible-sounding text is exactly what is needed — drafting, summarisation, code generation, creative work, translation. In domains where truth matters independently of plausibility — law, medicine, journalism, scientific research — the gap between the two is not a minor inconvenience. It is a structural property of the technology that no amount of prompting, fine-tuning, or wrapper infrastructure fully overcomes.
+            </p>
+
+            <p>
+                That is not a reason to dismiss these systems. It is a reason to deploy them with clear-eyed understanding of what they are. The models are remarkable. The expectations we project onto them are, sometimes, a hallucination of our own.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">LLMs</span>
+                <span class="tag">hallucination</span>
+                <span class="tag">next-token prediction</span>
+                <span class="tag">RAG</span>
+                <span class="tag">chain of thought</span>
+                <span class="tag">o1</span>
+                <span class="tag">uncertainty</span>
+                <span class="tag">machine learning</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="how-transformers-work.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">How Transformers Actually Work</span>
+                </a>
+                <a href="emergent-abilities-llms.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Emergent Abilities in Large Language Models</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

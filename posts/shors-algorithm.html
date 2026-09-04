@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shor's Algorithm — The Math That Could Break the Internet — Umakant Kunal</title>
+    <meta name="description" content="Shor's algorithm can factor large numbers in polynomial time — threatening RSA encryption and the security model the internet runs on.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-quantum { color: #c084fc; border-color: #4c1d95; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── FORMULA BLOCK ── */
+        .formula {
+            margin: 28px 0;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid #c084fc;
+            font-size: 0.92rem;
+            color: #c084fc;
+            line-height: 2;
+            overflow-x: auto;
+        }
+
+        .formula .formula-label {
+            display: block;
+            font-size: 0.66rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .formula .eq {
+            display: block;
+            color: var(--text);
+        }
+
+        .formula .eq em {
+            color: #c084fc;
+            font-style: normal;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+            .formula { padding: 14px 16px; font-size: 0.82rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                shors-algorithm
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-01-15</span>
+                <span class="post-category cat-quantum">Quantum Computing</span>
+                <span class="post-read-time">11 min read</span>
+            </div>
+
+            <h1 class="post-title">Shor's Algorithm —<br>The Math That Could<br>Break the Internet</h1>
+
+            <p class="post-subtitle">
+                Every HTTPS padlock in your browser rests on a single assumption: that factoring large numbers is hard. Peter Shor proved that assumption expires the moment we build a large enough quantum computer. Here's exactly how — and what happens next.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Right now, thousands of encrypted connections are protecting your banking sessions, your passwords, your private messages. Every single one of them depends on a mathematical fact that has never been proven — only assumed: <strong>that multiplying two large prime numbers is easy, but undoing that multiplication is computationally impossible.</strong>
+            </p>
+
+            <p>
+                In 1994, a mathematician named Peter Shor showed that this assumption is not a law of nature. It is a limitation of classical computers. On a sufficiently large quantum computer, factoring a 2048-bit number — the kind that secures most of the internet today — would take <em>hours, not the age of the universe</em>. The internet's security model has an expiry date. We just don't know exactly when it arrives.
+            </p>
+
+            <p>
+                This post is about the mathematics behind that claim: why RSA works, what Shor actually discovered, how the Quantum Fourier Transform makes it possible, and where we actually stand today. No quantum mechanics background required — just curiosity and a tolerance for beautiful ideas.
+            </p>
+
+            <h2>RSA ENCRYPTION EXPLAINED</h2>
+
+            <p>
+                RSA — named after its inventors Ron Rivest, Adi Shamir, and Leonard Adleman — is the bedrock of public-key cryptography. Understanding why it works requires about three minutes of number theory.
+            </p>
+
+            <p>
+                The scheme rests on a simple fact about prime multiplication. Take two primes: <strong>p = 61</strong> and <strong>q = 53</strong>. Their product is <strong>n = 3233</strong>. I just did that in my head. Now try the reverse: given only 3233, find the two primes that multiply to give it. You'd have to try divisors until you found them. For small numbers that's easy. For a 2048-bit n — a number with 617 decimal digits — it is not.
+            </p>
+
+            <p>
+                Here's how RSA uses this asymmetry. You choose n = p × q, then compute a related value <strong>φ(n) = (p−1)(q−1)</strong> — in our example, 60 × 52 = 3120. You pick a public exponent <strong>e</strong> (commonly 65537) that shares no common factor with φ(n), then calculate a private exponent <strong>d</strong> such that <em>e × d ≡ 1 (mod φ(n))</em>.
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">RSA key generation (small example)</span>
+                <span class="eq">p = 61,  q = 53</span>
+                <span class="eq">n = p × q = 3233</span>
+                <span class="eq">φ(n) = (p−1)(q−1) = 3120</span>
+                <span class="eq">e = 17  (public exponent, gcd(17, 3120) = 1)</span>
+                <span class="eq">d = 2753  (private exponent: 17 × 2753 ≡ 1 mod 3120)</span>
+                <span class="eq">Public key: (n=3233, e=17) &nbsp;|&nbsp; Private key: d=2753</span>
+            </div>
+
+            <p>
+                To encrypt a message M: compute <strong>C = M<sup>e</sup> mod n</strong>. To decrypt: <strong>M = C<sup>d</sup> mod n</strong>. The magic of modular arithmetic (Euler's theorem, specifically) guarantees these operations are inverses of each other — but only if you know d.
+            </p>
+
+            <p>
+                And d is computable only if you know φ(n). And φ(n) is computable only if you know p and q. So the entire security of RSA collapses to a single question: <strong>can an attacker factor n?</strong>
+            </p>
+
+            <blockquote>
+                "The security of RSA relies on the difficulty of factoring large integers. We have not proved that this is actually difficult; we just have no good algorithms for doing it."
+                <cite>— Ron Rivest, Adi Shamir &amp; Leonard Adleman, "A Method for Obtaining Digital Signatures and Public-Key Cryptosystems", 1978</cite>
+            </blockquote>
+
+            <p>
+                Notice the honesty in that phrasing. <em>We just have no good algorithms for doing it.</em> RSA was never proven secure. It was bet secure. For forty-eight years, that bet has held — on classical hardware.
+            </p>
+
+            <h2>THE QUANTUM SPEEDUP</h2>
+
+            <p>
+                The best classical algorithm for integer factorization is the <strong>General Number Field Sieve (GNFS)</strong>, discovered in 1990. It is genuinely impressive mathematics. Its runtime, however, is sub-exponential but still brutally large for big inputs:
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">General Number Field Sieve complexity</span>
+                <span class="eq">Time ≈ exp( c · (log N)<sup>1/3</sup> · (log log N)<sup>2/3</sup> )</span>
+                <span class="eq">where c ≈ 1.923 for factoring</span>
+            </div>
+
+            <p>
+                For a 2048-bit RSA key, this works out to roughly <strong>10<sup>34</sup> operations</strong> — more operations than there are atoms in the Earth. Current supercomputers executing a billion operations per second would need longer than the age of the universe. The largest RSA key ever factored classically was 829 bits (RSA-250), in 2020, using thousands of CPU-years of compute.
+            </p>
+
+            <p>
+                Shor's algorithm changes the equation entirely. Its complexity is:
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">Shor's algorithm complexity</span>
+                <span class="eq">Time = O( (log N)<sup>3</sup> )</span>
+                <span class="eq">Space = O( log N )</span>
+            </div>
+
+            <p>
+                That is <em>polynomial time</em>. For 2048-bit RSA, instead of 10<sup>34</sup> operations, Shor's algorithm needs roughly 2048<sup>3</sup> ≈ <strong>8.6 billion operations</strong>. A fast classical computer could execute that many operations in seconds — if it were running a quantum algorithm. The speedup is not incremental. It is <em>categorical</em>: the problem moves from a different class entirely.
+            </p>
+
+            <p>
+                To be concrete: breaking RSA-2048 classically with GNFS would take longer than the current age of the universe on the best hardware we have. Breaking it with a large-scale Shor implementation would take — depending on quantum hardware — <strong>hours to days</strong>.
+            </p>
+
+            <h2>HOW SHOR'S ALGORITHM WORKS</h2>
+
+            <p>
+                The genius of Shor's algorithm is a reduction: it converts the factoring problem into a different problem — <strong>period-finding</strong> — that quantum computers can solve exponentially faster than classical ones.
+            </p>
+
+            <h3>Step 1: Reduce Factoring to Period-Finding</h3>
+
+            <p>
+                Pick a random integer <strong>a</strong> with 1 &lt; a &lt; N. If gcd(a, N) ≠ 1, you got lucky — you already found a factor. Otherwise, consider the function:
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">The periodic function at the heart of Shor's</span>
+                <span class="eq"><em>f</em>(x) = a<sup>x</sup> mod N</span>
+            </div>
+
+            <p>
+                This function is periodic — it repeats itself. The length of its period is called <strong>r</strong>. By number theory, once you know r, you can recover factors of N with high probability. Specifically, if r is even, then <strong>gcd(a<sup>r/2</sup> − 1, N)</strong> and <strong>gcd(a<sup>r/2</sup> + 1, N)</strong> are likely to be non-trivial factors of N.
+            </p>
+
+            <p>
+                The problem is: classically, finding r requires evaluating f(x) for exponentially many values of x. That's the bottleneck. And this is exactly where quantum mechanics steps in.
+            </p>
+
+            <h3>Step 2: Superposition Over All Inputs</h3>
+
+            <p>
+                A quantum computer can place a register in a <em>superposition</em> — simultaneously representing every possible value of x from 0 to Q−1 (where Q is chosen as a power of 2 slightly larger than N²). Evaluating the quantum circuit for f on this superposition computes <strong>f(x) for all x at once</strong>, in a single quantum operation.
+            </p>
+
+            <p>
+                After measurement, the output register collapses to some value f(x₀) = a<sup>x₀</sup> mod N. But here's the key: the input register does not collapse to x₀. It collapses to the <em>uniform superposition of all x that give the same output</em> — namely x₀, x₀+r, x₀+2r, x₀+3r, ... The period r is now encoded in the quantum state.
+            </p>
+
+            <h3>Step 3: Extract the Period with the QFT</h3>
+
+            <p>
+                The input register now holds a periodic state with spacing r. To extract r, Shor applies the <strong>Quantum Fourier Transform</strong> — the quantum analogue of the discrete Fourier transform. The QFT converts a periodic signal in the time domain to a sharp spike in the frequency domain. After QFT, measuring the register gives a value close to a multiple of Q/r. A few measurements and a classical continued-fractions algorithm extract r exactly.
+            </p>
+
+            <h3>Step 4: Classical Post-Processing</h3>
+
+            <p>
+                With r in hand: check that r is even and that a<sup>r/2</sup> ≢ −1 (mod N). If so, compute <strong>p = gcd(a<sup>r/2</sup>−1, N)</strong> and <strong>q = gcd(a<sup>r/2</sup>+1, N)</strong>. With high probability, these are the prime factors. If not, repeat with a different random a. Expected repetitions: 1–2.
+            </p>
+
+            <div class="callout" data-label="the core insight">
+                Shor's algorithm doesn't "try" factors. It restructures the problem: factoring becomes period-finding becomes Fourier analysis — and quantum computers are exponentially good at Fourier analysis on superposed states. The trick is the reduction, not the raw power.
+            </div>
+
+            <h2>QUANTUM FOURIER TRANSFORM</h2>
+
+            <p>
+                The QFT is arguably the most important subroutine in all of quantum computing. It does what the classical Discrete Fourier Transform (DFT) does — map a function from the time domain to the frequency domain — but in quantum superposition, acting on all amplitudes simultaneously.
+            </p>
+
+            <p>
+                The classical DFT on N points takes O(N log N) operations (the Fast Fourier Transform). The QFT on N = 2<sup>n</sup> points takes only <strong>O(n²) = O((log N)²) quantum gates</strong>. This is not a constant-factor improvement. It is an <em>exponential</em> compression — the quantum state encodes all N amplitudes in n qubits, and the QFT operates on all of them at once.
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">QFT unitary (acts on computational basis states)</span>
+                <span class="eq">QFT<sub>N</sub> |j⟩ = (1/√N) · Σ<sub>k=0</sub><sup>N−1</sup> e<sup>2πijk/N</sup> |k⟩</span>
+                <span class="eq"></span>
+                <span class="eq">where N = 2<sup>n</sup>,  j ∈ {0, 1, ..., N−1}</span>
+                <span class="eq">and ω = e<sup>2πi/N</sup>  is the N-th root of unity</span>
+            </div>
+
+            <p>
+                In matrix form, the QFT is a unitary matrix whose (j,k) entry is ω<sup>jk</sup>/√N. What makes this remarkable: a classical computer needs O(N) memory to store the vector it acts on. A quantum computer stores the same information in O(log N) qubits — and the QFT circuit operates directly on those qubits with O(n²) Hadamard and controlled-phase gates.
+            </p>
+
+            <p>
+                Intuitively: the QFT takes a quantum state that encodes a periodic pattern — like the superposition of x₀, x₀+r, x₀+2r, ... that Shor's algorithm creates — and transforms it into a state concentrated around frequencies that are integer multiples of 1/r. Measuring gives you information about 1/r, from which r follows. The QFT is the lens that makes the hidden period visible.
+            </p>
+
+            <blockquote>
+                "The quantum Fourier transform is the key subroutine in almost all known quantum algorithms that provide exponential speedups over classical computation. What's remarkable is that it achieves in polynomial time what would require exponential time classically — not because of parallelism in the naive sense, but because of quantum interference."
+                <cite>— Peter Shor, "Polynomial-Time Algorithms for Prime Factorization and Discrete Logarithms on a Quantum Computer", SIAM Journal on Computing, 1997</cite>
+            </blockquote>
+
+            <h2>WHERE WE ACTUALLY ARE</h2>
+
+            <p>
+                Here is the honest answer: Shor's algorithm works. We know this because it has been run — on very small inputs. In 2001, IBM ran it on a 7-qubit NMR quantum computer and factored <strong>15 = 3 × 5</strong>. In 2012, researchers factored <strong>21 = 3 × 7</strong>. In subsequent years, various labs have factored numbers up to a few hundred using increasingly clever shortcuts and noise-mitigation techniques.
+            </p>
+
+            <p>
+                The gap between 21 and 2048-bit RSA is not a gap of degree. It is a gap of kind.
+            </p>
+
+            <p>
+                To factor an n-bit RSA key using Shor's algorithm in the general case, you need roughly <strong>2n logical (error-corrected) qubits</strong> for the algorithm itself, plus substantial overhead for quantum error correction. Realistic estimates for breaking RSA-2048 put the requirement at approximately <strong>4,000 to 10,000 noise-free logical qubits</strong>, each requiring anywhere from hundreds to thousands of physical qubits to implement via surface codes.
+            </p>
+
+            <p>
+                Where are we? As of early 2026: IBM's Heron processor has ~133 physical qubits with improved error rates. Google's Willow chip demonstrated below-threshold error correction — a genuine milestone. But "noise-free logical qubit" counts remain in single digits to low tens for full error correction. <strong>We are roughly three to four orders of magnitude away from breaking RSA-2048.</strong>
+            </p>
+
+            <p>
+                That sounds like a long way off. And in terms of brute timeline, 10–20 years is a common expert estimate for cryptographically relevant quantum computers. But consider: most RSA-protected data encrypted today could be captured now and decrypted later. This is the <em>harvest now, decrypt later</em> attack — adversaries collect encrypted traffic today, wait for quantum hardware to mature. For long-lived secrets — state intelligence, medical records, financial data — the threat window opens now, not when the first quantum computer arrives.
+            </p>
+
+            <blockquote>
+                "The question is not whether cryptographically relevant quantum computers will exist, but when. And for long-lived secrets, 'when' starts affecting your security posture today."
+                <cite>— Dustin Moody, NIST Post-Quantum Cryptography Project Lead, 2023</cite>
+            </blockquote>
+
+            <h2>POST-QUANTUM CRYPTOGRAPHY</h2>
+
+            <p>
+                The response to this threat is already underway. In 2024, NIST finalised its first set of <strong>Post-Quantum Cryptography (PQC) standards</strong> — algorithms designed to be secure against both classical and quantum adversaries.
+            </p>
+
+            <p>
+                The headline algorithm is <strong>CRYSTALS-Kyber</strong> (now standardised as ML-KEM), a key encapsulation mechanism based on the hardness of the <em>Module Learning With Errors (MLWE)</em> problem — a lattice-based problem with no known efficient quantum solution. For digital signatures, <strong>CRYSTALS-Dilithium</strong> (ML-DSA) and <strong>SPHINCS+</strong> (SLH-DSA) are the primary standards.
+            </p>
+
+            <p>
+                (A full deep-dive into PQC — how lattice cryptography works, why MLWE resists quantum attacks, and the practical migration path — is coming in a separate post. The math deserves its own space.)
+            </p>
+
+            <p>
+                The migration question is urgent. TLS 1.3, SSH, certificate authorities, code signing, VPNs, hardware security modules — every layer of the cryptographic stack needs updating. Large organisations are looking at multi-year transitions. <strong>The time to start is before quantum computers arrive, not after.</strong> NIST has published the standards. The engineering work starts now.
+            </p>
+
+            <h2>GROVER'S ALGORITHM (BONUS)</h2>
+
+            <p>
+                Shor's algorithm gets most of the headlines, but there is a second quantum threat that affects a broader range of cryptographic systems: <strong>Grover's algorithm</strong>.
+            </p>
+
+            <p>
+                Where Shor solves a specific mathematical structure (period-finding), Grover's is a general-purpose search speedup. Given an unstructured search space of N items — like searching for a secret key in a space of 2<sup>256</sup> possible keys — a classical computer needs O(N) evaluations on average. Grover's algorithm finds the answer in <strong>O(√N)</strong> steps using quantum amplitude amplification.
+            </p>
+
+            <div class="formula">
+                <span class="formula-label">Grover's speedup</span>
+                <span class="eq">Classical search: O(N) evaluations</span>
+                <span class="eq">Grover's search: O(√N) evaluations</span>
+                <span class="eq">For AES-256: √(2<sup>256</sup>) = 2<sup>128</sup> quantum evaluations</span>
+            </div>
+
+            <p>
+                The practical implication: <strong>Grover's algorithm halves the effective bit-security of symmetric-key cryptography.</strong> AES-256, which provides 256-bit security against classical adversaries, provides only 128-bit security against a quantum adversary running Grover's. AES-128 drops to 64-bit security — below acceptable thresholds.
+            </p>
+
+            <p>
+                The fix is simpler than for RSA: <strong>double your key size</strong>. AES-256 remains secure in a post-quantum world; AES-128 should be deprecated. Hash functions similarly need output lengths of at least 256 bits (SHA-256 and SHA-384 are fine; SHA-1 and MD5 were already broken for separate reasons). Grover's is a quantitative threat, not an existential one — unlike Shor's, which breaks RSA entirely.
+            </p>
+
+            <p>
+                The distinction matters for planning: symmetric encryption can be upgraded by changing a parameter. Public-key infrastructure requires replacing the underlying mathematics. Shor's is the civilisational problem. Grover's is the maintenance item.
+            </p>
+
+            <hr>
+
+            <h2>A NOTE FROM ME</h2>
+
+            <p>
+                I first encountered Shor's algorithm in my second year of my MSc, during a module on computational complexity. What struck me then — and still strikes me — is how the algorithm doesn't "attack" RSA by brute force. It finds a trapdoor that RSA's designers didn't know existed, because it only exists in a model of computation they weren't considering.
+            </p>
+
+            <p>
+                There is something philosophically unsettling about that. We built an entire global security infrastructure on a mathematical assumption — not a proven theorem, just an observed difficulty. And then someone found a different machine where the difficulty evaporates. The internet's encryption was not broken by a smarter attacker. It was broken by a smarter model of what computation is.
+            </p>
+
+            <p>
+                The right response, I think, is not panic — the hardware to run Shor's at scale doesn't exist yet — but <strong>not complacency either</strong>. The NIST standards are out. The migration tools exist. The threat model is well-understood. The organisations that act now, before quantum hardware scales, will be fine. The ones that wait for a headline will not be.
+            </p>
+
+            <p>
+                Post-quantum cryptography is not a distant academic exercise. It is infrastructure work that needs to start this decade. And it is, genuinely, one of the most interesting areas of applied mathematics and computer science right now.
+            </p>
+
+            <p>
+                Next in this series: photonic quantum computers — why light might be the path to fault-tolerant quantum hardware. And after that, a dedicated post on the mathematics of CRYSTALS-Kyber and why lattice problems are so hard to solve, even for quantum computers.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">quantum computing</span>
+                <span class="tag">shor's algorithm</span>
+                <span class="tag">RSA</span>
+                <span class="tag">cryptography</span>
+                <span class="tag">QFT</span>
+                <span class="tag">post-quantum</span>
+                <span class="tag">CRYSTALS-Kyber</span>
+                <span class="tag">Grover</span>
+                <span class="tag">number theory</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="quantum-decoherence.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Quantum Decoherence</span>
+                </a>
+                <a href="photonic-quantum-computers.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Photonic Quantum Computers</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

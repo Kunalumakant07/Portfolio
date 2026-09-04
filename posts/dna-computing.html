@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Computing — Storing Data in Molecules — Umakant Kunal</title>
+    <meta name="description" content="In 1994, Leonard Adleman solved a hard combinatorial problem using strands of DNA in a test tube. Biology has been computing for 3.8 billion years. Here's what that means.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-science   { color: #34d399;        border-color: #064e3b; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                dna-computing
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-03-18</span>
+                <span class="post-category cat-science">Biology × Computing</span>
+                <span class="post-read-time">9 min read</span>
+            </div>
+
+            <h1 class="post-title">DNA Computing —<br>Storing Data in Molecules</h1>
+
+            <p class="post-subtitle">
+                In 1994, Leonard Adleman solved a hard combinatorial problem using strands of DNA in a test tube. He didn't write a program. He synthesised molecules. The computation happened through chemistry. Biology, it turns out, has been doing computing for 3.8 billion years — and we are only just beginning to understand what that means for the future of information itself.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                In the autumn of 1994, Leonard Adleman sat in his lab at the University of Southern California and did something no computer scientist had done before. He solved an instance of the Hamiltonian path problem — a combinatorial puzzle of genuine theoretical difficulty — not by running a program, not by flipping transistors, but by synthesising strands of DNA and mixing them together in a test tube. The answer emerged from chemistry. The computation happened at the molecular level, carried out by the same biological machinery that has been encoding, copying, and expressing information since the first replicating molecule appeared on Earth roughly 3.8 billion years ago.
+            </p>
+
+            <p>
+                It was a proof of concept, not a product. The graph Adleman solved had only seven nodes — a problem any pocket calculator could dispatch in microseconds. But that misses the point entirely. What Adleman demonstrated was that <strong>computation is not the exclusive property of silicon</strong>. It is a property of information-bearing systems. Molecules can compute. They have always been computing. We just weren't paying attention.
+            </p>
+
+            <h2>WHY DNA?</h2>
+
+            <p>
+                The case for DNA as a storage and computation medium begins with a number that is almost impossible to absorb: <strong>one gram of DNA can theoretically store 215 petabytes of data</strong>. That is approximately 215 million gigabytes — enough to hold all the information humanity has ever produced, in a volume roughly the size of a few grains of rice. Every photograph, every book, every film, every database, every line of code ever written — packed into something you could hold between two fingers and not feel.
+            </p>
+
+            <p>
+                Compare this to a modern hard drive: roughly 10 terabytes per kilogram. DNA beats it by a factor of twenty million. The reason is density at the molecular level — each nucleotide base takes up less than a nanometre, and a single strand of DNA is just two nanometres wide. No lithographic process, no matter how refined, can approach the information density of molecular biology.
+            </p>
+
+            <p>
+                Then there is stability. In 2015, researchers at the Copenhagen Zoo recovered readable DNA sequences from a horse specimen that had been frozen in permafrost for 700,000 years. Seven hundred thousand years — approximately 697,970 years longer than the oldest silicon memory device has existed. Under the right conditions (cool, dry, dark), DNA is the most durable information storage medium we know of. Hard drives fail within decades. Magnetic tape degrades within centuries. DNA, sealed in a dark test tube, can outlast civilisations.
+            </p>
+
+            <p>
+                Energy efficiency is the third argument. Molecular binding — the process by which complementary DNA strands hybridise — requires almost no external energy input. The reactions are thermodynamically driven. Nature supplies the entropy gradient. You are not burning electricity to flip a magnetic domain; you are letting chemistry do what it wants to do anyway, and reading the result.
+            </p>
+
+            <div class="callout" data-label="The problem">
+                The arguments for DNA storage are compelling on paper and genuinely difficult in practice. Reading and writing DNA is still slow, expensive, and error-prone. Synthesis introduces errors at roughly one per thousand bases. Sequencing introduces further errors. The cost per megabyte written to DNA has fallen dramatically — from tens of thousands of dollars to pennies — but it remains orders of magnitude more expensive than flash storage for everyday use. DNA computing is not a replacement for silicon. It is a complement, suited to a specific class of problems that silicon handles poorly.
+            </div>
+
+            <h2>HOW DNA STORES DATA</h2>
+
+            <p>
+                DNA is a molecule built from four chemical bases: <strong>adenine (A), thymine (T), guanine (G), and cytosine (C)</strong>. These bases pair in a precise way — A with T, G with C — forming the famous double helix. For the purposes of information storage, the sequence of bases along a strand is an alphabet. Not a binary alphabet like silicon's zeros and ones, but a base-4 alphabet with four symbols.
+            </p>
+
+            <p>
+                Encoding binary data into DNA is conceptually straightforward: map two bits to each base (00 → A, 01 → C, 10 → G, 11 → T), write out a DNA sequence representing your data, and synthesise it. Decoding reverses the process: sequence the DNA strand, read off the bases, convert back to bits. The devil, as always, is in the implementation. Direct binary-to-base mappings produce sequences that are chemically unstable or difficult to sequence accurately. The field has developed more sophisticated encoding schemes — Goldman encoding, the Fountain Code approach, and others — that balance information density against chemical fidelity and error resilience.
+            </p>
+
+            <p>
+                Error correction is essential. DNA synthesis is not perfect: bases are occasionally inserted, deleted, or swapped during chemical synthesis. Sequencing introduces a further layer of errors. Practical DNA storage systems use redundancy and error-correcting codes — the same mathematical tools deployed in satellite communications and QR codes — to recover from these mistakes. The question is not whether errors will occur but how many you can tolerate and still reconstruct the original data faithfully.
+            </p>
+
+            <blockquote>
+                "We stored all 154 of Shakespeare's sonnets, a PDF of the famous Watson and Crick paper on DNA structure, a JPEG photograph, a MP3 of Martin Luther King Jr.'s 'I Have a Dream' speech, and a copy of all the files used in Huffman's 1952 paper. We retrieved them with 100% accuracy."
+                <cite>— George Church, Harvard Medical School, on the 2012 DNA storage experiment that encoded 650 kilobytes in synthetic DNA</cite>
+            </blockquote>
+
+            <p>
+                Microsoft's DNA storage project pushed this further. Working with the University of Washington, researchers demonstrated not just storage but a complete automated pipeline: an integrated system that encoded digital data, synthesised the corresponding DNA sequences, stored the physical DNA, retrieved specific files on demand using molecular addressing, sequenced the retrieved DNA, and decoded it back to the original files. In their 2022 demonstration, they stored 200 megabytes and retrieved files with 100% accuracy. The system was slow by silicon standards — minutes per file — but it was fully automated, the error rates were controlled, and the data density was extraordinary.
+            </p>
+
+            <h2>ADLEMAN'S EXPERIMENT</h2>
+
+            <p>
+                The Hamiltonian path problem asks a deceptively simple question: given a directed graph — a set of nodes connected by directed edges — does there exist a path that visits every node exactly once? It is one of the canonical NP-complete problems. For small graphs, it is trivial. As the graph grows, the number of possible paths explodes combinatorially, and no known classical algorithm can solve it efficiently in the general case. It is the kind of problem that makes theoretical computer scientists nervous.
+            </p>
+
+            <p>
+                Adleman's graph had seven nodes representing cities — call them Atlanta, Boston, Chicago, Detroit, Eugene, Fresno, and Gateway — and a set of directed edges representing direct flights between them. The question was whether a Hamiltonian path existed from Atlanta to Gateway visiting each city exactly once.
+            </p>
+
+            <p>
+                Here is what he did, step by step:
+            </p>
+
+            <ul>
+                <li><strong>Encoding cities as DNA:</strong> Each city was assigned a unique 20-base DNA sequence. Atlanta's sequence might be ACTTGCAG...TTGCA. Each sequence was split into two halves — a "head" and a "tail".</li>
+                <li><strong>Encoding flights as complementary strands:</strong> Each directed edge (a flight from city A to city B) was encoded as a DNA strand consisting of the reverse complement of A's tail concatenated with the reverse complement of B's head. This is the key insight: complementary strands hybridise. A flight-strand will naturally bind to both the city it departs from and the city it arrives at.</li>
+                <li><strong>The computation:</strong> Adleman mixed all the city strands and flight strands together in a single test tube. In solution, the strands found their complements by diffusion and hybridised according to Watson-Crick base-pairing rules. After ligation (enzymatic joining), the result was a soup of double-stranded DNA molecules, each representing a possible path through the graph.</li>
+                <li><strong>Filtering by length:</strong> A valid Hamiltonian path through seven cities crosses exactly six edges. He used gel electrophoresis to select only molecules of the correct length — discarding paths that were too short (skipping cities) or too long (revisiting them).</li>
+                <li><strong>Filtering by city visitation:</strong> He used a technique called affinity purification — magnetic beads coated with sequences complementary to each city — to repeatedly select only those molecules containing all seven cities. The final surviving molecules were Hamiltonian paths.</li>
+                <li><strong>Reading the answer:</strong> The remaining molecules were sequenced to reveal which paths had survived all the filters.</li>
+            </ul>
+
+            <p>
+                The remarkable thing is not the result — the specific path Adleman found was already known. The remarkable thing is <em>how</em> it was found. No algorithm was executed in the traditional sense. No search tree was traversed. The solution emerged from <strong>molecular self-assembly</strong>: the physical tendency of complementary strands to find each other and bind. The computation was performed by billions of molecules simultaneously, exploring all possible paths in parallel, with the correct answer selected by successive physical filtering steps.
+            </p>
+
+            <blockquote>
+                "I was struck by how easy it had been for the DNA molecules to solve the problem. While I had worked for several days to set up the experiment, the molecules had solved the problem in less than a second. The reason, of course, is that the molecules had been working in parallel — on the order of 10<sup>18</sup> molecules had been simultaneously tested."
+                <cite>— Leonard Adleman, USC, writing in Scientific American, 1998</cite>
+            </blockquote>
+
+            <h2>DNA COMPUTING VS SILICON</h2>
+
+            <p>
+                The comparison between DNA computing and conventional silicon is not a competition — it is a map of complementary territories. Silicon is extraordinary at sequential, deterministic, high-speed computation. A modern CPU executes billions of precisely ordered instructions per second. DNA computing is extraordinarily bad at this. There is no clock speed. There is no precise sequencing of operations. The computation is probabilistic, the timescale is measured in hours rather than nanoseconds, and programming it requires expertise in synthetic biology as much as computer science.
+            </p>
+
+            <p>
+                What DNA computing is good at is <strong>massively parallel combinatorial search</strong>. In Adleman's test tube, roughly 10<sup>18</sup> molecular operations happened simultaneously — more operations in a second than all the computers in the world combined could perform. The trick is that each operation is not a general-purpose computation: it is a specific molecular recognition event. You cannot reprogramme a DNA computer the way you reprogramme a CPU. The "programme" is baked into the molecular sequences you synthesise.
+            </p>
+
+            <p>
+                This limits DNA computing to a specific class of problems: those where the solution space can be represented as a combinatorial mixture of molecular sequences, and where correct solutions can be selected by physical filtering. NP-complete problems with a certain structure fit this template well. Most problems that matter for everyday computing do not.
+            </p>
+
+            <div class="callout" data-label="Key distinction">
+                DNA computing is not competing with your laptop. It is exploring a regime of computation — ultra-dense parallelism, molecular-scale operations, room-temperature biochemistry — that silicon cannot access at any price. The interesting question is not "which is better?" but "which problems belong to which substrate?" That question is still open.
+            </div>
+
+            <blockquote>
+                "There's plenty of room at the bottom. The principles of physics, as far as I can see, do not speak against the possibility of manoeuvring things atom by atom. It is not an attempt to violate any laws; it is something, in principle, that can be done."
+                <cite>— Richard Feynman, "There's Plenty of Room at the Bottom," 1959 — a lecture that anticipated molecular-scale engineering decades before it became possible</cite>
+            </blockquote>
+
+            <h2>SYNTHETIC BIOLOGY AND COMPUTATION</h2>
+
+            <p>
+                Adleman worked with DNA in a test tube — carefully controlled, outside any living cell. A younger and more ambitious branch of the field asks a different question: what if you compute <em>inside</em> living cells? What if the cellular machinery itself — the proteins, the gene regulatory networks, the feedback loops that keep an organism alive — could be recruited as a computational substrate?
+            </p>
+
+            <p>
+                This is the project of synthetic biology. Researchers have constructed <strong>genetic logic gates</strong> in bacteria: molecular circuits that implement Boolean logic (AND, OR, NOT, NOR) using gene regulatory elements. A gene is "on" (expressing a protein) or "off" (repressed), analogous to a digital 1 or 0. A repressor protein that blocks a gene only when two input signals are both present implements an AND gate in biochemistry. Chain enough of these together and you have a genetic circuit — a programme written in DNA that runs inside a living cell.
+            </p>
+
+            <p>
+                In 2000, a paper in <em>Nature</em> by Tim Gardner, Charles Cantor, and James Collins at Boston University described the construction of a <strong>genetic toggle switch</strong> in <em>E. coli</em> — a bistable circuit that could be flipped between two stable states by a chemical or thermal signal, and would remain in that state until explicitly switched. It was a one-bit memory implemented in living cells. It worked. The implications were profound: if you can build memory, you can build computation. If you can build computation inside cells, you can build programs that run in living tissue.
+            </p>
+
+            <p>
+                The vision that animates this line of research is striking in its ambition: <strong>programs that run inside your bloodstream</strong>. Engineered cells that circulate through your body, sample the molecular environment, run a diagnostic computation, and release a targeted therapeutic payload if — and only if — a specific molecular signature of disease is detected. A cancer-detecting, drug-releasing program written in the language of synthetic biology, operating at the scale of individual cells. Several research groups have demonstrated proof-of-concept versions of this in animal models. None has reached clinical deployment. The gap between a proof of concept in a mouse and a therapeutic in a human is wide, expensive, and dotted with biological surprises. But the principle is established.
+            </p>
+
+            <h2>MICROSOFT'S MOLECULAR COMPUTER</h2>
+
+            <p>
+                In 2022, Microsoft Research published a landmark demonstration: a complete, end-to-end molecular information processing system built around DNA storage. The system combined three components that had previously existed only as separate research projects: a DNA synthesis and storage layer, a set of molecular algorithms implemented using DNA strand displacement reactions, and a sequencing and retrieval pipeline.
+            </p>
+
+            <p>
+                The molecular algorithms — strand displacement cascades, in which one DNA strand displaces another through competitive hybridisation — performed computation on the stored data itself, without ever converting it back to digital form. The system could retrieve specific files from the DNA pool using molecular addressing: a query sequence, added to the solution, would bind to and amplify only the strands corresponding to the desired file. The integration of storage and computation at the molecular level is the key architectural point. In a conventional computer, storage and processing are separate subsystems connected by a bus. In this system, the data and the computation happened in the same physical medium.
+            </p>
+
+            <p>
+                It was not a general-purpose computer. It could not run arbitrary programs. It was purpose-built for the specific task of content-addressed retrieval from a large molecular archive. But as a demonstration of what a molecular computing architecture could look like — as a proof that storage, addressing, and computation could all be unified at the molecular scale — it was significant. The field had moved from Adleman's seven-node test tube to an automated, integrated system handling hundreds of megabytes of real data.
+            </p>
+
+            <h2>THE PHILOSOPHICAL DIMENSION</h2>
+
+            <p>
+                There is a way of thinking about DNA computing that reaches beyond engineering and into something more unsettling: the possibility that computation is not something we invented, but something we discovered — a property of the physical world that biology has been exploiting since life first appeared.
+            </p>
+
+            <p>
+                Consider what DNA actually is. It is a sequence of symbols, written in a four-letter alphabet, encoding instructions for building and operating a cell. The instructions are read by molecular machinery (ribosomes), translated into functional structures (proteins), and executed in the context of a physical environment. Errors in the sequence can be fatal. Copying errors accumulate across generations. The sequence that encodes you was written by a process of random variation and selection operating over billions of years — an algorithm, running in the substrate of chemistry, searching a space of possible organisms for those that survive and reproduce.
+            </p>
+
+            <p>
+                Evolution is a search algorithm. The cell is a Turing machine. DNA is a programme. These are not metaphors — they are descriptions of the actual information-processing structure of biological systems. The theoretical computer scientist John von Neumann recognised this in 1948, years before the structure of DNA was known, when he described the logical requirements for a self-replicating automaton. His description matched the cellular machinery almost exactly, despite being derived from pure logic rather than biology.
+            </p>
+
+            <p>
+                What this implies is something subtle and important: <strong>intelligence, life, and computation are not separate categories</strong>. They are different expressions of the same underlying phenomenon — the organisation of matter and energy to process information and produce structured outcomes. Silicon computers, DNA computers, living cells, and brains are all implementations of this general principle, each adapted to a different set of constraints and objectives.
+            </p>
+
+            <p>
+                The question "can machines think?" is perhaps the wrong question. The question that DNA computing forces you to confront is: has the universe always been thinking? And if so, what are we when we build machines that think?
+            </p>
+
+            <hr>
+
+            <p>
+                <strong>A personal note:</strong> There is a gap between Adleman's test tube and the screen I am writing this on that I find genuinely strange to contemplate. Both are computational systems. Both process information. One runs on quantum-mechanical tunnelling through silicon lattices at gigahertz frequencies; the other ran on the thermodynamic affinity of complementary base pairs in aqueous solution. They are, in some deep sense, doing the same thing. The abstraction of computation is substrate-independent — this is the foundational insight of theoretical computer science, the thing that Turing proved before there were any computers at all. And yet living inside that abstraction, using these two utterly alien implementations of it every day, I find I cannot fully close the strangeness of the gap. A test tube. A strand of synthesised molecules. The right answer emerging from chemistry. And somewhere in that emergence, the ghost of something that looks very much like thought.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">DNA computing</span>
+                <span class="tag">molecular biology</span>
+                <span class="tag">Adleman</span>
+                <span class="tag">synthetic biology</span>
+                <span class="tag">DNA storage</span>
+                <span class="tag">Hamiltonian path</span>
+                <span class="tag">Microsoft Research</span>
+                <span class="tag">genetic circuits</span>
+                <span class="tag">bioinformatics</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="travelling-salesman.html" class="prev">
+                    <span class="nav-dir">← previous</span>
+                    <span class="nav-title">The Travelling Salesman Problem</span>
+                </a>
+                <a href="brain-as-computer.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">The Brain as a Computer</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

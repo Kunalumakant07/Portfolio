@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A New Complexity Theory for the Quantum Age — Umakant Kunal</title>
+    <meta name="description" content="BQP, QMA, MIP* = RE — quantum computers have introduced an entirely new layer of complexity theory that redraws the map of what is computable and what is hard.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070b0f;
+            --surface:   #0d1117;
+            --surface2:  #111820;
+            --border:    #1a2633;
+            --accent:    #00ff9f;
+            --accent-dim:#00885a;
+            --blue:      #7dd3fc;
+            --amber:     #fbbf24;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --text:      #cdd6f4;
+            --muted:     #5b6b8a;
+            --dim:       #131c27;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.85;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            background: rgba(7,11,15,0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-brand .sep { color: var(--muted); }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a .cmd { color: var(--accent-dim); font-size: 0.7rem; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .nav-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+        /* ── LAYOUT ── */
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── POST HEADER ── */
+        .post-header {
+            padding: 120px 0 50px;
+        }
+
+        .breadcrumb {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a { color: var(--accent-dim); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb span { margin: 0 8px; }
+
+        .post-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .post-date { font-size: 0.72rem; color: var(--accent-dim); letter-spacing: 1px; }
+
+        .post-category {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border: 1px solid;
+        }
+
+        .cat-ai        { color: var(--accent);  border-color: var(--accent-dim); }
+        .cat-philosophy{ color: var(--purple);  border-color: #3d2d6e; }
+        .cat-space     { color: var(--blue);    border-color: #1e4a6e; }
+        .cat-quantum   { color: var(--purple);  border-color: #3d2d6e; }
+
+        .post-read-time { font-size: 0.7rem; color: var(--muted); }
+
+        .post-title {
+            font-family: 'VT323', monospace;
+            font-size: clamp(2.2rem, 6vw, 3.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .post-subtitle {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 600px;
+            margin-bottom: 32px;
+            border-left: 2px solid var(--accent-dim);
+            padding-left: 16px;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .author-name { font-size: 0.82rem; color: var(--text); }
+        .author-role { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── ARTICLE BODY ── */
+        article {
+            padding: 50px 0 60px;
+        }
+
+        article h2 {
+            font-family: 'VT323', monospace;
+            font-size: 1.9rem;
+            color: var(--text);
+            letter-spacing: 3px;
+            margin: 48px 0 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        article h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.4rem;
+            color: var(--blue);
+            letter-spacing: 2px;
+            margin: 34px 0 14px;
+        }
+
+        article p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.95;
+        }
+
+        article p strong { color: var(--text); }
+        article p em { color: var(--blue); font-style: italic; }
+
+        article blockquote {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border-left: 3px solid var(--accent);
+            background: var(--dim);
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.85;
+        }
+
+        article blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--accent-dim);
+            font-style: normal;
+        }
+
+        article ul, article ol {
+            margin: 16px 0 20px 20px;
+        }
+
+        article li {
+            font-size: 0.87rem;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.85;
+        }
+
+        article li::marker { color: var(--accent); }
+
+        article hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 44px 0;
+        }
+
+        .callout {
+            margin: 30px 0;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .callout::before {
+            content: attr(data-label);
+            position: absolute;
+            top: -10px; left: 14px;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            background: var(--surface);
+            padding: 0 6px;
+        }
+
+        /* ── COMPLEXITY DIAGRAM ── */
+        .complexity-diagram {
+            margin: 30px 0;
+            padding: 24px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.78rem;
+            line-height: 1.6;
+            color: var(--muted);
+            overflow-x: auto;
+        }
+
+        .complexity-diagram .label {
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--amber);
+            display: block;
+            margin-bottom: 14px;
+        }
+
+        .complexity-diagram pre {
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.7;
+            white-space: pre;
+        }
+
+        .complexity-diagram .cls-p      { color: var(--accent); }
+        .complexity-diagram .cls-bqp    { color: var(--purple); }
+        .complexity-diagram .cls-np     { color: var(--blue); }
+        .complexity-diagram .cls-qma    { color: #f97316; }
+        .complexity-diagram .cls-pspace { color: var(--red); }
+
+        /* ── POST FOOTER ── */
+        .post-footer {
+            padding: 40px 0 80px;
+            border-top: 1px solid var(--border);
+        }
+
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .tag {
+            font-size: 0.66rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .post-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .post-nav a {
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            text-decoration: none;
+            transition: border-color 0.2s;
+        }
+
+        .post-nav a:hover { border-color: var(--accent-dim); }
+
+        .nav-dir {
+            font-size: 0.68rem;
+            color: var(--accent-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .nav-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .post-nav a.next { text-align: right; }
+
+        /* ── FOOTER ── */
+        footer {
+            padding: 28px 0;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        footer .inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        footer p { font-size: 0.73rem; color: var(--muted); }
+        footer a { color: var(--accent-dim); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        /* ── PROGRESS BAR ── */
+        #readProgress {
+            position: fixed;
+            top: 58px; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 999;
+            transition: width 0.1s linear;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+        ::selection { background: var(--accent); color: var(--bg); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
+            .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
+            .post-nav { grid-template-columns: 1fr; }
+            .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
+            footer .inner { flex-direction: column; text-align: center; }
+            .complexity-diagram { font-size: 0.72rem; }
+        }
+
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    <div id="readProgress"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <a class="nav-brand" href="../index.html">UK<span class="sep">://</span>portfolio</a>
+            <button class="nav-toggle" id="navToggle">≡ menu</button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about"><span class="cmd">./</span>about</a></li>
+                <li><a href="../index.html#skills"><span class="cmd">./</span>skills</a></li>
+                <li><a href="../index.html#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="../blog.html" class="active"><span class="cmd">./</span>blog</a></li>
+                <li><a href="../index.html#contact"><span class="cmd">./</span>contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- POST HEADER -->
+    <div class="post-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">home</a>
+                <span>/</span>
+                <a href="../blog.html">blog</a>
+                <span>/</span>
+                quantum-complexity-theory
+            </div>
+
+            <div class="post-meta-top">
+                <span class="post-date">2026-01-22</span>
+                <span class="post-category cat-quantum">Quantum Computing / Theory</span>
+                <span class="post-read-time">10 min read</span>
+            </div>
+
+            <h1 class="post-title">A New Complexity Theory<br>for the Quantum Age</h1>
+
+            <p class="post-subtitle">
+                Everyone has heard of P vs NP. Almost no one knows that quantum computers have introduced an entirely new layer of complexity theory — BQP, QMA, MIP* — that redraws the map of <em>what is computable and what is hard</em>. The territory is stranger than you think.
+            </p>
+
+            <div class="post-author">
+                <div>
+                    <div class="author-name">Umakant Kunal</div>
+                    <div class="author-role">MSc Computer Science</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARTICLE -->
+    <article>
+        <div class="container">
+
+            <p>
+                Ask anyone with a passing interest in computer science and they will tell you about P vs NP. It is the famous open problem: can every problem whose answer is quickly <em>checkable</em> also be quickly <em>solvable</em>? The Clay Mathematics Institute will give you a million dollars if you resolve it. It underpins every assumption we make about cryptography, optimisation, and the practical limits of computation.
+            </p>
+
+            <p>
+                But there is a second story — younger, stranger, and barely known outside specialist circles — that quantum computing has forced us to tell. When you build a computer that runs on superposition and entanglement rather than classical bits, you don't just get a faster version of the machine you already had. You get a machine that belongs to a <strong>different complexity class entirely</strong>. The map of what is computable and what is hard has been redrawn, and the new map has regions that would have seemed like science fiction to the theorists who drew the original.
+            </p>
+
+            <p>
+                This is that story.
+            </p>
+
+            <h2>THE CLASSICAL COMPLEXITY ZOO</h2>
+
+            <p>
+                Before we can talk about quantum complexity, we need the classical foundation. Complexity theory is the branch of theoretical computer science that classifies problems by how hard they are — not just whether they can be solved, but <strong>how many resources</strong> (time, space, randomness) solving them requires as input size grows.
+            </p>
+
+            <p>
+                The most important classes, briefly:
+            </p>
+
+            <ul>
+                <li><strong>P (Polynomial time)</strong> — Problems solvable by a deterministic algorithm in time proportional to some polynomial in the input size. Sorting a list, finding shortest paths, multiplying matrices. If a problem is in P, we consider it computationally tractable: scaling up the input doesn't cause the runtime to explode exponentially.</li>
+                <li><strong>NP (Nondeterministic Polynomial time)</strong> — Problems where a proposed solution can be <em>verified</em> in polynomial time, even if finding that solution might be much harder. The travelling salesman problem (does a route under length L exist?), satisfiability of boolean formulas, protein folding configurations. If someone hands you a solution, you can check it quickly — but you may not be able to find it quickly.</li>
+                <li><strong>NP-complete</strong> — The hardest problems inside NP. Every NP problem can be efficiently reduced to any NP-complete problem. If you solve one NP-complete problem in polynomial time, you solve them all. Boolean satisfiability (SAT) was the first proven NP-complete problem (Cook–Levin theorem, 1971). There are now thousands of known NP-complete problems.</li>
+                <li><strong>co-NP</strong> — Problems where the <em>negative</em> answer can be verified efficiently. Primality testing was once thought to live here; it turns out to be in P. The relationship between NP and co-NP is itself an open question.</li>
+                <li><strong>PSPACE</strong> — Problems solvable using polynomial <em>space</em>, regardless of time. Strictly contains both P and NP (we believe), and captures problems like game-playing (chess, Go endgames) and circuit evaluation.</li>
+            </ul>
+
+            <p>
+                The central open question — <strong>P vs NP</strong> — asks whether P = NP. Most theorists believe they are different: that there are problems in NP that cannot be solved in polynomial time no matter how clever the algorithm. If P = NP were true, every puzzle whose solution is checkable would also be solvable efficiently. Public-key cryptography would collapse. Scientific discovery would be trivially automatable. The question has been open since 1971.
+            </p>
+
+            <div class="complexity-diagram">
+                <span class="label">// complexity class containment (classical)</span>
+                <pre>
+  ┌─────────────────────────────────────────────────────────┐
+  │  <span class="cls-pspace">PSPACE</span>                                                  │
+  │   ┌──────────────────────────────────────────────┐      │
+  │   │  <span class="cls-np">NP</span>                          <span class="cls-np">co-NP</span>              │      │
+  │   │   ┌────────────────────────────────────┐     │      │
+  │   │   │  <span class="cls-p">P</span>                                │     │      │
+  │   │   │   (sorting, shortest path, ...)    │     │      │
+  │   │   └────────────────────────────────────┘     │      │
+  │   │  (SAT, TSP, graph colouring, ...)             │      │
+  │   └──────────────────────────────────────────────┘      │
+  │  (game evaluation, formal verification, ...)             │
+  └─────────────────────────────────────────────────────────┘
+  Note: P ⊆ NP ∩ co-NP ⊆ PSPACE  (exact boundaries unknown)
+                </pre>
+            </div>
+
+            <p>
+                That is the classical zoo. It took decades of work to understand even these relationships. Now add quantum mechanics.
+            </p>
+
+            <h2>BQP — BOUNDED-ERROR QUANTUM POLYNOMIAL TIME</h2>
+
+            <p>
+                When we talk about what a quantum computer can do efficiently, the relevant class is <strong>BQP</strong>: Bounded-Error Quantum Polynomial time. A problem is in BQP if a quantum algorithm can solve it in polynomial time with error probability at most 1/3 (the "bounded error" part — you can drive the error exponentially small by repeating). BQP is the quantum analogue of P: it is the class of problems that are tractable for a quantum computer.
+            </p>
+
+            <p>
+                What do we know about where BQP sits in the complexity landscape?
+            </p>
+
+            <ul>
+                <li><strong>P ⊆ BQP</strong> — Everything classically efficient is also quantum-efficiently solvable. Quantum computers can simulate classical ones.</li>
+                <li><strong>BQP ⊆ PSPACE</strong> — Quantum computers cannot solve everything; they remain bounded by PSPACE. No polynomial-space problem is beyond them, but they don't leave the known universe.</li>
+                <li><strong>BQP vs NP is open</strong> — We do not know whether BQP contains NP. If it did, quantum computers could solve NP-complete problems efficiently. The evidence suggests they cannot — but this is not proven.</li>
+            </ul>
+
+            <p>
+                The most famous example of BQP's reach is <strong>Shor's algorithm</strong> (Peter Shor, 1994): integer factorisation runs in polynomial time on a quantum computer. Factoring large numbers is the foundation of RSA cryptography. On a classical computer, no polynomial-time algorithm for factoring is known — it is believed to be in NP but not in P. On a quantum computer, it is efficient. This is why large-scale quantum computers would break most current public-key cryptography.
+            </p>
+
+            <blockquote>
+                "Factoring integers is almost certainly not NP-complete. And yet, as far as we know, it's not in P either. It lives in this mysterious middle ground — which is exactly where quantum computers are most interesting."
+                <cite>— Scott Aaronson, Theoretical Computer Scientist, UT Austin</cite>
+            </blockquote>
+
+            <p>
+                The significance is subtle. Shor's result doesn't mean quantum computers solve all hard problems — it means they solve <em>this specific structured problem</em> that classical computers appear not to. Factoring likely sits outside P but outside NP-complete as well, in an intermediate region. Quantum computers find traction precisely there: problems with enough algebraic or periodic structure that quantum interference can be exploited. Unstructured problems — the truly hard NP-complete ones — don't offer that foothold.
+            </p>
+
+            <h2>QMA — QUANTUM MERLIN ARTHUR</h2>
+
+            <p>
+                If BQP is the quantum analogue of P, then <strong>QMA</strong> — Quantum Merlin Arthur — is the quantum analogue of NP. The name comes from a thought experiment: Merlin is an all-powerful prover who wants to convince Arthur (a polynomial-time quantum verifier) that the answer to a question is "yes." Merlin sends Arthur a <em>quantum state</em> as a witness — a quantum proof — and Arthur runs a quantum verification circuit on it.
+            </p>
+
+            <p>
+                A problem is in QMA if, when the answer is "yes," there exists a quantum witness state that convinces Arthur with probability at least 2/3, and when the answer is "no," no quantum state can convince Arthur with probability greater than 1/3. The quantum witness can be an arbitrary quantum state — exponentially many amplitudes, entanglement included.
+            </p>
+
+            <p>
+                The canonical QMA-complete problem is the <strong>Local Hamiltonian problem</strong>, established by Alexei Kitaev in 1999. A Hamiltonian is a quantum-mechanical operator representing the total energy of a system; the local Hamiltonian problem asks: does this quantum system have a ground state (lowest energy state) with energy below some threshold? This is the quantum generalisation of SAT — and it is QMA-complete.
+            </p>
+
+            <div class="callout" data-label="// physical meaning">
+                <strong>What QMA-completeness of Local Hamiltonian means physically:</strong> finding the ground state energy of a many-body quantum system — the energy level at absolute zero, the configuration nature prefers — is as hard as any problem in QMA. This is why simulating quantum chemistry and condensed matter physics is so hard classically: you're fighting a QMA-complete problem every time you try to find the lowest-energy molecular configuration. Quantum computers are expected to offer exponential speedups here — not because QMA ⊆ BQP (unknown), but because quantum hardware naturally encodes quantum states.
+            </div>
+
+            <p>
+                The hierarchy now has a quantum upper layer: NP ⊆ QMA (believed but not fully proven in the unrelativised sense), and QMA ⊆ PSPACE. Quantum proofs are more powerful than classical proofs — a quantum witness can encode exponentially more information in its amplitudes than any classical bitstring of the same length.
+            </p>
+
+            <blockquote>
+                "The Local Hamiltonian problem is the quantum equivalent of Boolean satisfiability. If you understand why SAT is hard, you understand why simulating quantum physics is hard. Nature is solving QMA-complete problems constantly — that's what chemistry is."
+                <cite>— Umesh Vazirani, Professor of Computer Science, UC Berkeley</cite>
+            </blockquote>
+
+            <h2>QUANTUM PROOFS AND THE POWER OF ENTANGLEMENT</h2>
+
+            <p>
+                Here is where things become genuinely strange. In 2020, a team of five researchers — Zhengfeng Ji, Anand Natarajan, Thomas Vidick, John Wright, and Henry Yuen — published a result that shook the theoretical computer science community: <strong>MIP* = RE</strong>.
+            </p>
+
+            <p>
+                To understand why this is astonishing, a brief detour through interactive proofs. A <em>multi-prover interactive proof</em> (MIP) is a system where a verifier interrogates multiple provers who cannot communicate with each other. The verifier can ask each prover questions and check whether their answers are consistent. Classical MIP = NEXP, the class of problems solvable nondeterministically in exponential time — already enormous.
+            </p>
+
+            <p>
+                Now allow the provers to share <em>quantum entanglement</em>. They still cannot communicate — entanglement doesn't allow signalling — but their answers can be correlated in quantum ways that no classical shared randomness can reproduce. This is the class MIP*, and the result of Ji, Natarajan, Vidick, Wright, and Yuen is that <strong>MIP* = RE</strong>: the class of all computably enumerable problems. That is every problem for which a Turing machine can enumerate "yes" instances — including the halting problem itself.
+            </p>
+
+            <blockquote>
+                "MIP* = RE is one of the most surprising results in the history of complexity theory. It says that entangled provers are so powerful that they can convince you of things no classical system could. The relationship between quantum mechanics and computation is deeper than anyone anticipated."
+                <cite>— Lance Fortnow, Complexity Theorist, Georgia Tech</cite>
+            </blockquote>
+
+            <p>
+                The implications cascade. MIP* = RE means that quantum entanglement, used in the right verification protocol, gives provers the power to certify answers to <em>undecidable</em> problems — problems no Turing machine can solve in finite time. A verifier with access to entangled provers can distinguish "yes" from "no" on instances of the halting problem, as long as the prover is honest.
+            </p>
+
+            <p>
+                As a corollary, the result also resolved a long-standing open problem in quantum information: it proved that Connes' Embedding Conjecture — a question in operator algebra from 1976 — is false. A complexity theory result from 2020 disproved a 44-year-old conjecture in pure mathematics. The connections run deeper than anyone had guessed.
+            </p>
+
+            <div class="callout" data-label="// 2025 update">
+                Researchers in 2025 have continued to probe the boundaries of quantum proofs, exploring what happens when the entanglement itself is constrained — bounded-entanglement provers, one-round protocols, and the complexity of specific verification games. The consensus is that entanglement doesn't just add power in a smooth, quantifiable way. It adds power in discrete, sometimes discontinuous jumps that feel more like phase transitions than dial settings.
+            </div>
+
+            <h2>ORACLE SEPARATIONS</h2>
+
+            <p>
+                A natural reaction to all this is: why don't we just prove BQP ≠ P, or BQP ⊇ NP, or settle these questions definitively? The answer involves one of the deepest methodological barriers in complexity theory: <strong>relativisation</strong>.
+            </p>
+
+            <p>
+                An oracle is a black-box subroutine that answers a fixed type of query in a single step. When we ask "does BQP = BPP relative to an oracle," we mean: if both classical and quantum computers can make queries to this black box, can the quantum computer solve problems the classical one cannot? The answer is yes — there exist oracles relative to which BQP ≠ BPP, most famously Bernstein and Vazirani's demonstration in 1993. Simon's problem makes the separation exponential.
+            </p>
+
+            <p>
+                But here is the catch. <strong>Relativisation results do not transfer.</strong> If BQP ≠ BPP relative to oracle A, that tells us nothing certain about whether BQP ≠ BPP absolutely, without an oracle. This is because oracle access changes the computational model in ways that break the proof techniques. Baker, Gill, and Solovay showed in 1975 that P vs NP cannot be resolved by relativising arguments — there are oracles relative to which P = NP and oracles relative to which P ≠ NP. The same barrier applies to quantum separations.
+            </p>
+
+            <p>
+                This is the <em>relativisation barrier</em>: most of our tools for proving complexity lower bounds — diagonalisation, simulation, reduction — are relativising arguments. They can tell us about oracle-relative complexity, but not about the absolute question. To prove BQP ≠ P or P ≠ NP unconditionally, we need genuinely non-relativising techniques. A handful exist (IP = PSPACE, PCP theorem, MIP* = RE) but they are extremely difficult to construct and have not yet been aimed successfully at the central P vs NP problem.
+            </p>
+
+            <p>
+                In short: we have oracle-relative separations, beautiful algebraic proof systems, and increasingly powerful complexity theory machinery — but the mountain remains unclimbed.
+            </p>
+
+            <h2>WHAT THIS MEANS PRACTICALLY</h2>
+
+            <p>
+                After all of this theory, the practical question: <strong>what can quantum computers actually do for you?</strong> The answer is more nuanced than either the hype or the backlash suggests.
+            </p>
+
+            <p>
+                Quantum computers will almost certainly <strong>not</strong> solve NP-complete problems in general. There is no known algorithm — and strong theoretical evidence there cannot be one — that gives quantum computers an exponential speedup on unstructured NP-hard optimisation. Grover's algorithm gives a quadratic speedup on unstructured search (searching N items in O(√N) instead of O(N)), but quadratic is not exponential, and it doesn't make NP-complete problems tractable.
+            </p>
+
+            <p>
+                Where quantum advantage is real, demonstrated, or strongly expected:
+            </p>
+
+            <ul>
+                <li><strong>Integer factorisation</strong> — Shor's algorithm. BQP but almost certainly not P classically. This breaks RSA, ECC, and related cryptography.</li>
+                <li><strong>Quantum simulation</strong> — Simulating quantum systems: chemistry, drug discovery, materials science. This is where Feynman's original insight lives. These problems are QMA-hard classically; quantum hardware encodes the answer natively.</li>
+                <li><strong>Discrete logarithm and related problems</strong> — Cryptographic primitives. Same class of algebraic structure that Shor's algorithm exploits.</li>
+                <li><strong>Sampling problems</strong> — Boson sampling, random circuit sampling. These are probably not in the classical polynomial hierarchy, which is why they are used to demonstrate quantum advantage experimentally.</li>
+                <li><strong>Structured optimisation</strong> — QAOA and variational algorithms may offer advantage on specific problem families, though this is an active research area with mixed results so far.</li>
+            </ul>
+
+            <p>
+                The pattern is consistent: quantum speedups appear for problems with <em>algebraic structure, periodicity, or quantum-mechanical nature</em> that interference can exploit. Brute-force NP-hard problems without such structure — bin packing, graph colouring, the travelling salesman in its raw form — do not benefit in the same way.
+            </p>
+
+            <p>
+                This is not a limitation to apologise for. It is a precise characterisation of where quantum computation is genuinely revolutionary. Getting that characterisation right matters enormously — both for research investment and for policy decisions about post-quantum cryptography, which needs to be deployed before large-scale quantum computers exist, not after.
+            </p>
+
+            <hr>
+
+            <p>
+                I keep coming back to complexity theory not as an academic exercise but as a kind of philosophical orientation. Every layer of the complexity zoo — P, NP, QMA, BQP, MIP*, RE — is a statement about what kinds of minds can know what kinds of things, and in how long. The P vs NP question is really asking: is insight fundamentally different from verification? Can a sufficiently clever algorithm always find what it could check?
+            </p>
+
+            <p>
+                Quantum mechanics adds a further dimension: the witness can be a quantum state, the verifier can be entangled with the prover, and the boundary of the knowable expands in ways we are still mapping. MIP* = RE says that with enough quantum entanglement and the right protocol, even the halting problem yields — not to a single machine, but to a collaborative quantum system operating at the edge of what mathematics allows.
+            </p>
+
+            <p>
+                I find something genuinely moving in that. The map of computation is not fixed — it is redrawn by every new model of what a computing device is. Classical, probabilistic, quantum, interactive, entangled. Each revision doesn't just change what we can compute; it changes what it means to compute at all. The question of what minds — silicon or quantum — can know is not closed. It is, right now, actively open in ways I find more interesting than almost anything else in science.
+            </p>
+
+        </div>
+    </article>
+
+    <!-- POST FOOTER -->
+    <div class="post-footer">
+        <div class="container">
+            <div class="post-tags">
+                <span class="tag">quantum computing</span>
+                <span class="tag">complexity theory</span>
+                <span class="tag">BQP</span>
+                <span class="tag">QMA</span>
+                <span class="tag">P vs NP</span>
+                <span class="tag">MIP* = RE</span>
+                <span class="tag">Shor's algorithm</span>
+                <span class="tag">quantum proofs</span>
+                <span class="tag">entanglement</span>
+                <span class="tag">theoretical CS</span>
+            </div>
+
+            <div class="post-nav">
+                <a href="photonic-quantum-computers.html" class="prev">
+                    <span class="nav-dir">← prev</span>
+                    <span class="nav-title">Photonic Quantum Computers</span>
+                </a>
+                <a href="quantum-cryptography.html" class="next">
+                    <span class="nav-dir">next →</span>
+                    <span class="nav-title">Quantum Cryptography</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="inner">
+            <p>← <a href="../blog.html">back to blog</a></p>
+            <p>© 2026 Umakant Kunal</p>
+        </div>
+    </footer>
+
+    <script>
+    'use strict';
+
+    /* STARFIELD */
+    (function () {
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [];
+
+        function resize() {
+            W = canvas.width  = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.min(160, Math.floor(W * H / 9000));
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.1,
+                    speed: Math.random() * 0.18 + 0.03,
+                    opacity: Math.random() * 0.45 + 0.08,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            frame += 0.008;
+            stars.forEach(s => {
+                const alpha = s.opacity * (0.75 + 0.25 * Math.sin(frame + s.twinkle));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(205,214,244,${alpha})`;
+                ctx.fill();
+                s.y += s.speed;
+                if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', () => { resize(); initStars(); });
+        resize(); initStars(); draw();
+    })();
+
+    /* READ PROGRESS BAR */
+    (function () {
+        const bar = document.getElementById('readProgress');
+        window.addEventListener('scroll', () => {
+            const total = document.body.scrollHeight - window.innerHeight;
+            bar.style.width = (window.scrollY / total * 100) + '%';
+        }, { passive: true });
+    })();
+
+    /* NAV TOGGLE */
+    (function () {
+        const toggle = document.getElementById('navToggle');
+        const links  = document.getElementById('navLinks');
+        toggle.addEventListener('click', () => links.classList.toggle('open'));
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => links.classList.remove('open'));
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -189,15 +189,44 @@
         ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
         ::selection { background: var(--accent); color: var(--bg); }
 
+        /* ── 768px TABLET ── */
+        @media (max-width: 768px) {
+            .post-title { font-size: clamp(1.8rem, 5vw, 3rem); }
+            article h2 { font-size: 1.6rem; }
+        }
+
+        /* ── 640px MOBILE ── */
         @media (max-width: 640px) {
             .nav-links { display: none; }
             .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 58px; right: 0; background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px 24px; gap: 18px; min-width: 180px; }
             .nav-toggle { display: block; }
+
+            .post-header { padding: 100px 0 36px; }
+            .post-title { letter-spacing: 1px; }
+            .post-subtitle { font-size: 0.84rem; }
+            .post-meta-top { gap: 8px; }
+            .breadcrumb { font-size: 0.68rem; }
+
+            article { padding: 36px 0 40px; }
+            article p { font-size: 0.85rem; }
+            article h2 { font-size: 1.5rem; letter-spacing: 2px; margin: 36px 0 14px; }
+            article h3 { font-size: 1.15rem; }
+            article blockquote { padding: 14px 16px; font-size: 0.84rem; }
+            .callout { padding: 14px 16px; font-size: 0.8rem; }
+
             .post-nav { grid-template-columns: 1fr; }
             .post-nav a.next { text-align: left; }
+            .post-tags { gap: 5px; }
+            .tag { font-size: 0.62rem; padding: 2px 7px; }
+
             footer .inner { flex-direction: column; text-align: center; }
-            .spectrum-name { min-width: 130px; }
-            .spectrum-note { display: none; }
+        }
+
+        /* ── 420px SMALL PHONES ── */
+        @media (max-width: 420px) {
+            .container { padding: 0 16px; }
+            .post-category { font-size: 0.62rem; padding: 2px 7px; }
+            article h2 { font-size: 1.35rem; }
         }
     </style>
 </head>
@@ -241,7 +270,7 @@
             <div class="post-author">
                 <div>
                     <div class="author-name">Umakant Kunal</div>
-                    <div class="author-role">MSc AI — Computer Scientist</div>
+                    <div class="author-role">MSc Computer Science</div>
                 </div>
             </div>
         </div>
@@ -649,7 +678,7 @@
     <footer>
         <div class="inner">
             <p>← <a href="../blog.html">back to blog</a></p>
-            <p>© 2025 Umakant Kunal</p>
+            <p>© 2026 Umakant Kunal</p>
         </div>
     </footer>
 
