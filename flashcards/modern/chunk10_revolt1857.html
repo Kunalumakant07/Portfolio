@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Revolt of 1857</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // modern_history // revolt_1857</div>
+  <h1>Revolt of<br><span class="hl">1857 AD</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'setup')">British Setup</button>
+<button class="filter-btn" onclick="filterCards(this,'auwa')">Erinpura & Auwa</button>
+<button class="filter-btn" onclick="filterCards(this,'kota')">Kota & Tonk</button>
+<button class="filter-btn" onclick="filterCards(this,'other')">Other Centers</button>
+<button class="filter-btn" onclick="filterCards(this,'tatya')">Tatya Tope</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'setup',topicLabel:'1857 – British Setup in Rajasthan',q:'Name the 6 military cantonments of Rajasthan. Which two did NOT participate in 1857 revolt?',a:`<div class="point"><span>1. <strong>Nasirabad</strong> (Ajmer) 2. <strong>Neemuch</strong> (MP) 3. <strong>Devali</strong> (Tonk)</span></div><div class="point"><span>4. <strong>Erinpura</strong> (Pali) 5. <strong>Beawar</strong> 6. <strong>Kherwada</strong> (Udaipur)</span></div><div class="point"><span><strong>Beawar & Kherwada</strong> did NOT participate</span></div>`,pyq:true,prob:false},
+{id:2,topic:'setup',topicLabel:'1857 – British Setup in Rajasthan',q:'First Resident for Rajputana, first AGG, and AGG at the time of 1857 revolt.',a:`<div class="point"><span><strong>David Ochterlony</strong> = 1st Resident for Rajputana (HQ: Delhi)</span></div><div class="point"><span>1832: AGG HQ established in <strong>Ajmer</strong>; 1st AGG: <strong>Mr. Locket</strong></span></div><div class="point"><span>1845: HQ shifted to <strong>Abu</strong></span></div><div class="point"><span>During 1857: AGG = <strong>George Patrick Lawrence</strong></span></div><div class="point"><span><strong>Col. James Tod</strong> = 1st Political Agent of Mewar</span></div>`,pyq:true,prob:false},
+{id:3,topic:'setup',topicLabel:'1857 – Nasirabad & Neemuch',q:'Nasirabad and Neemuch revolts – who revolted, who died, who supported rebels?',a:`<div class="point"><span><strong>Nasirabad</strong> (28 May): 15th Native Infantry revolted; Col. Neubari & Sportiswood killed; Col. Penny died of heart attack; 30th NI also joined; all marched to Delhi</span></div><div class="point"><span><strong>Neemuch</strong> (3 June): revolt under <strong>Heera Singh</strong>; Mohammad Ali Begh refused loyalty oath; <strong>Laxman Singh</strong> (Shahpura, Bhilwara) supported rebels; public welcomed at Nimbaheda</span></div>`,pyq:true,prob:false},
+{id:4,topic:'auwa',topicLabel:'Erinpura & Auwa (Key Center)',q:'Battle of Chelawas (18 Sep 1857) – why is it famous?',a:`<div class="point"><span>Kushal Singh Champawat vs AGG <strong>George Patrick Lawrence</strong> + PA Macmason</span></div><div class="point"><span>→ <strong>Kushal Singh WON</strong>; Macmason was killed</span></div><div class="point"><span>Called <strong>"Battle between blacks and white"</strong></span></div><div class="point"><span>Earlier Battle of Bithoda (8 Sep 1857): Kushal Singh defeated Capt. Hithcoat; Onad Singh Panwar (Jodhpur) died</span></div>`,pyq:true,prob:false},
+{id:5,topic:'auwa',topicLabel:'Erinpura & Auwa (Key Center)',q:'Battle of Auwa (20 Jan 1858) – Sugali Mata idol and Kushal Singh\'s fate.',a:`<div class="point"><span>Col. Holmes + Hansraj Joshi vs Kushal Singh → <strong>British WON</strong></span></div><div class="point"><span>British took away <strong>Sugali Mata idol</strong> (tutelary deity of Auwa; black marble; 10 heads, 54 hands)</span></div><div class="point"><span>Now kept in <strong>Rajputana Museum, Ajmer</strong></span></div><div class="point"><span>Kushal Singh surrendered at Neemuch (8 Aug 1860). <strong>Taylor Commission</strong> investigated. Died Udaipur 1864</span></div><div class="point"><span>Shivnath Singh (Asop): fought 35 days against Jodhpur king at Badlu; defeated near Narnaul by British officer Gerard</span></div>`,pyq:true,prob:false},
+{id:6,topic:'kota',topicLabel:'Kota Revolt (15 Oct 1857)',q:'Kota revolt – leaders, who was killed, and final outcome.',a:`<div class="point"><span>Rebels: <strong>Jaidayal</strong> (Mathura) & <strong>Meharab Khan</strong> (Karauli)</span></div><div class="point"><span>King Ram Singh II house arrested; PA <strong>Burton murdered</strong> + sons Frank & Arthur; Dr. Calder & Seville Catum also killed</span></div><div class="point"><span>Kanhaiya Lal Goswami (priest of Mathuresh temple) mediated</span></div><div class="point"><span>March 1858: Roberts liberated Kota. Jaidayal & Mehrab Khan given <strong>death penalty</strong></span></div><div class="point"><span>Ram Singh II's cannon salute reduced <strong>15 → 11</strong>; Madan Pal of Karauli honoured → 17 gun salute</span></div>`,pyq:true,prob:false},
+{id:7,topic:'kota',topicLabel:'Tonk & Dholpur Revolts',q:'Tonk revolt – Tarachand Patel and women\'s participation.',a:`<div class="point"><span>Nawab Waziruddaula = British supporter; uncle <strong>Mir Alam Khan</strong> supported rebels</span></div><div class="point"><span><strong>Tarachand Patel</strong> fought with English officer Jackson (pursuing Neemuch soldiers)</span></div><div class="point"><span>Women also participated (info: Mohammad Mujeeb's play <em>'Aazmaish'</em>)</span></div><div class="point"><span>British hanged Tarachand Patel</span></div><div class="point"><span><strong>Dholpur</strong>: Deva Gurjar started rebellion; Rao Ramchandra (Indore) & Hiralal (Gwalior) led rebels</span></div>`,pyq:false,prob:true},
+{id:8,topic:'other',topicLabel:'Jaipur & Bikaner in 1857',q:'Jaipur revolt – rebels and reward. Bikaner – why is Sardar Singh special?',a:`<div class="point"><span><strong>Jaipur</strong>: Rebels: Usman Khan, Vilayat Khan, Sadulla Khan; Ram Singh II arrested them on PA Eden's advice → got <strong>title 'Sitar-e-Hind'</strong> + Pargana Kotputli</span></div><div class="point"><span><strong>Bikaner</strong>: Sardar Singh = only king who supported British <strong>outside his territory</strong> (Badlu near Hisar, Haryana)</span></div><div class="point"><span>Got <strong>41 villages of Tibbi Pargana</strong> (Hanumangarh)</span></div>`,pyq:true,prob:false},
+{id:9,topic:'other',topicLabel:'Amar Chand Banthiya – 1st Martyr',q:'Amar Chand Banthiya – who was he and why is he called "Bhamashah of 1857"?',a:`<div class="point"><span>Originally from <strong>Bikaner</strong></span></div><div class="point"><span>Gave financial support to <strong>Queen of Jhansi</strong> in Gwalior during revolt</span></div><div class="point"><span>Called <strong>"Bhamashah of Revolt of 1857"</strong></span></div><div class="point"><span>British gave him <strong>death penalty</strong></span></div><div class="point"><span>= <strong>First Martyr of Rajasthan</strong></span></div>`,pyq:true,prob:false},
+{id:10,topic:'tatya',topicLabel:'Tatya Tope in Rajasthan',q:'Tatya Tope – his journey through Rajasthan and final fate.',a:`<div class="point"><span>Came to Rajasthan <strong>twice</strong>; 1st time to <strong>Mandalgarh (Bhilwara)</strong></span></div><div class="point"><span>Nasir Mohammad Khan of Tonk helped. Lost Battle of Kuaada vs Roberts</span></div><div class="point"><span>Captured Jhalawar (Prithvi Singh paid 5 lakh) & Banswara (king Lakshman Singh)</span></div><div class="point"><span>Visited all states <strong>except Jaisalmer</strong> for help</span></div><div class="point"><span>Arrested from Narwar forests due to <strong>Mansingh's betrayal</strong></span></div><div class="point"><span>Hanged <strong>18 April 1859 at Shivpuri</strong>; Cenotaph in <strong>Sikar</strong></span></div>`,pyq:true,prob:false},
+{id:11,topic:'tatya',topicLabel:'Post-1857 Military Formations',q:'Name the armies formed by British after 1857 and their locations.',a:`<div class="point"><span><strong>1822</strong>: Merwara Battalion (Beawar), Kota Contingent (Deoli)</span></div><div class="point"><span><strong>1841</strong>: Mewar Bhil Corps (Kherwada), Shekhawati Brigade (Jhunjhunu), Jodhpur Legion (Erinpura)</span></div><div class="point"><span>I.T. Prichard: "started as military rebellion but became war of independence"</span></div><div class="point"><span>Book: Nathuram Khadgawat – <em>Roles of Rajasthan in struggle at 1857 AD</em></span></div>`,pyq:false,prob:true}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

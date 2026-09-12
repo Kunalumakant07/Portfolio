@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – History of Marwar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // medieval_history // marwar_rathore</div>
+  <h1>History of<br><span class="hl">Marwar</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+  
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'early_mw')">Early Rulers</button>
+<button class="filter-btn" onclick="filterCards(this,'jodha')">Rao Jodha</button>
+<button class="filter-btn" onclick="filterCards(this,'maldev')">Rao Maldev</button>
+<button class="filter-btn" onclick="filterCards(this,'chandrasen')">Chandrasen</button>
+<button class="filter-btn" onclick="filterCards(this,'jaswant')">Jaswant Singh</button>
+<button class="filter-btn" onclick="filterCards(this,'ajit')">Ajit Singh</button>
+<button class="filter-btn" onclick="filterCards(this,'durgadas')">Durgadas</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'early_mw',topicLabel:'Marwar – Origin & Early Rulers',q:'Who was Rao Siha? What is the origin of the Rathore dynasty?',a:`<div class="point"><span>Rathore origin: <strong>Kannauj</strong> (Gahadwal Vans) & South India (Rashtrakuta)</span></div><div class="point"><span><strong>Rao Siha</strong> = Adhipurush of Rathores; descendant of Gahadwal Jayachand</span></div><div class="point"><span>Came to Marwar from Kannauj to help Paliwal Brahmins</span></div><div class="point"><span>Capital: <strong>Khed (Barmer)</strong>; Cenotaph: <strong>Bithu (Pali)</strong></span></div><div class="point"><span>Marwar = <strong>largest princely state of Rajasthan</strong> at time of independence</span></div>`,pyq:true,prob:false},
+{id:2,topic:'early_mw',topicLabel:'Marwar – Early Rulers',q:'Rao Mallinath and Rao Chunda – what are they known for?',a:`<div class="point"><span><strong>Rao Mallinath</strong>: folk deity of western Rajasthan; Barmer region called <strong>'Malani'</strong> due to him; Songs of Gindoli sung on Gangaur</span></div><div class="point"><span><strong>Rao Chunda (1394-1423)</strong>: Pratihara king gave Mandore as dowry → capital</span></div><div class="point"><span>Chunda killed by Bhatis of Pugal (1423); declared younger son Kanha as heir</span></div><div class="point"><span>Elder son Ranmal went to Mewar; sister Hansa Bai married to Rana Lakha</span></div>`,pyq:false,prob:true},
+{id:3,topic:'jodha',topicLabel:'Rao Jodha (1438-1489)',q:'Rao Jodha – founding of Jodhpur, Mehrangarh Fort, and key facts.',a:`<div class="point"><span>Treaty of Anwal-Bawal (1453): got Mandore back</span></div><div class="point"><span>Founded <strong>Jodhpur in 1459 AD</strong></span></div><div class="point"><span>Built <strong>Mehrangarh Fort</strong> on <strong>Chidiyantunk Hill</strong>; <strong>Karani Mata</strong> laid foundation</span></div><div class="point"><span>1460: built <strong>Chamunda Mata Temple</strong> inside Mehrangarh</span></div><div class="point"><span>Defeated Sultan Bahlol Lodi's army; Dr. Gaurishankar = first majestic ruler of Jodhpur</span></div><div class="point"><span>Queen Jasmade built <strong>Ranisar Pond</strong></span></div>`,pyq:true,prob:false},
+{id:4,topic:'maldev',topicLabel:'Rao Maldev (1531-1562)',q:'Battle of Giri Sumale / Jaitaran (1544) – Maldev vs Sher Shah Suri.',a:`<div class="point"><span>Maldev vs <strong>Sher Shah Suri</strong> → <strong>Sher Shah WON</strong></span></div><div class="point"><span>Sher Shah's famous quote: <strong>"I would have lost kingdom of Hindustan only for handful millet"</strong></span></div><div class="point"><span>Maldev's commanders Jaita & Kumpa fought with 12,000 vs 80,000</span></div><div class="point"><span>Maldev fled to <strong>Sewana (Barmer)</strong> = place of refuge of Rathores</span></div><div class="point"><span>Maldev made diplomatic mistake: let Kalyanmal & Veeramdev join Sher Shah</span></div>`,pyq:true,prob:false},
+{id:5,topic:'maldev',topicLabel:'Rao Maldev (1531-1562)',q:'Maldev and Humayun – what happened at Jogi Tirtha?',a:`<div class="point"><span>Humayun was passing through Rajasthan after losing to Sher Shah</span></div><div class="point"><span>Sent 3 messengers to Maldev for help: <strong>Mir Samand, Raymal Soni, Atka Khan</strong></span></div><div class="point"><span>Maldev promised help but Humayun didn't trust him; moved towards Sindh</span></div><div class="point"><span>On advice of library president <strong>Mulla Surkh</strong>; took refuge with Veerasal Sodha of Amarkot</span></div>`,pyq:false,prob:true},
+{id:6,topic:'maldev',topicLabel:'Rao Maldev – Uma De & Titles',q:'Uma De (Ruthi Rani) and Maldev\'s titles.',a:`<div class="point"><span><strong>Uma De</strong> = daughter of Lunkaran Bhati of Jaisalmer; annoyed due to maid <strong>Bharmali</strong></span></div><div class="point"><span>Called <strong>"Ruthi Rani"</strong>; spent time at Taragarh fort of Ajmer; moved to Kelwa (Rajsamand)</span></div><div class="point"><span>Titles: <strong>Hindu Badshah, Hasmat wala Raja</strong></span></div><div class="point"><span>Mentioned as strongest king of Hindustan in Tabkhat-i-Akbari & Tarikh-i-Farista</span></div>`,pyq:false,prob:true},
+{id:7,topic:'chandrasen',topicLabel:'Chandrasen (1562-1582)',q:'Why is Chandrasen called "Pratap of Marwar" and "Forgotten King of Marwar"?',a:`<div class="point"><span>Declared 3rd son by Maldev; brothers Ram Singh & Uday Singh went to Akbar</span></div><div class="point"><span>Attended Nagaur court (1570) but left without meeting Akbar; fled to Bhadrajun → Sivana → hills</span></div><div class="point"><span>Struggled against Akbar all his life but <strong>never accepted Akbar's subjection</strong></span></div><div class="point"><span>Died 1581 at Sinchaiyai (Pali) poisoned by feudal Barisal</span></div><div class="point"><span>Titles: <strong>Pratap of Marwar</strong> (Reu), <strong>Guide of Pratap</strong>, <strong>Forgotten King of Marwar</strong></span></div>`,pyq:true,prob:false},
+{id:8,topic:'jaswant',topicLabel:'Jaswant Singh (1638-1678)',q:'Jaswant Singh – Battle of Dharmat and his books.',a:`<div class="point"><span>Battle of Dharmat (1658): commander for Dara Shikoh; Qasim Khan betrayed → Dara defeated</span></div><div class="point"><span>Hadi Rani Jaswant De closed fort doors when he returned from Dharmat</span></div><div class="point"><span>Died <strong>28 Nov 1678 at Jamrud Ka Thana (Afghanistan)</strong></span></div><div class="point"><span>Aurangzeb: <strong>"Today door of Kufra is broken"</strong></span></div><div class="point"><span>Books: <strong>Anand Vilas, Bhasha Bhushan</strong>, Prabodh Chandrodaya, Aproksh Siddhanthsar</span></div>`,pyq:true,prob:false},
+{id:9,topic:'jaswant',topicLabel:'Muhanaut Nainasi – Court Scholar of Jaswant Singh',q:'Who was Muhanaut Nainasi? What are his key works?',a:`<div class="point"><span>Deewan & eminent writer of Jaswant Singh; Munshi Deviprasad: <strong>"Abul Fazl of Rajputana"</strong></span></div><div class="point"><span><strong>Nainsi Ri Khyat</strong>: 1st Khyat of Rajasthan; describes all princely states</span></div><div class="point"><span><strong>Marwar Ra Pargana Ri Vighat</strong>: census info; administrative text; <strong>"Gazette of Marwar"</strong></span></div><div class="point"><span>Arrested by Jaswant Singh for debt; committed suicide with brother Sundardas</span></div>`,pyq:true,prob:false},
+{id:10,topic:'ajit',topicLabel:'Ajit Singh (1679-1724)',q:'Ajit Singh – who brought him to Marwar and what was the 30-year struggle?',a:`<div class="point"><span>Durgadas Rathore brought Ajit Singh with <strong>Mukundas Khichi & Gaura</strong></span></div><div class="point"><span><strong>Gaura</strong> = Pannadhay of Marwar; cenotaph in Jodhpur</span></div><div class="point"><span>Kept at Kalindri (Sirohi) in Mukundas Dhani / Jayadev Purohit's house</span></div><div class="point"><span>Durgadas fought <strong>30-year struggle (1678-1708)</strong> = Struggle of 30 years of Rathores</span></div><div class="point"><span>Ajit Singh became king of Jodhpur 1708 after Debari Agreement; defeated Jafur Kuli</span></div><div class="point"><span>Married daughter <strong>Indra Kanwar</strong> to Farrukhsiyar = <strong>last Hindu princess to marry a Mughal emperor</strong></span></div><div class="point"><span>Murdered by son <strong>Bakht Singh</strong> on 23 June 1724</span></div>`,pyq:true,prob:false},
+{id:11,topic:'durgadas',topicLabel:'Durgadas Rathore',q:'Durgadas Rathore – titles, cenotaph, and his role with Aurangzeb\'s son Akbar.',a:`<div class="point"><span>Father: Aashkaran; Mother: Naith Kanwar; Birthplace: Salwa (Jodhpur)</span></div><div class="point"><span>Durgadas provoked Aurangzeb's son <strong>Prince Akbar</strong> to rebel → Akbar declared emperor at Nadole (Pali) on 1 Jan 1681</span></div><div class="point"><span>Raised Akbar's children: <strong>Buland Akhtar & Safiyatunisa</strong></span></div><div class="point"><span>Titles: <strong>Ulysses of Rathore</strong> (James Tod), <strong>Garibaldi of Rajputana</strong>, Brindling Pearl of Marwar</span></div><div class="point"><span>Cenotaph: banks of <strong>Shipra River, Ujjain</strong></span></div>`,pyq:true,prob:false},
+{id:12,topic:'durgadas',topicLabel:'Abhay Singh & Man Singh',q:'Khejadli incident and Man Singh (Sannyasi king) – key facts.',a:`<div class="point"><span><strong>Khejadli Incident</strong> (Bhadrapad Shukla Dasami, Vikrami 1787): <strong>Amrita Devi Bishnoi</strong> led; <strong>363 people martyred</strong> to save trees</span></div><div class="point"><span>Amritadevi Bishnoi Award given for environmental protection; Tree Fair organised at Khejadli</span></div><div class="point"><span><strong>Man Singh (1803-1843)</strong>: <strong>Sannyasi king</strong>; built Nath sect temple; established library <strong>'Man Pustak Prakash'</strong></span></div><div class="point"><span>Treaty with British: <strong>16 Jan 1818</strong>; gave shelter to Apa Sahib Bhonsle against British</span></div><div class="point"><span>Kaviraja Bankidas Ji: <em>'Bankidas Re Khyat'</em>, song <strong>'Ayo Angrez Mulk Re Upar'</strong></span></div>`,pyq:true,prob:false}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

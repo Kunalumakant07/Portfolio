@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Pratap & Later Mewar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // medieval_history // pratap_later_mewar</div>
+  <h1>Pratap &<br><span class="hl">Later Mewar</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+  
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'udai')">Udai Singh</button>
+<button class="filter-btn" onclick="filterCards(this,'pratap')">Maharana Pratap</button>
+<button class="filter-btn" onclick="filterCards(this,'haldi')">Haldighati</button>
+<button class="filter-btn" onclick="filterCards(this,'later')">Later Mewar</button>
+<button class="filter-btn" onclick="filterCards(this,'treaty')">Mughal Treaty</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'udai',topicLabel:'Udai Singh & 3rd Saka (1568)',q:'3rd Saka of Chittor (1568) – who led, what happened, and what did Akbar do?',a:`<div class="point"><span>Akbar attacked Chittor 1567-68; Jaimal & Patta defended; Udai Singh moved to Girwa hills</span></div><div class="point"><span>Phul Kanwar committed Johar (sister of Jaimal & queen of Patta)</span></div><div class="point"><span>Kesariya under leadership of <strong>Jaimal & Patta</strong></span></div><div class="point"><span>Kalla Rathore = <strong>"God with four hands"</strong></span></div><div class="point"><span>25 Feb 1568: Akbar captured Chittor; massacred 30,000; circulated coin <strong>'Elachi'</strong></span></div><div class="point"><span>Akbar installed idols of Jaimal & Patta at <strong>Agra Fort</strong> (French traveller Bernier confirmed)</span></div><div class="point"><span>Akbar's gun: <strong>'Sangram'</strong></span></div>`,pyq:true,prob:false},
+{id:2,topic:'udai',topicLabel:'Udai Singh',q:'Udai Singh – key facts: city founded, death, and cenotaph.',a:`<div class="point"><span><strong>1559</strong>: Udaipur established; built Udai Sagar Lake & Moti Magari Palace</span></div><div class="point"><span>Battle of Mawali (1540): defeated Banveer</span></div><div class="point"><span>Died <strong>28 Feb 1572 at Gogunda</strong> on Holi; Cenotaph: <strong>Gogunda</strong></span></div><div class="point"><span>Jaimal was king of Merta; Patta = feudal lord of Amet (1st grade Thikana of Mewar)</span></div>`,pyq:false,prob:true},
+{id:3,topic:'pratap',topicLabel:'Maharana Pratap – Biography',q:'Birth, family, coronation, and early challenges of Maharana Pratap.',a:`<div class="point"><span>Birth: <strong>9 May 1540</strong>, Kumbhalgarh; Mother: <strong>Jaiwanta Bai Songara</strong>; Queen: <strong>Ajabde Panwar</strong>; Childhood name: <strong>Kika</strong></span></div><div class="point"><span>Udai Singh coronated younger son Jagmal instead of Pratap</span></div><div class="point"><span>Crowned at Gogunda by <strong>Krishan Das Chundawat of Salumbar</strong>; Chandrasen of Marwar attended</span></div><div class="point"><span>Jagmal approached Akbar; got Jahajpur Pargana & later half of Sirohi</span></div><div class="point"><span>Akbar's 4 messengers: Jalal Khan Korachi (1572), Man Singh (1573), Bhagwant Das (1573), Todarmal (1573)</span></div>`,pyq:true,prob:false},
+{id:4,topic:'haldi',topicLabel:'Battle of Haldighati (18 June 1576)',q:'Battle of Haldighati – commanders on both sides and key events.',a:`<div class="point"><span>Pratap vs Akbar (commander: <strong>Man Singh + Asaf Khan</strong>)</span></div><div class="point"><span>Pratap's side: Krishan Das Chundawat, Ram Shah Tomar (Gwalior), <strong>Hakim Khan Sur (Afghan)</strong>, <strong>Rana Punja (Bheel Army)</strong></span></div><div class="point"><span>Chetak (horse) injured → <strong>Jhala Bida</strong> led the battle</span></div><div class="point"><span><strong>Mihatar Khan</strong> (Mughal soldier) spread false news of Akbar's arrival</span></div><div class="point"><span>Akbar banned Man Singh & Asaf Khan from court for failing to subdue Pratap</span></div>`,pyq:true,prob:false},
+{id:5,topic:'haldi',topicLabel:'Battle of Haldighati – Names',q:'How did different historians name the Battle of Haldighati?',a:`<div class="point"><span><strong>Abul Fazal</strong>: 'Battle of Khamnor'</span></div><div class="point"><span><strong>Badayuni</strong>: 'Gogunda's battle'</span></div><div class="point"><span><strong>Adarshilal Shrivastav</strong>: 'Battle of Badhsha-Bagh'</span></div><div class="point"><span><strong>James Tod</strong>: <strong>'Thermopoly of Mewar'</strong></span></div><div class="point"><span>Badayuni personally participated in this battle</span></div>`,pyq:true,prob:false},
+{id:6,topic:'pratap',topicLabel:'Maharana Pratap – Key Events',q:'Battle of Deware (1582), Bhamashah, and Pratap\'s death.',a:`<div class="point"><span><strong>Battle of Deware (1582)</strong>: Pratap defeated Mughals; Amar Singh killed Sultan Khan; James Tod = <strong>"Marathon of Mewar"</strong></span></div><div class="point"><span><strong>Bhamashah & Tarachand</strong>: met at village Chuliya; gave financial support; 25,000 soldiers for 12 years</span></div><div class="point"><span>Bhamashah = <strong>"Reviver of Mewar"</strong>; appointed as PM by Pratap</span></div><div class="point"><span>Capital: <strong>Chawand</strong>. Awargarh (Udaipur) = temporary capital. Mayara's Cave = armoury</span></div><div class="point"><span>Died <strong>9 January 1597 at Chawand</strong>; Cenotaph: <strong>Bandoli (Udaipur)</strong></span></div><div class="point"><span>Recaptured all Mewar except <strong>Chittorgarh & Mandalgarh</strong></span></div>`,pyq:true,prob:false},
+{id:7,topic:'pratap',topicLabel:'Maharana Pratap – Court Scholars',q:'Pratap\'s court scholars and their works.',a:`<div class="point"><span><strong>Chakrapani Mishra</strong>: Rajayabhishek, Muhratmala, Vishva Vallabh</span></div><div class="point"><span><strong>Hemratna Suri</strong>: Gaura Badal Padmini Chaupai</span></div><div class="point"><span>Prominent painter at Chawand: <strong>Nisardeen</strong> (independent development of Mewar painting school)</span></div>`,pyq:false,prob:true},
+{id:8,topic:'treaty',topicLabel:'Mughal-Mewar Treaty (1615)',q:'Mughal-Mewar Treaty (5 Feb 1615) – conditions and significance.',a:`<div class="point"><span>Between Jahangir & Amar Singh I; <strong>Khurram (Shah Jahan)</strong> made treaty for Mughals</span></div><div class="point"><span>Conditions: Rana won't go to Mughal court; Crown prince will; 1000 cavalry to Mughals; Chittor returned but can't be rebuilt; no marital relations</span></div><div class="point"><span>Thomas Roe: "emperor subjugated Rana by mutual agreement not by force" (book by William Faster)</span></div><div class="point"><span>Importance: wars ended → peace → <strong>boost to art development</strong></span></div>`,pyq:true,prob:false},
+{id:9,topic:'later',topicLabel:'Later Mewar Rulers',q:'Karan Singh to Jagat Singh I – what did each build?',a:`<div class="point"><span><strong>Karan Singh</strong>: built Karna Vilas, Dilkhusha palaces; started <strong>Jag Mandir</strong> (Pichola Lake); Khurram stayed here during rebellion</span></div><div class="point"><span><strong>Jagat Singh I</strong>: completed Jagmandir; built <strong>Jagdish Temple (Jagannath)</strong> in Panchayatan style; architects: Arjuna, Bhana, Mukand</span></div><div class="point"><span>Jagannath Rai Prasasti (by Krishna Bhatt): provides info about Haldighati battle</span></div>`,pyq:false,prob:true},
+{id:10,topic:'later',topicLabel:'Raj Singh (1652-1680)',q:'Raj Singh – major achievements and his protection of Hinduism against Aurangzeb.',a:`<div class="point"><span>Opposed Aurangzeb's <strong>Jaziya tax</strong>; protected Hindu princesses</span></div><div class="point"><span>1669: married Charumati of Rupangarh (Ajmer) against Aurangzeb's will</span></div><div class="point"><span><strong>Rathore-Sisodia Alliance</strong>: helped Ajit Singh of Jodhpur</span></div><div class="point"><span><strong>Shri Nath Temple</strong> – Nathdwara (Rajsamand, 1672); <strong>Rajsamand Lake</strong> (1662-1676, famine relief)</span></div><div class="point"><span><strong>Raj Prasasti</strong>: largest inscription in Sanskrit; 25 stones; at Nauchauki near Rajsamand Lake</span></div><div class="point"><span>Sahal Kanwar: Hadi queen who cut her own head; poem by Meghraj Mukul</span></div>`,pyq:true,prob:false},
+{id:11,topic:'later',topicLabel:'Later Mewar – Sangram Singh II & Hurada',q:'Who obtained Chauth from Mewar first? What was the Hurada Conference?',a:`<div class="point"><span><strong>Sangram Singh II</strong>: Marathas obtained Chauth from Mewar = <strong>first time in Rajasthan</strong></span></div><div class="point"><span>Built Saheliyon ki Baadi (Udaipur); Vaidyanath Temple (1716)</span></div><div class="point"><span><strong>Hurada Conference (17 July 1734, Bhilwara)</strong>: conference of Rajput kings against Marathas</span></div><div class="point"><span>President: <strong>Jagat Singh II (Mewar)</strong>; attended by Jaipur, Marwar, Nagaur, Bikaner, Bundi, Kota, Kishangarh, Karauli</span></div><div class="point"><span>Failed due to internal contradictions among kings</span></div>`,pyq:true,prob:false},
+{id:12,topic:'later',topicLabel:'Bhim Singh & Treaty with British',q:'Bhim Singh (1778-1828) – Krishna Kumari episode and British treaty.',a:`<div class="point"><span>Krishna Kumari episode: dispute over her marriage led to <strong>Battle of Gingoli/Parbatsar (1807)</strong></span></div><div class="point"><span>Krishna Kumari poisoned on <strong>21 July 1810</strong> (on advice of Amir Khan Pindari)</span></div><div class="point"><span>Treaty with British: <strong>13 Jan 1818</strong>; British rep: <strong>Charles Metcalfe</strong>; Mewar rep: Ajit Singh</span></div><div class="point"><span>Colonel James Tod = <strong>1st Political Agent of Mewar</strong></span></div>`,pyq:true,prob:false}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

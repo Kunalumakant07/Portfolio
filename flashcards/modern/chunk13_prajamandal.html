@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Prajamandal Movements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // modern_history // prajamandal_movements</div>
+  <h1>Prajamandal<br><span class="hl">Movements</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'intro')">Overview</button>
+<button class="filter-btn" onclick="filterCards(this,'jaipur')">Jaipur</button>
+<button class="filter-btn" onclick="filterCards(this,'marwar')">Marwar</button>
+<button class="filter-btn" onclick="filterCards(this,'mewar_pm')">Mewar</button>
+<button class="filter-btn" onclick="filterCards(this,'others')">Other States</button>
+<button class="filter-btn" onclick="filterCards(this,'special')">Special Events</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'intro',topicLabel:'Prajamandal – Overview',q:'When did All India Princely States People\'s Conference form? Who supported Prajamandal in which Congress session?',a:`<div class="point"><span>All India Princely States People's Conference: Foundation <strong>1927 (Bombay)</strong>; President: Diwan Ram Chandra Rao; VP: Vijay Singh Pathik; Secretary of Rajputana: Ram Narayan Choudhary</span></div><div class="point"><span>Rajputana Princely States People's Conference (RPSPC): <strong>1928</strong>; 1st session: Ajmer 1931; President: Ram Narayan Choudhary</span></div><div class="point"><span>Congress supported Prajamandal in <strong>Haripura session 1938</strong>; Congress President: <strong>Subhash Chandra Bose</strong></span></div>`,pyq:true,prob:false},
+{id:2,topic:'intro',topicLabel:'Prajamandal – Year-wise Formation',q:'List the Prajamandals by founding year.',a:`<div class="point"><span><strong>1931</strong>: Jaipur, Bundi</span></div><div class="point"><span><strong>1934</strong>: Marwar, Hadoti</span></div><div class="point"><span><strong>1936</strong>: Bikaner, Dholpur</span></div><div class="point"><span><strong>1938</strong>: Mewar, Shahpura, Alwar, Bharatpur, Karauli</span></div><div class="point"><span><strong>1939</strong>: Kota, Kishangarh, Sirohi</span></div><div class="point"><span><strong>1942</strong>: Kushalgarh</span></div><div class="point"><span><strong>1943</strong>: Banswara</span></div><div class="point"><span><strong>1944</strong>: Dungarpur</span></div><div class="point"><span><strong>1945</strong>: Jaisalmer, Pratapgarh</span></div><div class="point"><span><strong>1946</strong>: Jhalawar</span></div>`,pyq:true,prob:false},
+{id:3,topic:'jaipur',topicLabel:'Jaipur Prajamandal (1931)',q:'Jaipur Prajamandal – Gentlemen Agreement (1942) conditions and Azad Morcha.',a:`<div class="point"><span>Founder: Karpurcand Patni (1931); 1936: Jamnalal Bajaj reorganised; 1st session 1938</span></div><div class="point"><span><strong>Gentlemen Agreement (17 Sept 1942)</strong>: Mirza Ismail (PM Jaipur) + Heeralal Shastri (President, Prajamandal)</span></div><div class="point"><span>Conditions: Jaipur won't support British; responsible govt; Prajamandal can protest peacefully; can shelter rebels; <strong>Prajamandal won't join Quit India</strong></span></div><div class="point"><span><strong>Azad Morcha</strong>: workers dissatisfied with agreement; under <strong>Baba Harish Chandra</strong>; participated in Quit India. 1945: merged back on Nehru's advice</span></div>`,pyq:true,prob:false},
+{id:4,topic:'jaipur',topicLabel:'Jaipur – Devishankar Tiwari',q:'Devishankar Tiwari – newspaper, achievements, and unique distinctions.',a:`<div class="point"><span>Published newspaper <strong>Lokvani (1943)</strong> in memory of Jamnalal Bajaj</span></div><div class="point"><span>Later made <strong>President of Prajamandal</strong></span></div><div class="point"><span>1946: made <strong>non-government minister in Jaipur</strong> = <strong>first time in any princely state of Rajasthan</strong></span></div><div class="point"><span>Later made <strong>Chairman of RPSC</strong> (longest tenure)</span></div>`,pyq:true,prob:false},
+{id:5,topic:'marwar',topicLabel:'Marwar Prajamandal (1934)',q:'Jai Narayan Vyas – organizations, newspapers, books, and title.',a:`<div class="point"><span>Founded: Marwar Seva Sangh (1920), Marwar Youth League (1931 → Bal Bharat Sabha)</span></div><div class="point"><span>Newspapers: <strong>Akhand Bharat</strong> (Hindi, Bombay), <strong>Angiban</strong> (1st political newspaper in Rajasthani, Beawar 1932), <strong>Tarun Rajasthan</strong> (Hindi), <strong>Peep</strong> (English, Delhi)</span></div><div class="point"><span>Books: Marwar Ki Avastha, Popabai ki Pol, March se Sangrsh Kyo</span></div><div class="point"><span>Title: <strong>Sher-e-Rajasthan</strong></span></div><div class="point"><span>During Quit India: house arrested in <strong>Siwana Fort</strong>; other leaders in Jalor Fort</span></div>`,pyq:true,prob:false},
+{id:6,topic:'marwar',topicLabel:'Marwar – Taul Movement & Balmukund Bissa',q:'Taul Movement (1920) and Balmukund Bissa – key facts.',a:`<div class="point"><span><strong>Taul Movement (1920)</strong>: 1 ser reduced from 100 Taula to 80 Taula; led by <strong>Chandmal Surana</strong></span></div><div class="point"><span><strong>Balmukund Bissa</strong>: from Pilwa (Nagaur); established Jawahar Khadi Bhandar in Jodhpur</span></div><div class="point"><span>Died <strong>19 June 1942</strong> in Jodhpur Jail during hunger strike = <strong>Jatindas of Rajasthan</strong></span></div><div class="point"><span>Note: Balkrishna Kaul went on hunger strike in <strong>Ajmer Jail</strong></span></div>`,pyq:true,prob:false},
+{id:7,topic:'mewar_pm',topicLabel:'Mewar Prajamandal (1938)',q:'Mewar Prajamandal – founders, 1st session, Bhurelal Baya, and Sarada Fort.',a:`<div class="point"><span>Founded <strong>24 April 1938</strong>. Founder: <strong>Balwant Singh Mehta</strong> (President), <strong>Bhurelal Baya</strong> (VP), <strong>Manikyalal Verma</strong> (Mahamantri)</span></div><div class="point"><span>Verma wrote <em>"Mewar Ka Vartman Shashan"</em>; arrested → Gandhi criticised in <em>Harijan</em></span></div><div class="point"><span>1941: 1st session in Udaipur; President: Manikya Lal Verma; participated: Vijaylaxmi Pandit, J.B. Kriplani</span></div><div class="point"><span>1946: 7th session at Saletiya ground, Udaipur; President: <strong>Jawaharlal Nehru</strong>; Sheikh Abdullah attended</span></div><div class="point"><span>Bhurelal Baya house arrested in <strong>Sarada Fort</strong> = <strong>"Kalapani of Mewar"</strong></span></div>`,pyq:true,prob:false},
+{id:8,topic:'mewar_pm',topicLabel:'Shahpura – First Responsible Govt',q:'Shahpura Prajamandal (1938) – what makes it unique in Rajasthan?',a:`<div class="point"><span>Founders: Laduram Vyas, Ramesh Chandra Ojha. Inspired by Manikya Lal Verma</span></div><div class="point"><span><strong>First Responsible Government of Rajasthan</strong> established here</span></div><div class="point"><span>King: <strong>Sudershan Dev</strong>; PM: <strong>Gokul Lal Asawa</strong></span></div>`,pyq:true,prob:false},
+{id:9,topic:'others',topicLabel:'Bikaner Prajamandal (1936)',q:'Bikaner – Sarvhitkarini Sabha, Bikaner Conspiracy Case, and Birbal Diwas.',a:`<div class="point"><span>1907: <strong>Sarvhitkarini Sabha</strong> in Churu; founders: Kanhaiyalal Dundh, Swami Gopal Das</span></div><div class="point"><span>Opened Kabir Pathshala (for Dalits) & Kanya Pathshala (for girls)</span></div><div class="point"><span><strong>Bikaner Conspiracy Case (1932)</strong>: 4 arrested: Swami Gopal Das, Chandan Mal Bahed, Satyanarayan Sarraf, Khubram Sarraf</span></div><div class="point"><span>Ganganagar: police fired on march; youth <strong>Birbal martyred</strong>; <strong>17 July = Birbal Diwas</strong></span></div><div class="point"><span>Jaisalmer Branch of Indira Gandhi Canal = <strong>Birbal Branch</strong></span></div>`,pyq:true,prob:false},
+{id:10,topic:'others',topicLabel:'Bharatpur & Sirohi Prajamandal',q:'"Nehru of Rajasthan" and "Gandhi of Rajasthan" – who are they?',a:`<div class="point"><span><strong>"Nehru of Rajasthan"</strong> = <strong>Jugal Kishore Chaturvedi</strong> (Bharatpur Prajamandal founder)</span></div><div class="point"><span><strong>"Gandhi of Rajasthan"</strong> = <strong>Gokul Bhai Bhatt</strong> (Sirohi Prajamandal founder; also Gandhi of Wagad = Bhogilal Pandya)</span></div><div class="point"><span>Bharatpur Prajamandal founded at <strong>Rewari (Haryana)</strong>; newspaper: <em>Vaibhav Diwas</em></span></div><div class="point"><span>Sirohi Prajamandal (1939) founded in <strong>Bombay</strong></span></div>`,pyq:true,prob:false},
+{id:11,topic:'special',topicLabel:'Rastapal Incident & Dungarpur PM',q:'Rastapal Incident (19 June 1947) and the Kali Bai Award.',a:`<div class="point"><span>Teacher <strong>Nana Bhai</strong> & Bhil girl <strong>Kalibai</strong> were martyred</span></div><div class="point"><span>Idols established near <strong>Gaib Sagar Pond, Dungarpur</strong></span></div><div class="point"><span><strong>Kali Bai Award</strong> given for girls' education</span></div><div class="point"><span>Dungarpur Prajamandal (1944): <strong>Bhogilal Pandya</strong> = "Gandhi of Wagad"; leaders: Haridev Joshi, Gouri Shankar Upadhyay</span></div><div class="point"><span>Foundation: <strong>1 Aug 1944</strong> (death anniversary of Tilak on 1 Aug 1920)</span></div>`,pyq:true,prob:false},
+{id:12,topic:'special',topicLabel:'Kota – College Girls\' Revolt',q:'Kota Prajamandal during Quit India – what extraordinary thing happened?',a:`<div class="point"><span>Kota Prajamandal founded 1939; founders: Pandit Naynuram Sharma, Abhinn Hari</span></div><div class="point"><span>During <strong>Quit India Movement</strong>: workers captured <strong>city administration of Kota</strong></span></div><div class="point"><span><strong>College girls captured Rampura Police Station</strong></span></div><div class="point"><span>First session 1939 at Mangrol (Baran); 1940 session at Kota</span></div>`,pyq:false,prob:true}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

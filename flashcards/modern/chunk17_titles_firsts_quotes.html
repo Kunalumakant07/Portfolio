@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Titles, Firsts & Quotes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // rapid_revision // titles_firsts_quotes</div>
+  <h1>Titles, Firsts<br><span class="hl">& Quotes</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'titles')">Titles & Nicknames</button>
+<button class="filter-btn" onclick="filterCards(this,'quotes')">Famous Quotes</button>
+<button class="filter-btn" onclick="filterCards(this,'firsts')">Firsts of Rajasthan</button>
+<button class="filter-btn" onclick="filterCards(this,'comparisons')">Comparisons</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'titles',topicLabel:'Titles & Nicknames – Medieval',q:'Match these titles: Hindu Surtan / Abhinav Bhartacharya / Rana Raso / Adivaarh',a:`<div class="point"><span>All are titles of <strong>Kumbha</strong> of Mewar</span></div><div class="point"><span>Full list: Hindu Surtan, Abhinav Bhartacharya, Rana Raso, Hal Guru, Chap Guru, Adivaarh, Param Bhagwat</span></div>`,pyq:true,prob:false},
+{id:2,topic:'titles',topicLabel:'Titles & Nicknames – Medieval',q:'Match: Hindupat / Remnants of Soldiers / Hindupat. Who are: Bhisham of Mewar / Savior of Mewar / Reviver of Mewar?',a:`<div class="point"><span><strong>Hindupat</strong> & <strong>"Remnants of Soldiers"</strong> (James Todd) → <strong>Rana Sanga</strong></span></div><div class="point"><span><strong>Bhisham of Mewar</strong> → <strong>Chunda</strong> (son of Rao Chunda, Marwar)</span></div><div class="point"><span><strong>Savior of Mewar</strong> → <strong>Hammeer</strong> (recaptured Chittor from Banveer Songara)</span></div><div class="point"><span><strong>Reviver of Mewar</strong> → <strong>Bhamashah</strong></span></div>`,pyq:true,prob:false},
+{id:3,topic:'titles',topicLabel:'Titles & Nicknames – Marwar & Others',q:'Match titles: Pratap of Marwar / Guide of Pratap / Forgotten King / Ulysses of Rathore / Garibaldi of Rajputana',a:`<div class="point"><span><strong>Pratap of Marwar / Guide of Pratap / Forgotten King of Marwar</strong> → <strong>Chandrasen</strong></span></div><div class="point"><span><strong>Ulysses of Rathore</strong> (James Tod) & <strong>Garibaldi of Rajputana</strong> → <strong>Durgadas Rathore</strong></span></div><div class="point"><span><strong>Bhagirath of Rajasthan</strong> → <strong>Ganga Singh</strong> (built Ganga Canal)</span></div><div class="point"><span><strong>Pleto/Aflatun of Jaat</strong> → <strong>Surajmal</strong> (Bharatpur)</span></div>`,pyq:true,prob:false},
+{id:4,topic:'titles',topicLabel:'Titles & Nicknames – Modern',q:'Match: Gandhi of Rajasthan / Gandhi of Wagad / Gandhi of Marwar / Sher-e-Rajasthan / Nehru of Rajasthan',a:`<div class="point"><span><strong>Gandhi of Rajasthan</strong> → <strong>Gokul Bhai Bhatt</strong> (Sirohi)</span></div><div class="point"><span><strong>Gandhi of Wagad</strong> → <strong>Bhogilal Pandya</strong> (Dungarpur)</span></div><div class="point"><span><strong>Gandhi of Marwar</strong> → <strong>Ashok Gehlot</strong></span></div><div class="point"><span><strong>Sher-e-Rajasthan</strong> → <strong>Jai Narayan Vyas</strong></span></div><div class="point"><span><strong>Nehru of Rajasthan</strong> → <strong>Jugal Kishore Chaturvedi</strong> (Bharatpur)</span></div>`,pyq:true,prob:false},
+{id:5,topic:'titles',topicLabel:'Titles & Nicknames – Bhamashah comparisons',q:'Three different people called "Bhamashah" in Rajasthan history – who are they?',a:`<div class="point"><span><strong>Bhamashah</strong> → <strong>Bhamashah himself</strong> (gave financial support to Maharana Pratap; PM of Mewar)</span></div><div class="point"><span><strong>Bhamashah of Revolt of 1857</strong> → <strong>Amar Chand Banthiya</strong> (gave financial support to Rani of Jhansi)</span></div><div class="point"><span><strong>Bhamashah (of revolutionaries)</strong> → <strong>Damodar Das Rathi</strong> (gave financial aid to revolutionaries)</span></div>`,pyq:true,prob:false},
+{id:6,topic:'titles',topicLabel:'Jatindas / Jaliawala Comparisons',q:'"Jatindas of Rajasthan" and two events called "Jaliawala Massacre of Rajasthan".',a:`<div class="point"><span><strong>Jatindas of Rajasthan</strong> → <strong>Balmukund Bissa</strong> (died in Jodhpur Jail hunger strike, 1942)</span></div><div class="point"><span><strong>Jaliawala Massacre of Rajasthan (tribal)</strong> → <strong>Mangarh Massacre</strong> (17 Nov 1913; 1500+ Bhils)</span></div><div class="point"><span><strong>Jaliawala Massacre of Rajasthan (peasant)</strong> → <strong>Neemuchana Massacre</strong> (14 May 1925; 156 farmers; per Riyasat newspaper)</span></div>`,pyq:true,prob:false},
+{id:7,topic:'quotes',topicLabel:'Famous Quotes',q:'Sher Shah Suri\'s famous quote after Battle of Giri Sumale. Allauddin Khilji\'s quote about Ranthambhore.',a:`<div class="point"><span>Sher Shah after Giri Sumale: <strong>"I would have lost the kingdom of Hindustan only for a handful of millet"</strong></span></div><div class="point"><span>Allauddin Khilji about Ranthambhore: <strong>"I don't consider ten such forts equal to a single hair of a Muslim"</strong></span></div><div class="point"><span>Amir Khushro after Ranthambhore fell: <strong>"Today the house of Kufra became the house of Islam"</strong></span></div>`,pyq:true,prob:false},
+{id:8,topic:'quotes',topicLabel:'Famous Quotes – Aurangzeb & Vallabh Bhai Patel',q:'Aurangzeb\'s quotes about Jaswant Singh and Chandrasen. Patel\'s famous quote about Sirohi.',a:`<div class="point"><span>Aurangzeb on Jaswant Singh's death: <strong>"Today the door of Kufra is broken"</strong></span></div><div class="point"><span>Aurangzeb on Chandrasen: <strong>NOT a direct quote</strong> — Chandrasen title was "door of Kufra" implicitly</span></div><div class="point"><span>Patel on Sirohi-Gokul Bhai Bhatt: <strong>"People of Rajasthan wanted Gokul Bhai Bhatt and we have given that"</strong></span></div><div class="point"><span>Chandraveer Singh (Banswara) on signing accession: <strong>"I am signing my death warrant"</strong></span></div>`,pyq:true,prob:false},
+{id:9,topic:'quotes',topicLabel:'Famous Quotes – Gandhi',q:'Gandhi\'s famous quotes about the 1857 revolt and peasant movements.',a:`<div class="point"><span>Gandhi on Neemuchana Massacre: <strong>"Double Dyrism"</strong> (in <em>Young India</em>)</span></div><div class="point"><span>Gandhi criticised Manikya Lal Verma's arrest in <strong>Harijan</strong> newspaper</span></div><div class="point"><span>Gandhi gave moral support to Bijolia movement at <strong>Nagpur Congress (1920)</strong></span></div><div class="point"><span>At Amritsar Congress (1919): Tilak proposed for Bijolia — Gandhi <strong>OPPOSED</strong> it</span></div>`,pyq:false,prob:true},
+{id:10,topic:'firsts',topicLabel:'Firsts of Rajasthan',q:'Match: First newspaper / First Hindi daily / First political newspaper in Rajasthani / First woman arrested in freedom struggle',a:`<div class="point"><span><strong>First newspaper</strong>: Marwar Gazette (1866, Jodhpur)</span></div><div class="point"><span><strong>First Hindi Daily</strong>: Rajasthan Samachar (1889, Munshi Somrath Dan Charan)</span></div><div class="point"><span><strong>First political newspaper in Rajasthani</strong>: Angiban (1932, Beawar, Jai Narayan Vyas)</span></div><div class="point"><span><strong>First woman arrested in freedom struggle</strong>: <strong>Anjana Devi Choudhary</strong></span></div>`,pyq:true,prob:false},
+{id:11,topic:'firsts',topicLabel:'Firsts of Rajasthan – Government & Awards',q:'First Responsible Govt / First Nominated CM / First Elected CM / First Padma Shri / First Padma Vibhushan in Rajasthan',a:`<div class="point"><span><strong>First Responsible Govt</strong>: <strong>Shahpura</strong> (king Sudershan Dev, PM Gokul Lal Asawa)</span></div><div class="point"><span><strong>First Nominated CM</strong>: <strong>Heera Lal Shastri</strong></span></div><div class="point"><span><strong>First Elected CM</strong>: <strong>Tika Ram Paliwal</strong></span></div><div class="point"><span><strong>First Padma Shri (woman)</strong>: <strong>Ratan Shastri</strong> (1955)</span></div><div class="point"><span><strong>First Padma Vibhushan</strong>: <strong>Janaki Devi Bajaj</strong> (1956)</span></div>`,pyq:true,prob:false},
+{id:12,topic:'firsts',topicLabel:'Firsts of Rajasthan – Integration',q:'First state to sign / last state to sign / First Governor / Rajasthan Diwas date',a:`<div class="point"><span><strong>First to sign Instrument of Accession</strong>: Bikaner Maharaja <strong>Sardul Singh</strong> (7 Aug 1947)</span></div><div class="point"><span><strong>Last to sign</strong>: Maharaja <strong>Udaybhan Singh of Dholpur</strong> (14 Aug 1947)</span></div><div class="point"><span><strong>First Governor of Rajasthan</strong>: <strong>Sardar Gurumukh Nihal Singh</strong></span></div><div class="point"><span><strong>Rajasthan Diwas</strong>: <strong>30 March</strong> (Greater Rajasthan formed 30 March 1949)</span></div><div class="point"><span><strong>Last state to sign British treaty</strong>: <strong>Sirohi</strong> (Shiv Singh, 1823)</span></div>`,pyq:true,prob:false},
+{id:13,topic:'firsts',topicLabel:'Firsts of Rajasthan – Peasant & Tribal',q:'First martyr of Rajasthan / First Saka of Rajasthan / First Saka of Chittor / Jaliawala of Rajasthan',a:`<div class="point"><span><strong>First Martyr of Rajasthan</strong>: <strong>Amar Chand Banthiya</strong> (1857)</span></div><div class="point"><span><strong>First Saka of Rajasthan</strong>: <strong>Ranthambhore (1301)</strong> under Hammeer</span></div><div class="point"><span><strong>First Saka of Chittor</strong>: <strong>1303 AD</strong> – Padmini & Ratan Singh</span></div><div class="point"><span><strong>Jaliawala of Rajasthan</strong>: <strong>Mangarh Massacre</strong> (tribal) & <strong>Neemuchana</strong> (peasant)</span></div><div class="point"><span><strong>First Saka of Jaisalmer</strong>: under <strong>Mulraj I</strong> (Allauddin Khilji attacked)</span></div>`,pyq:true,prob:false},
+{id:14,topic:'comparisons',topicLabel:'James Tod\'s Famous Comparisons',q:'All of James Tod\'s comparisons with European events/people.',a:`<div class="point"><span>Battle of Haldighati → <strong>"Thermopoly of Mewar"</strong></span></div><div class="point"><span>Battle of Deware → <strong>"Marathon of Mewar"</strong></span></div><div class="point"><span>Kirti Stambha (Victory Tower) → <strong>"Tarjan Tower of Rome"</strong></span></div><div class="point"><span>Durgadas Rathore → <strong>"Ulysses of Rathore"</strong></span></div><div class="point"><span>Hammeer of Ranthambhore → <strong>"Formidable Hindu"</strong></span></div><div class="point"><span>Bappa Rawal (per C.V. Vaidya) → like <strong>Charles Martel</strong> of France</span></div>`,pyq:true,prob:false},
+{id:15,topic:'comparisons',topicLabel:'Comparisons – Scholars & Historians',q:'Who called Muhanaut Nainasi "Abul Fazl of Rajputana"? Who is "Newton of India"? Who is "Karna of Rajputana"?',a:`<div class="point"><span><strong>Muhanaut Nainasi = "Abul Fazl of Rajputana"</strong> → said by Munshi Deviprasad</span></div><div class="point"><span><strong>"Newton of India"</strong> → <strong>Brahmagupta</strong> (astronomer-mathematician of Bhinmal)</span></div><div class="point"><span><strong>"Karna of Rajputana"</strong> → <strong>Rai Singh of Bikaner</strong> → said by Munshi Deviprasad</span></div><div class="point"><span><strong>"Karna of KalYug"</strong> → <strong>Loon Karan</strong> (Bikaner) → said by Bithu Souza</span></div><div class="point"><span>Kilhorne compared <strong>Vighra Raj IV</strong> to <strong>Kalidas & Bhavbhuti</strong></span></div>`,pyq:true,prob:false},
+{id:16,topic:'comparisons',topicLabel:'City Nicknames & Special Names',q:'Pink City / Golden Fort / Iron Fort / City of Lake Palaces / City of bells / Kalapani of Mewar',a:`<div class="point"><span><strong>Pink City</strong> → <strong>Jaipur</strong> (Stanley Reed in "Royal Towns of India")</span></div><div class="point"><span><strong>Golden Fort (Sonargarh)</strong> → <strong>Jaisalmer Fort</strong></span></div><div class="point"><span><strong>Iron Fort</strong> → <strong>Bharatpur Fort</strong> (Lord Lake attacked 5 times, couldn't capture)</span></div><div class="point"><span><strong>City of Lake Palaces</strong> → <strong>Deeg</strong> (Surajmal's lake palaces)</span></div><div class="point"><span><strong>City of Bells (Jhalarapatan)</strong> → capital of <strong>Jhalawar</strong></span></div><div class="point"><span><strong>Kalapani of Mewar</strong> → <strong>Sarada Fort</strong> (where Bhurelal Baya was house arrested)</span></div>`,pyq:true,prob:false}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

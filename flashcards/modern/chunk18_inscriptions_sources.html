@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Inscriptions & Sources</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // rapid_revision // inscriptions_sources</div>
+  <h1>Inscriptions &<br><span class="hl">Sources</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'inscriptions')">Inscriptions</button>
+<button class="filter-btn" onclick="filterCards(this,'books')">Books & Authors</button>
+<button class="filter-btn" onclick="filterCards(this,'travellers')">Foreign Travellers</button>
+<button class="filter-btn" onclick="filterCards(this,'sakas')">All 3 Sakas of Chittor</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'inscriptions',topicLabel:'Key Inscriptions – Ancient',q:'Name the 5 most important inscriptions of ancient/early medieval Rajasthan with dates.',a:`<div class="point"><span><strong>Barali Inscription (443 BC)</strong>: Oldest inscription of Rajasthan; Brahmi, Prakrit; found by G.H. Ojha (1912); Madhyamika = Jain site</span></div><div class="point"><span><strong>Ghosundi Inscription (2nd century BC)</strong>: Oldest Vaishnav inscription; Hathibade Inscription; Ashwamedha Yajna by Sarvattat; read by D.R.Bhandarkar</span></div><div class="point"><span><strong>Samoli Inscription (646 AD)</strong>: Oldest inscription about Guhil dynasty; belongs to Shiladitya</span></div><div class="point"><span><strong>Bijoliya Inscription (1170 AD)</strong>: Chauhan history; Vatsa Gautriya Brahmin; administrative divisions; composer Gunbhadra</span></div><div class="point"><span><strong>Raj Prasasti</strong>: Largest Sanskrit inscription; 25 stones; Nauchauki, Rajsamand Lake; by Raj Singh of Mewar</span></div>`,pyq:true,prob:false},
+{id:2,topic:'inscriptions',topicLabel:'Key Inscriptions – Post-Gupta',q:'5 important inscriptions of Post-Gupta Age (625–960 AD) with key facts.',a:`<div class="point"><span><strong>Basantgarh (625 AD)</strong>: Chawda dynasty feudal system info; from Khimel Mata temple</span></div><div class="point"><span><strong>Mansarovar (713 AD)</strong>: 4 Mauryan kings: Maheshwar, Bhim, Bhoj, Man</span></div><div class="point"><span><strong>Kansava/Kota (738 AD)</strong>: Mauryan king Dhawal; <strong>last info of Mauryans in Rajasthan</strong></span></div><div class="point"><span><strong>Buchkala/Jodhpur (815 AD)</strong>: Pratihara king <strong>Nagbhat II</strong>; from Parvati Mata temple</span></div><div class="point"><span><strong>Rajorgarh (960 AD)</strong>: Pratihara king Mathandev; feudal of Mahipal Pratihar</span></div>`,pyq:true,prob:false},
+{id:3,topic:'inscriptions',topicLabel:'Key Inscriptions – Medieval',q:'Ranakpur Eulogy, Kumbhalgarh Eulogy, Amber Inscription – key info from each.',a:`<div class="point"><span><strong>Ranakpur Eulogy (1439 AD)</strong>: kings from Bappa Rawal to Kumbha; Bappa & Kalbhoj = different persons; word 'Nanak' = coins; architect Depak</span></div><div class="point"><span><strong>Kumbhalgarh Eulogy</strong>: Kumbha's titles; writer Mahesh Bhatt; Kumbha = "incarnation of Religion & Purity"</span></div><div class="point"><span><strong>Amber Inscription</strong>: Kachchawas = 'Raghuwanshi Tilak'; Man Singh = son of Bhagwant Das; built Jamuwa Ramgarh Fort</span></div><div class="point"><span><strong>Rai Singh Prasasti</strong> (Junagadh Fort): composed by Jain scholar Jayita; Rai Singh = 'Rajendra'</span></div>`,pyq:false,prob:true},
+{id:4,topic:'inscriptions',topicLabel:'Ghatiyala & Bauk Inscriptions',q:'Ghatiyala inscriptions (861 AD) and Bauk Eulogy (837 AD) – key facts.',a:`<div class="point"><span><strong>Bauk Eulogy (837 AD)</strong>: at Vishnu Temple of Mandore; prominent source about Pratihars of Mandore</span></div><div class="point"><span><strong>Ghatiyala Inscription A</strong>: from Mata ki Sal (Jain temple); Prakrit language</span></div><div class="point"><span><strong>Ghatiyala Inscription B</strong>: from Khakhu Deval = <strong>Ganpati Pillar Inscription</strong>; Sanskrit; writer Matri Ravi; engraved by Krishneshwar</span></div><div class="point"><span>Both installed by <strong>Kakkuka</strong> (Pratihar of Mandore)</span></div>`,pyq:false,prob:true},
+{id:5,topic:'books',topicLabel:'Books & Their Authors',q:'Match: Prithvi Raj Raso / Prithvi Raj Vijay / Hammeer Mahakavya / Bihari Satsai / Nainsi Ri Khyat',a:`<div class="point"><span><strong>Prithvi Raj Raso</strong> → <strong>Chandbardai</strong> (court poet of Prithviraj III)</span></div><div class="point"><span><strong>Prithvi Raj Vijay</strong> → <strong>Jayanak</strong></span></div><div class="point"><span><strong>Hammeer Mahakavya</strong> → <strong>Nayan Chandra Suri</strong></span></div><div class="point"><span><strong>Bihari Satsai</strong> → <strong>Bihari Ji</strong> (court of Mirza Raja Jai Singh)</span></div><div class="point"><span><strong>Nainsi Ri Khyat</strong> → <strong>Muhanaut Nainasi</strong> (1st Khyat of Rajasthan)</span></div>`,pyq:true,prob:false},
+{id:6,topic:'books',topicLabel:'Books & Their Authors – Marwar',q:'Books: Marwar Ra Pargana Ri Vighat / Bankidas Re Khyat / Veer Vinod / Bikaner Ra Rathora ri Khyat',a:`<div class="point"><span><strong>Marwar Ra Pargana Ri Vighat</strong> → <strong>Muhanaut Nainasi</strong> (Gazette of Marwar; census info)</span></div><div class="point"><span><strong>Bankidas Re Khyat</strong> → <strong>Kaviraja Bankidas Ji</strong> (date of establishment of Jodhpur & Jaipur)</span></div><div class="point"><span><strong>Veer Vinod</strong> → <strong>Kavi Raja Shyamaldas</strong> (info about Kumbha's 32 forts; origin of Guhil dynasty)</span></div><div class="point"><span><strong>Bikaner Ra Rathora ri Khyat</strong> → <strong>Dayaldas</strong> (last famous book of Rajasthan; Bika to Sardar Singh)</span></div>`,pyq:true,prob:false},
+{id:7,topic:'books',topicLabel:'Books & Sources – Battles & Events',q:'Which books give information about Battle of Haldighati / Battle of Khanwa / Padmini story?',a:`<div class="point"><span><strong>Battle of Haldighati</strong>: Abul Fazal (Akbarnama), Badayuni (participated), <strong>Jagannath Rai Prasasti</strong> (in Jagdish Temple)</span></div><div class="point"><span><strong>Battle of Khanwa</strong>: <strong>Baburnama</strong> (7 kings, 9 Rao, 104 commanders in Sanga's court)</span></div><div class="point"><span><strong>Padmini story</strong>: Amir Khushro's <em>Khajain-ul-Futuh</em>; <em>Padmavat</em> by Malik Muhammad Jaisi (1540, Jaunpur)</span></div><div class="point"><span><strong>Bijolia Movement</strong>: Premchand's novel <em>Rangbhoomi</em>; VS Pathik's song <em>"Piditon ka Panchida"</em></span></div>`,pyq:true,prob:false},
+{id:8,topic:'travellers',topicLabel:'Foreign Travellers in Rajasthan',q:'Hiuen-Tsang visited which 2 places in Rajasthan? What did he call them?',a:`<div class="point"><span>Visited <strong>Bairath</strong> → called it <strong>"Pi-Lo-Yo-To-Lo"</strong>; said 8 Buddhist monasteries demolished by Hun king</span></div><div class="point"><span>Visited <strong>Bhinmal</strong> → also called <strong>"Pi-Lo-Yo-To-Lo"</strong></span></div><div class="point"><span>Same name for both places — common exam trick!</span></div>`,pyq:true,prob:false},
+{id:9,topic:'travellers',topicLabel:'Foreign Travellers',q:'Nikolo Manuchi, Bernier, Sir Thomas Roe – what did each say about Rajasthan?',a:`<div class="point"><span><strong>Nikolo Manuchi</strong> (Italian; book <em>'Storio Da Mogor'</em>): gave info about Treaty of Purander between Mirza Raja Jai Singh & Shivaji</span></div><div class="point"><span><strong>Bernier</strong> (French): confirmed that Akbar installed idols of Jaimal & Patta at Agra Fort</span></div><div class="point"><span><strong>Sir Thomas Roe</strong> (English ambassador): "Emperor subjugated Rana of Mewar by mutual agreement not by force" (book by William Faster)</span></div>`,pyq:true,prob:false},
+{id:10,topic:'sakas',topicLabel:'All 3 Sakas of Chittor',q:'Describe all 3 Sakas of Chittor – attacker, year, Johar leader, Kesariya leader.',a:`<div class="point"><span><strong>1st Saka (1303)</strong>: Attacker: <strong>Allauddin Khilji</strong>; Johar: <strong>Padmini</strong> (1600 women); Kesariya: <strong>Ratan Singh</strong>; Commanders: Gaura & Badal</span></div><div class="point"><span><strong>2nd Saka (1535)</strong>: Attacker: <strong>Bahadur Shah of Gujarat</strong>; Johar: <strong>Rani Karmawati</strong>; Kesariya: <strong>Bagh Singh of Devaliya</strong>; Rani sent Rakhi to Humayun</span></div><div class="point"><span><strong>3rd Saka (1568)</strong>: Attacker: <strong>Akbar</strong>; Johar: <strong>Phul Kanwar</strong> (sister of Jaimal); Kesariya: <strong>Jaimal & Patta</strong>; Akbar massacred 30,000</span></div>`,pyq:true,prob:false},
+{id:11,topic:'sakas',topicLabel:'Sakas Across Rajasthan',q:'1st Saka of Rajasthan / Sakas of Ranthambhore, Siwana, Jaisalmer – when and under whom?',a:`<div class="point"><span><strong>1st Saka of Rajasthan</strong>: <strong>Ranthambhore (1301)</strong>; Johar by queen Rang Devi; Allauddin Khilji attacked; Hammeer led Kesariya</span></div><div class="point"><span><strong>Saka of Siwana (1308)</strong>: Allauddin Khilji; Satal & Som defended; renamed 'Kherabad'</span></div><div class="point"><span><strong>1st Saka of Jaisalmer</strong>: Allauddin Khilji; under Mulraj I</span></div><div class="point"><span><strong>2nd Saka of Jaisalmer</strong>: Firoz Tughlak; under Durjansal</span></div><div class="point"><span><strong>Half Saka of Jaisalmer (1550)</strong>: Amir Ali of Kandhar; Kesariya without Johar → Half Saka; under Loon Karan Bhatti</span></div>`,pyq:true,prob:false},
+{id:12,topic:'sakas',topicLabel:'Johar & Kesariya Explained',q:'What is the difference between Johar, Kesariya, and Jal Johar? Give examples of each.',a:`<div class="point"><span><strong>Johar</strong>: Women committed self-immolation in fire when defeat was certain. Ex: Padmini (1303), Karmawati (1535), Rang Devi (Ranthambhore)</span></div><div class="point"><span><strong>Kesariya</strong>: Men wore saffron robes & fought to death. Ex: Ratan Singh (1303), Bagh Singh (1535), Jaimal & Patta (1568), Hammeer (1301)</span></div><div class="point"><span><strong>Jal Johar</strong>: Self-immolation by drowning in water. Ex: <strong>Devalde</strong> (daughter of Hammeer of Ranthambhore) dived into Padam Pond</span></div>`,pyq:true,prob:false}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

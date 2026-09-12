@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Peasant Movements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // modern_history // peasant_movements</div>
+  <h1>Peasant<br><span class="hl">Movements</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'bijolia')">Bijolia</button>
+<button class="filter-btn" onclick="filterCards(this,'begun')">Begun</button>
+<button class="filter-btn" onclick="filterCards(this,'bundi')">Bundi/Barad</button>
+<button class="filter-btn" onclick="filterCards(this,'alwar')">Alwar</button>
+<button class="filter-btn" onclick="filterCards(this,'shekha')">Shekhawati/Sikar</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'bijolia',topicLabel:'Bijolia Peasant Movement',q:'Bijolia – background, causes, and key facts about Chanwari Tax & Talwar Bandhai Tax.',a:`<div class="point"><span>Bijolia = class Thikana of Mewar; ancient name <strong>Vijayavalli</strong>; now Bhilwara district</span></div><div class="point"><span>Rana Sanga gave Upermal Jagir to <strong>Ashok Parmar</strong> (participated in Battle of Khanwa)</span></div><div class="point"><span>Causes: <strong>84 types of taxes</strong>, high land revenue, Lata Kunta, Begar</span></div><div class="point"><span><strong>Chanwari Tax (1903)</strong>: Krishna Singh imposed tax on farmers at daughter's marriage</span></div><div class="point"><span><strong>Talwar Bandhai Tax (1906)</strong>: Prithvi Singh imposed on public (originally deposited by new feudal lord)</span></div>`,pyq:true,prob:false},
+{id:2,topic:'bijolia',topicLabel:'Bijolia – 3 Phases',q:'Bijolia Peasant Movement – summarise all 3 phases.',a:`<div class="point"><span><strong>1st Phase (1897-1914)</strong>: Started by Dhakad farmers of Girdharpura. Sadhu Sita Ram Das advised; Nanji Patel & Thakri Patel met Maharana Fateh Singh. Local leaders: Premchand Bhil, Fateh Karan Charan</span></div><div class="point"><span><strong>2nd Phase (1914-1923)</strong>: Vijay Singh Pathik joined (1915). Uparmal Panch Board (1917, Bairisal). Tilak proposed in Amritsar Congress (1919); Gandhi OPPOSED. 35 taxes reduced (1922 agreement).</span></div><div class="point"><span><strong>3rd Phase (1923-1941)</strong>: Trench increased tax; 1927 Pathik left; Gandhi sent Jamnalal Bajaj. Final agreement by PM Raghavachari & Revenue Minister Mohan Singh Mehta (1941)</span></div>`,pyq:true,prob:false},
+{id:3,topic:'bijolia',topicLabel:'Bijolia – Key People & Sources',q:'Bijolia Movement – Tilak, Gandhi, Premchand, and VS Pathik\'s contributions.',a:`<div class="point"><span>Amritsar Congress (1919): Tilak proposed in favour of Bijolia on <strong>Vijay Singh Pathik's</strong> behest; Gandhi OPPOSED</span></div><div class="point"><span>Tilak wrote in <em>Maratha</em> newspaper & letter to Maharana Fateh Singh</span></div><div class="point"><span><strong>Ganesh Shankar Vidhyarthi</strong> published news in <em>'Pratap'</em> (Kanpur); Pathik sent him Silver Rakhi</span></div><div class="point"><span><strong>Premchand's novel 'Rangbhoomi'</strong> = based on Bijolia peasant movement</span></div><div class="point"><span>Pathik's song: <em>"Piditon ka Panchida"</em>; Manikya Lal Verma's song: <em>"Panchida"</em></span></div>`,pyq:true,prob:false},
+{id:4,topic:'begun',topicLabel:'Begun Peasant Movement',q:'Begun Movement – leader, Govindpura Massacre, and what did Trench call the 1922 agreement?',a:`<div class="point"><span>Begun = <strong>1st grade Thikana</strong> of Mewar; now Chittorgarh district</span></div><div class="point"><span>Leader: <strong>Ram Narayan Choudhary</strong>. 53 types of taxes.</span></div><div class="point"><span>Feudal Lord Anup Singh Chundawat concluded agreement (1922) at Ajmer; Mewar state rejected it</span></div><div class="point"><span>Trench called it <strong>"Bolshevik Agreement"</strong> (Bolshevik Revolution: 1917 Russia by Lenin)</span></div><div class="point"><span><strong>Govindpura Massacre (13 July 1923)</strong>: Trench open fired; martyrs: <strong>Rupaji & Kripaaji</strong></span></div><div class="point"><span>Vijay Singh Pathik arrested on 10 September 1923</span></div>`,pyq:true,prob:false},
+{id:5,topic:'bundi',topicLabel:'Bundi/Barad Peasant Movement',q:'Dabi Massacre (2 April 1923) – who were martyred and what song was sung?',a:`<div class="point"><span>Police officer <strong>Ekram Hussain</strong> open fired on farmers' assembly</span></div><div class="point"><span>Martyred: <strong>Nanak Ji Bhil</strong> & <strong>Devilal Gurjar</strong></span></div><div class="point"><span>Nanak Ji was singing <strong>Jhanda (Flag) song</strong> at that time</span></div><div class="point"><span>Manikya Lal Verma wrote <strong>'Arzi' song</strong> in his memory</span></div><div class="point"><span>Leader: Pandit <strong>Nayanuram Sharma</strong> (member of Rajasthan Seva Sangh)</span></div><div class="point"><span>Bundi = <strong>1st princely state where Marathas interfered</strong> in internal politics</span></div>`,pyq:true,prob:false},
+{id:6,topic:'bundi',topicLabel:'Bundi – Hindauli Conference',q:'Bundi Peasant Movement – key organisations and Hindauli Conference.',a:`<div class="point"><span>1920: Sadhu Sita Ram Das established <strong>Dabi Kishan Panchayat</strong>; President: Harla Bhadak</span></div><div class="point"><span>1927: Movement ended with closure of <strong>Rajasthan Seva Sangh</strong></span></div><div class="point"><span>1936: 2nd phase. <strong>Hindauli Conference (5 October 1936)</strong>: 500 Gurjar & Meena farmers in Hudeshwar Temple; most conditions accepted</span></div><div class="point"><span>Led by Gurjar farmers; women also participated</span></div>`,pyq:false,prob:true},
+{id:7,topic:'alwar',topicLabel:'Neemuchana Massacre (14 May 1925)',q:'Neemuchana Massacre – cause, death toll, and what did Gandhi call it?',a:`<div class="point"><span>Police officer <strong>Chaju Singh</strong> opened fire on farmers' assembly</span></div><div class="point"><span><strong>156 farmers martyred</strong></span></div><div class="point"><span>Gandhi called it <strong>"Double Dyrism"</strong> in his newspaper <em>'Young India'</em></span></div><div class="point"><span><em>Riyasat</em> newspaper compared it to <strong>Jaliawala Massacre</strong></span></div><div class="point"><span><em>Tarun Rajasthan</em> published with photo (31 May 1925). Farmers published paper <em>'Pukar'</em></span></div><div class="point"><span>Cause: 1924 – Maharaja Jaisingh increased tax by <strong>40%</strong> on Rajput/Brahmin farmers</span></div>`,pyq:true,prob:false},
+{id:8,topic:'alwar',topicLabel:'Mev Kisan Movement',q:'Mev Kisan Movement (Alwar) – area, causes, and how it ended.',a:`<div class="point"><span>Area: <strong>Mewat</strong> (Ramgarh, Laxmangarh, Kishangarh, Tijara)</span></div><div class="point"><span>Causes: Excessive land revenue, Urdu promotion, Govt control of mosques ended</span></div><div class="point"><span>Leaders: Yasin Khan, Muhammad Ali, Sayyed Bhik Narang</span></div><div class="point"><span>Became violent & communal; 1933: communal riots in Tijara</span></div><div class="point"><span>British removed Alwar Maharaja <strong>Jai Singh</strong>; he went to Paris and died there</span></div>`,pyq:false,prob:true},
+{id:9,topic:'shekha',topicLabel:'Shekhawati/Sikar Movement',q:'Katrathal Conference (25 April 1934) – significance and leaders.',a:`<div class="point"><span><strong>10,000+ women</strong> participated</span></div><div class="point"><span>Cause: Feudal lord of Sihot misbehaved with women</span></div><div class="point"><span>President: <strong>Kishori Devi</strong> (wife of Thakur Harlal Singh)</span></div><div class="point"><span>Chief Speaker: <strong>Uttama Devi</strong> (wife of Thakur Deshraj, Bharatpur)</span></div>`,pyq:true,prob:false},
+{id:10,topic:'shekha',topicLabel:'Shekhawati/Sikar Movement',q:'Kundan Massacre (25 April 1935) and Jai Singhpura Massacre (21 June 1935).',a:`<div class="point"><span><strong>Kundan Massacre (25 April 1935, Sikar)</strong>: Dhapi Devi advised refusing land revenue; Capt. Web fired; martyrs: Chetram, Tulcha Ram, Tiku Ram, Aasha Ram; discussed in House of Commons</span></div><div class="point"><span><strong>Jai Singhpura Massacre (21 June 1935)</strong>: <strong>First peasant massacre in which murderers of farmers were punished</strong></span></div>`,pyq:true,prob:false},
+{id:11,topic:'shekha',topicLabel:'Shekhawati – Key Leaders',q:'Narottam Lal Joshi and Sardar Harlal Singh – what are they known for?',a:`<div class="point"><span><strong>Narottam Lal Joshi</strong>: started Shekhawati <strong>Zakat movement</strong>; <strong>1st Speaker of Rajasthan Legislative Assembly</strong>. (Zakat = tax on food sold in another state)</span></div><div class="point"><span><strong>Sardar Harlal Singh</strong>: born 1901 at Hanumanpura (Jhunjhunu); established <strong>Vidyarthi Bhawan</strong> in Jhunjhunu (main center of movement)</span></div><div class="point"><span>1931: <strong>Jaat Kshetriya Mahasabha</strong> established; 1933: first session at Palthana (Sikar)</span></div><div class="point"><span>Jaat Prajapati Mahayagya (20 Jan 1934): on Basant Panchami; Priest: <strong>Khemraj Sharma</strong></span></div>`,pyq:false,prob:true},
+{id:12,topic:'shekha',topicLabel:'Shekhawati – International Attention',q:'How did the Shekhawati movement reach the British Parliament?',a:`<div class="point"><span>1925: <strong>Pathik Lawrence</strong> discussed Shekhawati movement in <strong>"House of Commons"</strong> of Britain</span></div><div class="point"><span>News published in <em>Daily Herald</em> newspaper of Britain</span></div><div class="point"><span>Sikar base banned entry of <strong>Ram Narayan Choudhary</strong> & Tarun Rajasthan newspaper</span></div><div class="point"><span>Kundan Massacre (1935) also discussed in House of Commons</span></div>`,pyq:false,prob:true}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

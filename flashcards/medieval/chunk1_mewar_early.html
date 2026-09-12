@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Mewar Early Rulers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // medieval_history // guhil_dynasty_early</div>
+  <h1>Mewar<br><span class="hl">Early Rulers</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+  
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'origin')">Origin</button>
+<button class="filter-btn" onclick="filterCards(this,'bappa')">Bappa Rawal</button>
+<button class="filter-btn" onclick="filterCards(this,'early')">Allat–Tej Singh</button>
+<button class="filter-btn" onclick="filterCards(this,'ratan')">Ratan Singh & Padmini</button>
+<button class="filter-btn" onclick="filterCards(this,'hammeer')">Hammeer</button>
+<button class="filter-btn" onclick="filterCards(this,'lakha')">Lakha & Mokal</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'origin',topicLabel:'Guhil Dynasty – Origin',q:'When was the Guhil dynasty founded? What is the oldest inscription about it?',a:`<div class="point"><span>Guhil founded dynasty in <strong>566 AD</strong></span></div><div class="point"><span><strong>Samoli Inscription (646 AD)</strong> = oldest inscription about Guhil dynasty; belongs to Shiladitya (5th descendant)</span></div><div class="point"><span>Also provides info about <strong>Jawar Mata Temple</strong> and <strong>mining industry of Jawar</strong></span></div>`,pyq:true,prob:false},
+{id:2,topic:'origin',topicLabel:'Guhil Dynasty – Origin',q:'Three theories about the origin place of Guhil dynasty.',a:`<div class="point"><span><strong>Vallabhi</strong> – Shyamaldas (Veer Vinod)</span></div><div class="point"><span><strong>Anandpur</strong> – D.R. Bhandarkar</span></div><div class="point"><span><strong>Vallabhi dynasty (France connection)</strong> – James Todd</span></div><div class="point"><span>Ancient names of Mewar: <strong>MedPat, Pragwat, Shivi Janpad</strong></span></div><div class="point"><span>Guhil states: Mewar, Banswara, Dungarpur, Pratapgarh, Shahpura. Guhil dynasty has <strong>24 branches</strong></span></div>`,pyq:false,prob:true},
+{id:3,topic:'bappa',topicLabel:'Bappa Rawal',q:'Bappa Rawal – real name, capital, key achievements, titles, and C.V. Vaidya\'s comparison.',a:`<div class="point"><span>Real name: <strong>Kalbhoj</strong>; Disciple of <strong>Saint Harit</strong>; Capital: <strong>Nagada (Udaipur)</strong></span></div><div class="point"><span><strong>734 AD</strong>: defeated Man Maurya & conquered Chittor</span></div><div class="point"><span>Built <strong>Ekling Temple</strong> & <strong>Sun Temple (Kalika Mata Temple)</strong> at Chittor</span></div><div class="point"><span>Circulated golden coins (115 grains); drove Muslim army to Ghazni; deposed Ghazni king Salim</span></div><div class="point"><span>Titles: <strong>Hindu Suraj, Rajguru, Chakkavai</strong></span></div><div class="point"><span>C.V. Vaidya compared him to <strong>Charles Martel</strong> of France</span></div><div class="point"><span>City <strong>Rawalpindi (Pakistan)</strong> named due to his military camp</span></div>`,pyq:true,prob:false},
+{id:4,topic:'bappa',topicLabel:'Bappa Rawal',q:'What tradition did Bappa Rawal establish? What did he do in his last days?',a:`<div class="point"><span>Kings of Mewar considered themselves as <strong>Deewan of Ekaling ji</strong></span></div><div class="point"><span>In last days became a saint & coronated son <strong>Khuman</strong></span></div>`,pyq:false,prob:true},
+{id:5,topic:'early',topicLabel:'Allat to Tej Singh',q:'Allat (Alu Rawal) – Saraneshwar Eulogy and administrative officers.',a:`<div class="point"><span>Saraneshwar Eulogy (953 AD): made <strong>Ahar</strong> capital; built <strong>Vaarh Temple</strong></span></div><div class="point"><span>Married Huna princess <strong>Hariya Devi</strong></span></div><div class="point"><span>Admin officers: <strong>Amatya</strong>=PM; <strong>Sandivigharhak</strong>=Chief Accounting Officer; <strong>Bhishagadhiraj</strong>=Royal Doctor; <strong>Bandipati</strong>=Who praised king</span></div>`,pyq:false,prob:true},
+{id:6,topic:'early',topicLabel:'Jaitra Singh',q:'Battle of Bhutala (1227 AD) – who fought, who won, source book, and why it matters.',a:`<div class="point"><span><strong>Jaitra Singh vs Iltutmish → Jaitra Singh WON</strong></span></div><div class="point"><span>Source: <em>'Hammeer Mad Mardam'</em> by Jai Singh Suri; Iltutmish called <strong>'Hammeer'</strong> in it</span></div><div class="point"><span>Commanders of Jaitra Singh: <strong>Balak & Madan</strong></span></div><div class="point"><span>Retreating Iltutmish army demolished <strong>Nagda</strong></span></div><div class="point"><span>Dashrath Sharma: reign of Jaitra Singh = <strong>Golden Age of medieval Mewar</strong></span></div>`,pyq:true,prob:false},
+{id:7,topic:'early',topicLabel:'Tej Singh',q:'Tej Singh – oldest painted text of Mewar.',a:`<div class="point"><span>1260 AD at Ahar: <strong>Kamal Chandra</strong> depicted <em>'Shrawak Pratikraman Sutra Churni'</em></span></div><div class="point"><span>= <strong>Oldest painted text of Mewar</strong></span></div><div class="point"><span>Queen Jaital Devi built <strong>Shyam Parshvanath Temple</strong> at Chittor</span></div>`,pyq:false,prob:true},
+{id:8,topic:'ratan',topicLabel:'Ratan Singh & 1st Saka of Chittor (1303)',q:'Who was Padmini? What happened in the 1st Saka of Chittor?',a:`<div class="point"><span>Padmini = queen of Ratan Singh; princess of <strong>Sinhal Island</strong>; father <strong>Gandharvasen</strong></span></div><div class="point"><span>Raghav Chetan told Allauddin Khilji about Padmini's beauty</span></div><div class="point"><span>1303: <strong>1st Saka of Chittor</strong>; Padmini + 1600 women committed <strong>Johar</strong></span></div><div class="point"><span>Kesariya under Ratan Singh; commanders: <strong>Gaura & Badal</strong></span></div><div class="point"><span>25 Aug 1303: Alauddin captured Chittor; massacred <strong>30,000 people</strong></span></div>`,pyq:true,prob:false},
+{id:9,topic:'ratan',topicLabel:'Ratan Singh – After 1st Saka',q:'What did Allauddin do after capturing Chittor? What did Malik Muhammad Jaisi write?',a:`<div class="point"><span>Renamed Chittor as <strong>Khijrabad</strong>; gave to son Khijra Khan</span></div><div class="point"><span>Source: Amir Khushro's <em>'Khajain-ul-Futuh' (Tarikh-i-Alai)</em></span></div><div class="point"><span>1540 AD: Malik Muhammad Jaisi (Jaunpur) wrote <em>'Padmavat'</em> in <strong>Oudhi language</strong></span></div><div class="point"><span>Kumbhkaran (Ratan Singh's brother) founded 'rana branch' of Guhil dynasty at <strong>Nepal</strong></span></div>`,pyq:true,prob:false},
+{id:10,topic:'hammeer',topicLabel:'Hammeer (1326-1364) – Sisodiya Branch',q:'Who was Hammeer? How did the Sisodiya branch begin? What are his key titles?',a:`<div class="point"><span>Hammeer of Sisoda defeated Banveer Songara & recaptured Chittor</span></div><div class="point"><span><strong>Sisodiya branch</strong> of Guhil dynasty starts from here; adopted title <strong>RANA</strong></span></div><div class="point"><span>Known as <strong>"Savior of Mewar"</strong></span></div><div class="point"><span>Battle of Singholi: defeated Mohammad Bin Tughlaq</span></div><div class="point"><span>Titles: <strong>Visham Ghati Panchanan</strong> (Kumbhalgarh Eulogy); <strong>Veer Raja</strong> (Rasik Priya); <strong>Formidable Hindu</strong> (James Tod)</span></div>`,pyq:true,prob:false},
+{id:11,topic:'hammeer',topicLabel:'Hammeer – Books',q:'Name the books written about Hammeer and their authors.',a:`<div class="point"><span><strong>Hammeer Mahakavya</strong> – Nayan Chandra Suri</span></div><div class="point"><span><strong>Hammeer Raso</strong> – Jodhraj & Sarangadhar</span></div><div class="point"><span><strong>Hammeer Hatha</strong> – Chandra Sekhar</span></div><div class="point"><span><strong>Hammeer Bandhan</strong> – Amrit Kailash</span></div><div class="point"><span><strong>Hammeerayan</strong> – Bhandau Vyas</span></div><div class="point"><span>Hammeer's own book: <em>Shringar Har</em>; Organised <strong>Koti Yajna</strong> (Purohit: Vishwaroop)</span></div>`,pyq:false,prob:true},
+{id:12,topic:'lakha',topicLabel:'Rana Lakha & "Bhisham of Mewar"',q:'Who is called "Bhisham of Mewar" and why? Who built Pichola Lake?',a:`<div class="point"><span>Mewar's Rao Chunda married sister <strong>Hansa Bai</strong> to Rana Lakha</span></div><div class="point"><span>Lakha's son <strong>Chunda</strong> took oath not to become king → son of Hansa Bai will be king</span></div><div class="point"><span>Chunda = <strong>"Bhisham of Mewar"</strong>; given <strong>Salumbar Thikana</strong></span></div><div class="point"><span>Feudal of Salumbar: coronates king, signs documents, always commands army</span></div><div class="point"><span>Pichola Lake built by nomadic merchant <strong>Chhitra Banjara</strong></span></div>`,pyq:true,prob:false},
+{id:13,topic:'lakha',topicLabel:'Mokal (1421-1433)',q:'Mokal – how did he die and what did he build?',a:`<div class="point"><span>Killed by <strong>Chacha, Mera & Mahpa Panwar</strong></span></div><div class="point"><span>Ahmad Shah of Gujarat attacked at <strong>Jheelwara (Rajsamand)</strong></span></div><div class="point"><span>Built: Rampart of Ekaling Temple; Dwarikanath Temple; rebuilt <strong>Samidheshwar Temple</strong> (earlier Tribhuvan Narayan by Bhoj Parmar)</span></div><div class="point"><span><strong>Shringi Rishi Inscription (1428)</strong>: info from Hammeer to Mokal</span></div>`,pyq:false,prob:true},
+{id:14,topic:'lakha',topicLabel:'Guhil Sub-Dynasties',q:'Dungarpur, Banswara, Pratapgarh, Shahpura – which Guhil dynasty ruled each?',a:`<div class="point"><span>All 4 states = <strong>Guhil Dynasty</strong></span></div><div class="point"><span><strong>Shahpura</strong>: Sujan Singh founded it; <strong>smallest state of Rajasthan</strong>; Shah Jahan declared independent in 1631</span></div><div class="point"><span><strong>Dungarpur</strong>: Dungar Singh made Dungarpur capital (1358); Queen Premal Devi built Naulakha stepwell</span></div><div class="point"><span><strong>Banswara</strong>: Jagmal established independent state after Battle of Khanwa</span></div><div class="point"><span><strong>Pratapgarh</strong>: Udai Singh made Pratapgarh capital; Bagh Singh participated in Battle of Khanwa</span></div>`,pyq:false,prob:true}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

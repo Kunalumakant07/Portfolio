@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Battles & Wars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // rapid_revision // battles_wars</div>
+  <h1>Battles &<br><span class="hl">Wars</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'ancient_b')">Ancient Battles</button>
+<button class="filter-btn" onclick="filterCards(this,'mewar_b')">Mewar Battles</button>
+<button class="filter-btn" onclick="filterCards(this,'marwar_b')">Marwar Battles</button>
+<button class="filter-btn" onclick="filterCards(this,'chauhan_b')">Chauhan Battles</button>
+<button class="filter-btn" onclick="filterCards(this,'mughal_b')">vs Mughals</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'ancient_b',topicLabel:'Ancient & Early Medieval Battles',q:'Battle of Kayandra (1178) – participants and significance.',a:`<div class="point"><span>Mohammad Gauri vs <strong>Mulraj II (Gujarat)</strong> + coalition: Kelhan (Nadol), Kirtipal (Jalore), Dharavarsh (Abu)</span></div><div class="point"><span>Guardian of Mulraj II: <strong>Naika Devi</strong></span></div><div class="point"><span>Result: <strong>Mohammad Gauri DEFEATED</strong></span></div><div class="point"><span>Significance: first major defeat of Muhammad Gauri in India</span></div>`,pyq:true,prob:false},
+{id:2,topic:'chauhan_b',topicLabel:'Chauhan Battles',q:'War of Mahoba (1182) / Battle of Nagaur (1184) – Prithviraj III.',a:`<div class="point"><span><strong>War of Mahoba (1182)</strong>: vs Paramardev Chandel → <strong>Prithviraj WON</strong>; Alha & Udhal (brave commanders) martyred; appointed Panjunrai Kachchawa as governor</span></div><div class="point"><span><strong>Battle of Nagaur (1184)</strong>: vs Bhima II Chalukya (Gujarat); both wanted to marry Abu princess Ichchhini Devi; <strong>Prithviraj married her</strong></span></div><div class="point"><span><strong>Gaharwal-Chauhan Dispute</strong>: Prithviraj kidnapped Sanyogita (Jayachand's daughter) → enmity; Jayachand assisted Chandelas</span></div>`,pyq:true,prob:false},
+{id:3,topic:'chauhan_b',topicLabel:'Battles of Tarain',q:'1st & 2nd Battles of Tarain – years, opponents, results, and why outcome changed.',a:`<div class="point"><span><strong>1st Battle of Tarain (1191)</strong>: Prithviraj III vs Muhammad Gauri → <strong>PRITHVIRAJ WON</strong>; Gauri injured by Govindraj Tomar of Delhi</span></div><div class="point"><span><strong>2nd Battle of Tarain (1192)</strong>: Prithviraj III vs Muhammad Gauri → <strong>GAURI WON</strong>; Prithviraj arrested near Saraswati (Sirsa, Haryana)</span></div><div class="point"><span>Outcome changed: Commanders Udai Raj & Sakand absent; Someshwar betrayed</span></div><div class="point"><span>Hasan Nizami's <em>Taj ul Masir</em>: Prithviraj ruled briefly under Gauri</span></div>`,pyq:true,prob:false},
+{id:4,topic:'mewar_b',topicLabel:'Key Mewar Battles – Hammeer to Sanga',q:'Battle of Bhutala (1227) / Battle of Singholi – opponents and results.',a:`<div class="point"><span><strong>Battle of Bhutala (1227)</strong>: Jaitra Singh vs Iltutmish → <strong>Jaitra Singh WON</strong>; Iltutmish demolished Nagda retreating</span></div><div class="point"><span><strong>Battle of Singholi</strong>: Hammeer vs Mohammad Bin Tughlaq → <strong>Hammeer WON</strong></span></div><div class="point"><span><strong>Battle of Sarangpur (1437, MP)</strong>: Kumbha vs Mahmud Khilji (Malwa) → <strong>Kumbha WON</strong>; reason: Khilji gave shelter to killers of Mokal (Chacha & Mera)</span></div><div class="point"><span><strong>Battle of Badanaur (Bhilwara, 1457)</strong>: Kumbha defeated joint forces of Malwa & Gujarat</span></div>`,pyq:true,prob:false},
+{id:5,topic:'mewar_b',topicLabel:'Rana Sanga\'s 6 Battles',q:'All 6 battles of Rana Sanga in chronological order with results.',a:`<div class="point"><span><strong>1517 Khatoli</strong>: vs Ibrahim Lodi → WON</span></div><div class="point"><span><strong>1518 Bari (Dholpur)</strong>: vs Ibrahim Lodi → WON</span></div><div class="point"><span><strong>1519 Gagroan (Jhalawar)</strong>: vs Mahmud Khilji II → WON; Haridas Charan arrested Khilji</span></div><div class="point"><span><strong>1520 Ider (Gujarat)</strong>: defeated Bharmal & Muzaffar Shah</span></div><div class="point"><span><strong>16 Feb 1527 Bayana</strong>: vs Babur → WON; snatched 'Tasha'</span></div><div class="point"><span><strong>17 March 1527 Khanwa</strong>: vs Babur → <strong>BABUR WON</strong> (Artillery + Tugluma); Sanga's last battle</span></div>`,pyq:true,prob:false},
+{id:6,topic:'mughal_b',topicLabel:'Battles vs Mughals',q:'Battle of Haldighati (18 June 1576) – full details: commanders, horse, and aftermath.',a:`<div class="point"><span>Pratap vs Akbar (commander: <strong>Man Singh + Asaf Khan</strong>)</span></div><div class="point"><span>Pratap's commanders: Hakim Khan Sur (Afghan), <strong>Rana Punja (Bheel)</strong>, Ram Shah Tomar (Gwalior)</span></div><div class="point"><span>Pratap's horse <strong>Chetak</strong> injured → <strong>Jhala Bida</strong> led the battle</span></div><div class="point"><span>Mihatar Khan (Mughal) spread false news of Akbar's arrival</span></div><div class="point"><span>Names: Abul Fazal = Khamnor; Badayuni = Gogunda; James Tod = <strong>Thermopoly of Mewar</strong></span></div><div class="point"><span>Akbar banned Man Singh & Asaf Khan from court for failing</span></div>`,pyq:true,prob:false},
+{id:7,topic:'mughal_b',topicLabel:'Battle of Deware & Battle of Dharmat',q:'Battle of Deware (1582) and Battle of Dharmat (1658) – details.',a:`<div class="point"><span><strong>Battle of Deware (1582)</strong>: Pratap defeated Mughal army; Amar Singh killed Sultan Khan; James Tod = <strong>"Marathon of Mewar"</strong></span></div><div class="point"><span><strong>Battle of Dharmat (1658)</strong>: Dara Shikoh vs Aurangzeb; Jaswant Singh & Qasim Khan commanded for Dara; Qasim Khan betrayed → Dara defeated</span></div><div class="point"><span>Jaswant Singh's Hadi Rani closed fort doors when he returned from Dharmat</span></div>`,pyq:true,prob:false},
+{id:8,topic:'marwar_b',topicLabel:'Marwar Battles',q:'Battle of Paheba/Saheba (1541) and Battle of Giri Sumale (1544).',a:`<div class="point"><span><strong>Battle of Paheba/Saheba (1541)</strong>: Maldev vs Jaitsi (Bikaner) → <strong>Maldev WON</strong>; Jaitsi killed; Maldev captured Bikaner</span></div><div class="point"><span><strong>Battle of Giri Sumale/Jaitaran (1544)</strong>: Maldev vs Sher Shah Suri → <strong>Sher Shah WON</strong>; famous quote about millet; Jaita & Kumpa fought with 12,000 vs 80,000</span></div><div class="point"><span><strong>Battle of Bithoda (8 Sep 1857)</strong>: Kushal Singh vs Hithcoat → <strong>Kushal Singh WON</strong></span></div><div class="point"><span><strong>Battle of Chelawas (18 Sep 1857)</strong>: Kushal Singh vs Lawrence + Macmason → Kushal Singh WON; Macmason killed = "Blacks vs whites battle"</span></div>`,pyq:true,prob:false},
+{id:9,topic:'marwar_b',topicLabel:'Battles of Jaipur State',q:'Battles of Pilsud, Mandsour, Rampura, Tunga, Pattan, Malpura – Jaipur vs Marathas.',a:`<div class="point"><span><strong>Battle of Pilsud (1715)</strong>: Sawai Jai Singh vs Kanha ji Bhosle (Maratha) → <strong>Jai Singh WON</strong></span></div><div class="point"><span><strong>Battle of Mandsour (1733)</strong>: Sawai Jai Singh vs Marathas → <strong>Marathas WON</strong></span></div><div class="point"><span><strong>Battle of Rampura (1735)</strong>: Sawai Jai Singh vs Marathas → <strong>Marathas WON</strong></span></div><div class="point"><span><strong>Battle of Tunga (1787)</strong>: Pratap Singh (Jaipur) + Vijay Singh (Jodhpur) vs Marathas → Marathas defeated badly</span></div><div class="point"><span><strong>Battle of Pattan (1789)</strong>: Pratap Singh + Vijay Singh vs Marathas (De Bois-French commander) → <strong>Marathas WON</strong></span></div><div class="point"><span><strong>Battle of Malpura (1800)</strong>: Pratap Singh + Bheem Singh vs Daulat Rao Sindhiya → <strong>Marathas WON</strong></span></div>`,pyq:false,prob:true},
+{id:10,topic:'mewar_b',topicLabel:'Battle of Debari & Gingoli',q:'Battle of Debari (1680 AD) and Battle of Gingoli / Parbatsar (1807) – details.',a:`<div class="point"><span><strong>Battle of Debari (1680 AD)</strong>: Mughal army defeated combined forces of Mewar & Marwar</span></div><div class="point"><span><strong>Debari Agreement (1708)</strong>: Amarsingh II (Mewar) + Ajit Singh (Marwar) vs Bahadur Shah I; Sawai Jai Singh (Amber) was also party</span></div><div class="point"><span><strong>Battle of Gingoli/Parbatsar (Deedwana-Kuchaman, 1807)</strong>: Jagat Singh II (Jaipur) vs Mansingh (Jodhpur)</span></div><div class="point"><span>Cause: Dispute over marriage of Krishna Kumari (Bhim Singh's daughter)</span></div><div class="point"><span>Result: <strong>Jagat Singh II WON</strong>; Krishna Kumari poisoned 21 July 1810</span></div>`,pyq:true,prob:false},
+{id:11,topic:'chauhan_b',topicLabel:'Battles of Ranthambhore Hammeer',q:'Jalaluddin Khilji\'s 2 attacks (1290, 1292) vs Allauddin\'s attack (1301) on Ranthambhore.',a:`<div class="point"><span><strong>Jalaluddin Khilji (1290 & 1292)</strong>: attacked Ranthambhore twice but <strong>couldn't capture</strong></span></div><div class="point"><span>Jalaluddin's famous quote: <strong>"I don't consider ten such forts equal to a single hair of a Muslim"</strong></span></div><div class="point"><span><strong>Allauddin Khilji (1301)</strong>: captured Ranthambhore; commanders Nusrat Khan & Ulug Khan; Ratipal & Ranmal betrayed Hammeer</span></div><div class="point"><span>Reason: Hammeer gave shelter to rebels <strong>Muhammad Shah & Kehabru</strong></span></div><div class="point"><span>Book: Amir Khushro's <em>'Mifata-ul-Futuh'</em> = info about Jalaluddin's attacks; <em>'Khajain-ul-Futuh'</em> = info about Allauddin's attack</span></div>`,pyq:true,prob:false},
+{id:12,topic:'ancient_b',topicLabel:'Hurada Conference – Anti-Maratha Alliance',q:'Hurada Conference (17 July 1734) – who presided, who attended, and why did it fail?',a:`<div class="point"><span>Held at <strong>Bhilwara (Hurada)</strong> on <strong>17 July 1734 AD</strong></span></div><div class="point"><span>Conference of Rajput kings against the Marathas; President: <strong>Jagat Singh II of Mewar</strong></span></div><div class="point"><span>Attendees: Sawai Jai Singh (Jaipur), Abhay Singh (Marwar), Bakht Singh (Nagaur), Jorawar Singh (Bikaner), Dalel Singh (Bundi), Durjan Saal (Kota), Gopal Pal (Karauli), Raj Singh (Kishangarh)</span></div><div class="point"><span>Decision: all kings will help each other against Marathas; war at Rampura (Kota) after rainy season</span></div><div class="point"><span><strong>Failed due to internal contradictions</strong> among kings</span></div><div class="point"><span>Significance: after Khanwa war, this was the second attempt at Rajput unity</span></div>`,pyq:true,prob:false}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

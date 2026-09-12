@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS Flashcards – Rajasthan History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:40px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:3rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats-bar{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:32px}
+  .stat{background:var(--surface);border:1px solid var(--border);padding:4px 16px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat span{color:var(--accent)}
+  .section-divider{display:flex;align-items:center;gap:14px;margin:36px 0 14px}
+  .section-divider h2{font-family:'VT323',monospace;font-size:1.5rem;color:var(--text);letter-spacing:3px;text-transform:uppercase;white-space:nowrap}
+  .section-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:2px;margin-bottom:4px}
+  .card{border:1px solid var(--border);background:var(--surface);padding:22px 22px 18px;position:relative;cursor:pointer;transition:border-color .2s;text-decoration:none;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card:hover{border-color:var(--accent-dim)}
+  .card:hover::before{height:100%}
+  .card-id{font-size:.68rem;color:var(--accent);opacity:.4;letter-spacing:1px}
+  .card-title{font-family:'VT323',monospace;font-size:1.2rem;color:var(--text);letter-spacing:2px;line-height:1.2}
+  .card-desc{font-size:.76rem;color:var(--muted);line-height:1.75;flex:1}
+  .card-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .tag{font-size:.62rem;padding:1px 8px;border:1px solid var(--border);color:var(--muted);letter-spacing:.5px}
+  .tag-red{border-color:rgba(241,113,113,.35);color:var(--red)}
+  .tag-amber{border-color:rgba(251,191,36,.35);color:var(--amber)}
+  .tag-blue{border-color:rgba(125,211,252,.35);color:var(--blue)}
+  .cta{font-size:.72rem;color:var(--accent);letter-spacing:1px;margin-top:2px;transition:letter-spacing .2s}
+  .card:hover .cta{letter-spacing:2px}
+  footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+
+<header>
+  <div class="header-meta">&gt; ras_prep // rajasthan_history.flashcards()</div>
+  <h1>Rajasthan History<br><span class="hl">Flashcards</span></h1>
+  <p>RAS Exam Prep &nbsp;·&nbsp; Source: Rajasthan History (English) 2024 PDF &nbsp;·&nbsp; <a href="../index.html">← portfolio</a></p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">total decks <span>21</span></div>
+  <div class="stat">ancient <span>54</span> cards</div>
+  <div class="stat">medieval <span>~99</span> cards</div>
+  <div class="stat">modern <span>~77</span> cards</div>
+  <div class="stat">grand total <span>298</span> cards</div>
+</div>
+
+<!-- ANCIENT HISTORY -->
+<div class="section-divider"><h2>Ancient History</h2><hr></div>
+<div class="grid">
+  <a class="card" href="rajasthan_ancient_history.html">
+    <div class="card-id">FC_A01 // ancient · pages 1–15</div>
+    <div class="card-title">Ancient History of Rajasthan</div>
+    <div class="card-desc">Stone Age → Chalcolithic → Bronze Age (Kalibanga) → Mahajanpad → Mauryan → Gupta → Post-Gupta. Inscriptions, excavators, coins, rock paintings.</div>
+    <div class="card-meta"><span class="tag tag-red">16 PYQ</span><span class="tag tag-amber">18 High-Prob</span><span class="tag">54 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+</div>
+
+<!-- MEDIEVAL HISTORY -->
+<div class="section-divider"><h2>Medieval History</h2><hr></div>
+<div class="grid">
+
+  <a class="card" href="medieval/chunk1_mewar_early.html">
+    <div class="card-id">FC_M01 // mewar · pages 16–20</div>
+    <div class="card-title">Mewar – Early Rulers</div>
+    <div class="card-desc">Guhil origin · Bappa Rawal · Allat · Jaitra Singh · Ratan Singh & Padmini · 1st Saka of Chittor · Hammeer · Rana Lakha · Mokal · Guhil sub-dynasties</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">14 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk2_kumbha_sanga.html">
+    <div class="card-id">FC_M02 // mewar · pages 21–28</div>
+    <div class="card-title">Kumbha & Rana Sanga</div>
+    <div class="card-desc">Kumbha's battles · Kirti Stambha · Adinath Tower · Kumbhalgarh Fort · Ranakpur Temples · Literature & titles · Rana Sanga's 6 battles · Khanwa · 2nd Saka of Chittor</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">13 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk3_pratap_later_mewar.html">
+    <div class="card-id">FC_M03 // mewar · pages 28–35</div>
+    <div class="card-title">Pratap & Later Mewar</div>
+    <div class="card-desc">Udai Singh · 3rd Saka · Maharana Pratap · Haldighati · Bhamashah · Mughal-Mewar Treaty 1615 · Raj Singh · Raj Prasasti · Hurada Conference · British treaty</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">12 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk4_marwar.html">
+    <div class="card-id">FC_M04 // marwar · pages 38–47</div>
+    <div class="card-title">History of Marwar</div>
+    <div class="card-desc">Rathore origin · Rao Jodha · Maldev · Giri Sumale · Chandrasen · Jaswant Singh · Nainasi · Ajit Singh · Durgadas Rathore · Khejadli · Man Singh</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">12 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk5_bikaner_kishangarh.html">
+    <div class="card-id">FC_M05 // bikaner · pages 48–52</div>
+    <div class="card-title">Bikaner & Kishangarh</div>
+    <div class="card-desc">Rao Bikka · Loon Karan · Rai Singh · Junagadh Fort · Anup Singh · Anoop Sanskrit Library · Surat Singh → Hanumangarh · Ganga Singh (Bhagirath) · Kishangarh Painting · Bani Thani</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">11 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk6_kachchawa_jaipur.html">
+    <div class="card-id">FC_M06 // jaipur · pages 53–60</div>
+    <div class="card-title">Kachchawa & Jaipur</div>
+    <div class="card-desc">Dulherai · Bharmal (1st subjection) · Man Singh · Mirza Raja · Treaty of Purander · Sawai Jai Singh · Jaipur 1727 · Jantar Mantar · Hawa Mahal · Pink City · Man Singh II</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">11 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk7_chauhan.html">
+    <div class="card-id">FC_M07 // chauhan · pages 61–76</div>
+    <div class="card-title">Chauhan Dynasties</div>
+    <div class="card-desc">Origin theories · Vighra Raj IV · Bijoliya Inscription · Prithviraj III · Battles of Tarain · Ranthambhore Hammeer · 1st Saka of Rajasthan · Jalore Sakas · Bundi · Kota · Jhalawar · Sirohi</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">12 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk8_parmar_pratihar_jaat.html">
+    <div class="card-id">FC_M08 // other · pages 77–87</div>
+    <div class="card-title">Parmar, Pratihar & Jaat</div>
+    <div class="card-desc">Abu Parmar · Vimal Vasahi · Battle of Kayandra · Bhoj Parmar & Gyanpeeth · Pratihar Mandore · Bauk Eulogy · Jaisalmer Sakas · Sagarmal Gopa · Karauli · Surajmal · Iron Fort</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">13 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="medieval/chunk9_admin_revenue.html">
+    <div class="card-id">FC_M09 // admin · pages 88–94</div>
+    <div class="card-title">Admin & Revenue System</div>
+    <div class="card-desc">Feudal system · James Tod's comparison · 6 taxes · Tajeem rights · 4 Jagir types · Feudal grades (Mewar/Marwar/Bikaner) · 10 admin officers · 8 revenue measurement types · Judicial</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">11 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+</div>
+
+<!-- MODERN HISTORY -->
+<div class="section-divider"><h2>Modern History</h2><hr></div>
+<div class="grid">
+
+  <a class="card" href="modern/chunk10_revolt1857.html">
+    <div class="card-id">FC_N01 // modern · pages 95–100</div>
+    <div class="card-title">Revolt of 1857 AD</div>
+    <div class="card-desc">6 cantonments · Nasirabad · Neemuch · Erinpura & Auwa (3 battles) · Sugali Mata · Kota revolt · Burton murder · Amar Chand Banthiya (1st martyr) · Tatya Tope in Rajasthan</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">11 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk11_peasant_movements.html">
+    <div class="card-id">FC_N02 // modern · pages 101–108</div>
+    <div class="card-title">Peasant Movements</div>
+    <div class="card-desc">Bijolia (3 phases) · Chanwari Tax · Govindpura Massacre · Begun Movement · Bundi/Dabi Massacre · Neemuchana Massacre (156 martyrs) · Mev Movement · Shekhawati/Sikar · Katrathal Conference</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">12 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk12_tribal_movements.html">
+    <div class="card-id">FC_N03 // modern · pages 109–111</div>
+    <div class="card-title">Tribal Movements</div>
+    <div class="card-desc">Bhagat Movement · Govind Guru · Samp Sabha · Mangarh Massacre (1500+ Bhils = Jaliawala of Rajasthan) · Eki Movement · Motilal Tejawat · Neemra Massacre · Meena Movement · Criminal Tribe Act</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">6 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk13_prajamandal.html">
+    <div class="card-id">FC_N04 // modern · pages 112–120</div>
+    <div class="card-title">Prajamandal Movements</div>
+    <div class="card-desc">Year-wise formation of 20 Prajamandals · Jaipur (Gentlemen Agreement) · Marwar (Jai Narayan Vyas) · Mewar (Manikya Lal Verma) · Shahpura (1st Responsible Govt) · Bikaner Conspiracy Case · Rastapal Incident · Kota girls revolt</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">12 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk14_integration.html">
+    <div class="card-id">FC_N05 // modern · pages 121–126</div>
+    <div class="card-title">Integration of Rajasthan</div>
+    <div class="card-desc">7 Phases (1948-1956) · Matsya Union · Rajasthan Union · Greater Rajasthan (30 March = Rajasthan Diwas) · Rajasthan Andolan Samiti · State Reorganisation Commission · 1st Governor · All CMs · Rajasthan's largest state</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">10 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk15_freedom_fighters.html">
+    <div class="card-id">FC_N06 // modern · pages 127–132</div>
+    <div class="card-title">Freedom Fighters</div>
+    <div class="card-desc">Vijay Singh Pathik · Arjun Lal Sethi · Kesari Singh Baarhath (Chetawani Ra Chungtya) · Rao Gopal Singh Kharwa · Heeralal Shastri · Jamnalal Bajaj · Damodar Das Rathi · Balmukund Bissa · Women fighters (Anjana Devi, Janaki Devi, Ratan Shastri)</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">11 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk16_orgs_news.html">
+    <div class="card-id">FC_N07 // modern · pages 133–139</div>
+    <div class="card-title">Organizations & Newspapers</div>
+    <div class="card-desc">Desh Hiteshini Sabha · Walter Sabha · Rajasthan Seva Sangh · Veer Bharat Sabha · Arya Samaj (Satyarth Prakash · Sharda Act 1929) · Marwar Gazette (1st newspaper) · All major newspapers with founders & years</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag">10 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+</div>
+
+
+<!-- RAPID REVISION -->
+<div class="section-divider"><h2>Rapid Revision</h2><hr></div>
+<div class="grid">
+
+  <a class="card" href="modern/chunk17_titles_firsts_quotes.html">
+    <div class="card-id">FC_R01 // revision · cross-topic</div>
+    <div class="card-title">Titles, Firsts & Quotes</div>
+    <div class="card-desc">All famous titles (Hindu Surtan / Bhagirath / Pleto of Jaat) · Three Bhamasha comparisons · Three Jatindas · Jaliawala comparisons · Famous quotes (Sher Shah / Allauddin / Patel) · Firsts of Rajasthan · James Tod comparisons</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag tag-amber">High-Prob</span><span class="tag">16 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk18_inscriptions_sources.html">
+    <div class="card-id">FC_R02 // revision · cross-topic</div>
+    <div class="card-title">Inscriptions & Sources</div>
+    <div class="card-desc">Barali / Ghosundi / Bijoliya / Raj Prasasti / Bauk Eulogy · All 5 Post-Gupta inscriptions · Books with authors · Prithvi Raj Raso / Nainsi Ri Khyat / Veer Vinod · Foreign travellers · All 3 Sakas of Chittor · Johar vs Kesariya vs Jal Johar</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag tag-amber">High-Prob</span><span class="tag">12 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk19_architecture.html">
+    <div class="card-id">FC_R03 // revision · cross-topic</div>
+    <div class="card-title">Architecture & Monuments</div>
+    <div class="card-desc">Temples (Vimal Vasahi / Jagdish / Ekling / Chaumukha / Shri Nathji) · Forts (Watchman / Emergency capitals / Iron Fort / Golden Fort) · Lakes (Pichola / Ana Sagar / Rajsamand / Jaisamand) · Hawa Mahal · Adhai-din-ka-Jhompra · Taragarh Forts</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag tag-amber">High-Prob</span><span class="tag">10 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+  <a class="card" href="modern/chunk20_battles_wars.html">
+    <div class="card-id">FC_R04 // revision · cross-topic</div>
+    <div class="card-title">Battles & Wars</div>
+    <div class="card-desc">Battle of Kayandra · Battles of Tarain (1191/1192) · Rana Sanga's 6 battles · Haldighati · Deware · Giri Sumale · Dharmat · Debari · Gingoli · Ranthambhore vs Khilji · Hurada Conference · Jaipur vs Marathas</div>
+    <div class="card-meta"><span class="tag tag-red">PYQ</span><span class="tag tag-amber">High-Prob</span><span class="tag">12 cards</span></div>
+    <div class="cta">&gt; open_deck() ↗</div>
+  </a>
+
+</div>
+
+
+<footer>
+  &gt; source: Rajasthan History (English) PDF 2024 &nbsp;·&nbsp;
+  ancient: 54 &nbsp;·&nbsp; medieval: ~99 &nbsp;·&nbsp; modern: ~77 &nbsp;·&nbsp;
+  <strong style="color:var(--accent)">grand total: <strong style="color:var(--accent)">276 cards</strong></strong> across 16 decks
+</footer>
+</div>
+
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;
+function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+function init(){stars=[];const n=Math.min(150,Math.floor(W*H/9000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}
+function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}
+resize();init();draw();window.addEventListener('resize',()=>{resize();init()});})();
+</script>
+</body>
+</html>

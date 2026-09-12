@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Chauhan Dynasties</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // medieval_history // chauhan_dynasties</div>
+  <h1>Chauhan<br><span class="hl">Dynasties</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+  
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'origin_ch')">Origin</button>
+<button class="filter-btn" onclick="filterCards(this,'ajmer')">Ajmer Chauhan</button>
+<button class="filter-btn" onclick="filterCards(this,'p3')">Prithviraj III</button>
+<button class="filter-btn" onclick="filterCards(this,'rantham')">Ranthambhore</button>
+<button class="filter-btn" onclick="filterCards(this,'jalore')">Jalore</button>
+<button class="filter-btn" onclick="filterCards(this,'bundi_kota')">Bundi & Kota</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'origin_ch',topicLabel:'Chauhan – Origin & Dynasties',q:'What are the 6 theories about the origin of Chauhans? What is their origin place?',a:`<div class="point"><span><strong>Agnivanshi</strong>: Prithviraj Raso (Chandabardai) – 4 clans from fire altar at Abu; also Nainasi & Suryamall Misan</span></div><div class="point"><span><strong>Suryavanshi</strong>: Prithviraj Vijay, Hammir Mahakavya, G.H.Ojha, Vigharaja IV inscription</span></div><div class="point"><span><strong>Chandravanshi</strong>: Hansi (Haryana) inscription, Achaleshwar temple inscription (Abu)</span></div><div class="point"><span><strong>Brahmin</strong>: Bijoliya inscription, Chandravati inscription, Dr. Dashrath Sharma</span></div><div class="point"><span><strong>Foreigner</strong>: James Todd (Shak/Shithian), William Crooke, V.Smith</span></div><div class="point"><span>Origin place: <strong>Sapadlaksha</strong> (area around Sambhar lake). Capital: <strong>Ahichchatrapur (Nagaur)</strong></span></div>`,pyq:true,prob:false},
+{id:2,topic:'origin_ch',topicLabel:'Chauhan Dynasties',q:'Name all 7 Chauhan dynasties/states.',a:`<div class="point"><span>1. <strong>Sambhar/Ajmer</strong></span></div><div class="point"><span>2. <strong>Ranthambhore</strong></span></div><div class="point"><span>3. <strong>Nadol</strong></span></div><div class="point"><span>4. <strong>Jalor</strong></span></div><div class="point"><span>5. <strong>Sirohi</strong> (Deora branch)</span></div><div class="point"><span>6. <strong>Bundi</strong> (Hada branch)</span></div><div class="point"><span>7. <strong>Kota</strong> (Hada branch)</span></div>`,pyq:false,prob:true},
+{id:3,topic:'ajmer',topicLabel:'Sambhar/Ajmer – Key Rulers',q:'Vighra Raj IV (1153-1163) – all key achievements.',a:`<div class="point"><span>Defeated Khushro Shah of Ghazni; defeated Kumarpal Chalukya of Gujarat</span></div><div class="point"><span>Defeated Tomars of Delhi; installed <strong>Delhi Shivalik Inscription</strong> (under Ashoka's Topra inscription)</span></div><div class="point"><span>Wrote drama <strong>'Harikeli'</strong> (based on Bharvi's Kiratarjuniyam)</span></div><div class="point"><span>Founded <strong>Bisalpur</strong>; built Bisalpur pond & Shiv Temple</span></div><div class="point"><span>Established <strong>Saraswati Khanthabharam Sanskrit School</strong> at Ajmer → demolished by Qutubddin Aibak → became <strong>Adhai-din-ka-Jhompra</strong></span></div><div class="point"><span>Scholar Somdev: <em>Lalit Vigarh Raj</em>; Narpati Nallah: <em>Bisaldev Raso</em> (written in Godwari dialect)</span></div><div class="point"><span>Kilhorne compared him to <strong>Kalidas & Bhavbhuti</strong>; Titles: <strong>Bisaldev, Kavi Bandhu</strong></span></div>`,pyq:true,prob:false},
+{id:4,topic:'ajmer',topicLabel:'Bijoliya Inscription (1170 AD)',q:'Bijoliya Inscription – location, composers, and key information.',a:`<div class="point"><span>In <strong>Parshvanath Temple of Bijoliya</strong> (Bhilwara); written by Digambar Jain <strong>Lolak</strong></span></div><div class="point"><span>Composer: <strong>Gunbhadra</strong>; Writer: <strong>Keshav</strong>; Engraver: <strong>Govind</strong></span></div><div class="point"><span>Chauhans = <strong>Vatsa Gautriya Brahmin</strong>; Vasudev built <strong>Sambhar Lake</strong>; capital = Nagaur</span></div><div class="point"><span>Admin divisions: <strong>Desh → Pattan → Pur → Palli → Gram</strong></span></div><div class="point"><span>Ancient names: Vijayavalli=Bijoliya, Srimal=Bhinmal, Ahichhatrapur=Nagaur, Jabalipur=Jalore, Shakambhari=Sambhar, Dhillika=<strong>Delhi</strong></span></div>`,pyq:true,prob:false},
+{id:5,topic:'p3',topicLabel:'Prithviraj III (1177-1192)',q:'1st and 2nd Battles of Tarain – who won each and why?',a:`<div class="point"><span><strong>1st Battle of Tarain (1191)</strong>: Prithviraj vs Gori → <strong>Prithviraj WON</strong>. Gori captured Tabar Hind (Bhatinda); Gori injured by Govindraj Tomar of Delhi</span></div><div class="point"><span><strong>2nd Battle of Tarain (1192)</strong>: Prithviraj vs Gori → <strong>Gori WON</strong>. Prithviraj arrested near Saraswati (Sirsa, Haryana)</span></div><div class="point"><span>Commanders Udai Raj & Sakand were absent; Someshwar commander betrayed</span></div><div class="point"><span>Hasan Nizami's <em>'Taj ul Masir'</em>: Prithviraj ruled under Gori for a few days</span></div>`,pyq:true,prob:false},
+{id:6,topic:'p3',topicLabel:'Prithviraj III – Other Battles',q:'War of Mahoba (1182) and the Sanyogita story.',a:`<div class="point"><span><strong>War of Mahoba/Tumul (1182)</strong>: vs Paramardev Chandel → <strong>Prithviraj WON</strong>; Panjunrai Kachchawa appointed governor; Alha & Udhal martyred</span></div><div class="point"><span>Kidnapped Jayachand's daughter <strong>Sanyogita</strong> and married her; dispute with Jayachand of Kannauj</span></div><div class="point"><span>This love story accepted as historical fact by <strong>Dashrath Sharma, Gopinath Sharma, C.V.Vaidya</strong></span></div><div class="point"><span>Dashrath Sharma's book: <em>"The Early Chauhan Dynasty"</em></span></div><div class="point"><span>Built: Art & culture dept (Minister Padmanabh); <strong>Pithoragarh Fort</strong> (near New Delhi)</span></div><div class="point"><span>Court scholars: <strong>Chandbardai (Prithvi Raj Raso)</strong>, <strong>Jayanak (Prithvi Raj Vijay)</strong>. Titles: <strong>Rai Pithaura, Dal Pungal</strong></span></div>`,pyq:true,prob:false},
+{id:7,topic:'rantham',topicLabel:'Ranthambhore – Hammeer (1282-1301)',q:'Hammeer of Ranthambhore – Jalaluddin & Allauddin attacks and the 1st Saka of Rajasthan.',a:`<div class="point"><span>Won <strong>16 battles out of 17</strong></span></div><div class="point"><span>Jalaluddin Khilji attacked 1290 & 1292 → couldn't capture; famous quote: <strong>"I don't consider ten such forts equal to a single hair of a Muslim"</strong></span></div><div class="point"><span>1301: Allauddin attacked; reason: Hammeer gave shelter to rebels <strong>Muhammad Shah & Kehabru</strong></span></div><div class="point"><span>Allauddin's commanders: Nusrat Khan, Ulug Khan, Alap Khan; Ratipal & Ranmal betrayed Hammeer</span></div><div class="point"><span><strong>1st Saka of Rajasthan (1301)</strong>: Johar by queen <strong>Rang Devi</strong>; info in Amir Khushro's <em>'Khajain-ul-Futuh'</em> = 1st Johar info in Persian</span></div><div class="point"><span><strong>Devalde</strong> (princess): committed suicide in Padam Pond = <strong>Jal Johar</strong></span></div><div class="point"><span>Jaen Fort = Key of Ranthambhore; renamed <strong>'Nausher'</strong> by Allauddin</span></div>`,pyq:true,prob:false},
+{id:8,topic:'jalore',topicLabel:'Jalore – Kanhar Dev',q:'Allauddin\'s attacks on Siwana (1308) and Jalore (1311) – what happened?',a:`<div class="point"><span><strong>Siwana (1308)</strong>: Satal & Som defended; <strong>Bhalya soldier betrayed</strong>; 1st Saka of Siwana; renamed <strong>'Kherabad'</strong>; given to Kamaluddin Gurga</span></div><div class="point"><span>Siwana = <strong>"Key of Jalore"</strong></span></div><div class="point"><span><strong>Jalore (1311)</strong>: Saka under Kanhar Dev & Veeramdev; renamed <strong>'Jallalabad'</strong></span></div><div class="point"><span><strong>Bika Dahiya</strong> betrayed Kanhardev; his wife <strong>Heera De</strong> murdered Bika Dahiya</span></div><div class="point"><span>Reason: Jaita Devda snatched pieces of Somnath Shivling from Allauddin's returning army</span></div>`,pyq:true,prob:false},
+{id:9,topic:'jalore',topicLabel:'Jalore – Fort & Kirtipal',q:'Why is Jalore called Sonargarh? Who founded the Songra branch?',a:`<div class="point"><span>Jalore Fort on <strong>Songiri hill</strong> → also called <strong>Sonargarh, Suvarnagiri, Kanchanagiri</strong></span></div><div class="point"><span>Jalore = Jabalipur (worshipping place of Sage Jabali); Jaal trees → Jalore</span></div><div class="point"><span><strong>Kirtipal (1181)</strong>: founded Songra (Sonagara) branch; defeated Kuntpal Parmar</span></div><div class="point"><span>Called <strong>'Rajeshwar'</strong> in Sundha Parvat inscription</span></div><div class="point"><span>Court scholar: Padamnabh – <em>Kanharde Prabandh</em></span></div>`,pyq:false,prob:true},
+{id:10,topic:'bundi_kota',topicLabel:'Bundi (Hada Chauhan)',q:'Bundi – origin, Taragarh Fort, and Marathas\' first interference.',a:`<div class="point"><span>Hada branch; earlier ruled by Meena; named after <strong>Bunda Meena</strong></span></div><div class="point"><span>Called <strong>'Vrindavati'</strong> in Ranakpur inscription</span></div><div class="point"><span><strong>Deva (1241)</strong>: defeated Jaita Meena; established Hada branch</span></div><div class="point"><span><strong>Bar Singh (1354)</strong>: built <strong>Taragarh Fort at Bundi</strong> (famous for murals)</span></div><div class="point"><span><strong>Buddha Singh</strong>: Bundi = <strong>first princely state where Marathas interfered</strong> in internal politics</span></div>`,pyq:true,prob:false},
+{id:11,topic:'bundi_kota',topicLabel:'Kota – Madho Singh & Ram Singh II',q:'How did Kota become independent? What is Jhalawar\'s significance?',a:`<div class="point"><span><strong>Madho Singh</strong>: Shah Jahan declared independent king of Kota (1631)</span></div><div class="point"><span><strong>Bhim Singh</strong>: renamed Kota to <strong>'Nandagram'</strong>, Shergarh to <strong>'Barsana'</strong>; follower of Vallabh sect</span></div><div class="point"><span>Ummed Singh: Treaty with British 1817; <strong>Jaleem Singh Jhala</strong> = permanent Deewan of Kota</span></div><div class="point"><span><strong>Ram Singh II</strong>: British divided Kota; declared Madan Singh Jhala as king of <strong>Jhalawar</strong></span></div><div class="point"><span>Jhalawar = <strong>last state of Rajasthan</strong>. Capital: <strong>Jhalarapatan (City of bells)</strong></span></div>`,pyq:true,prob:false},
+{id:12,topic:'bundi_kota',topicLabel:'Sirohi – Surtaan & Last Treaty',q:'Battle of Datani (1583) and Sirohi\'s treaty with British.',a:`<div class="point"><span>Deora branch of Chauhan ruled Sirohi</span></div><div class="point"><span><strong>Sahasmal (1425)</strong>: established Sirohi as capital</span></div><div class="point"><span><strong>Battle of Datani (1583)</strong>: Surtaan vs Akbar/Raisingh/Jagmal → <strong>Surtaan WON</strong>; Jagmal & Rai Singh died</span></div><div class="point"><span>Scholar: Dursa Adha – <em>Virud Chathari</em> (76 titles of Pratap)</span></div><div class="point"><span><strong>Shiv Singh (1823)</strong>: Treaty with British = <strong>Sirohi = last princely state to sign treaty</strong></span></div>`,pyq:true,prob:false}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>

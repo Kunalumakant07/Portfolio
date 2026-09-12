@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS – Kachchawa & Jaipur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070b0f;--surface:#0d1117;--surface2:#111820;--border:#1a2633;--accent:#00ff9f;--accent-dim:#00885a;--blue:#7dd3fc;--amber:#fbbf24;--purple:#a78bfa;--text:#cdd6f4;--muted:#5b6b8a;--dim:#131c27;--red:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono','Courier New',monospace;font-size:14px;line-height:1.7;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9999}
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 28px 80px;position:relative;z-index:1}
+  header{padding:48px 0 32px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .header-meta{font-size:.72rem;color:var(--accent-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  header h1{font-family:'VT323',monospace;font-size:2.8rem;color:var(--text);letter-spacing:4px;text-transform:uppercase;line-height:1;margin-bottom:10px}
+  header h1 .hl{color:var(--accent)}
+  header p{font-size:.78rem;color:var(--muted);letter-spacing:1px}
+  header p a{color:var(--accent-dim);text-decoration:none}
+  header p a:hover{color:var(--accent)}
+  .stats{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:24px}
+  .stat-pill{background:var(--surface);border:1px solid var(--border);padding:4px 14px;font-size:.72rem;color:var(--muted);letter-spacing:1px}
+  .stat-pill span{color:var(--accent)}
+  .progress-wrap{margin-bottom:28px}
+  .progress-text{font-size:.72rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+  .progress-bar-track{height:2px;background:var(--border);max-width:400px}
+  .progress-bar{height:100%;background:var(--accent);transition:width .3s;width:0%}
+  .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:36px}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 14px;font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+  .filter-btn::before{content:'[';color:var(--dim);margin-right:2px}
+  .filter-btn::after{content:']';color:var(--dim);margin-left:2px}
+  .filter-btn:hover{border-color:var(--accent-dim);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700}
+  .filter-btn.active::before,.filter-btn.active::after{color:var(--accent-dim)}
+  .filter-btn.pyq-filter.active{background:var(--red);border-color:var(--red);color:var(--bg)}
+  .filter-btn.prob-filter.active{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+  .topic-divider{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:24px 0 8px}
+  .topic-divider h2{font-family:'VT323',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;opacity:.7}
+  .topic-divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px;max-width:1100px}
+  .card-wrap{perspective:1000px;height:220px;cursor:pointer}
+  .card-wrap.tall{height:280px}
+  .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+  .card-wrap.flipped .card-inner{transform:rotateY(180deg)}
+  .card-front,.card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;padding:18px 20px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:border-color .2s}
+  .card-front::before,.card-back::before{content:'';position:absolute;top:0;left:0;width:2px;height:0%;background:var(--accent);transition:height .3s ease}
+  .card-wrap:hover .card-front::before,.card-wrap:hover .card-back::before{height:100%}
+  .card-wrap:hover .card-front,.card-wrap:hover .card-back{border-color:var(--accent-dim)}
+  .card-back{transform:rotateY(180deg);background:var(--surface2);justify-content:flex-start;overflow-y:auto}
+  .card-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .badge{font-size:.62rem;padding:1px 8px;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border);color:var(--muted)}
+  .badge-pyq{border-color:rgba(241,113,113,.4);color:var(--red)}
+  .badge-prob{border-color:rgba(251,191,36,.4);color:var(--amber)}
+  .question{font-size:.88rem;line-height:1.6;color:var(--text);flex:1;display:flex;align-items:center;letter-spacing:.3px}
+  .flip-hint{font-size:.65rem;color:var(--muted);text-align:right;margin-top:8px;letter-spacing:1px}
+  .answer-label{font-size:.65rem;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+  .answer{font-size:.82rem;line-height:1.7;color:var(--muted)}
+  .answer strong{color:var(--amber)}
+  .answer .point{display:flex;gap:6px;margin-bottom:3px}
+  .answer .point::before{content:"›";color:var(--accent-dim);flex-shrink:0}
+  .card-num{position:absolute;bottom:8px;right:12px;font-size:.6rem;color:var(--border);letter-spacing:1px}
+  #scrollBtn{position:fixed;bottom:28px;right:28px;width:38px;height:38px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'Share Tech Mono',monospace;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:500;transition:all .2s;font-size:1rem}
+  #scrollBtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+  #scrollBtn.visible{display:flex}
+  @media(max-width:680px){.wrap{padding:0 16px 60px}header h1{font-size:2rem;letter-spacing:2px}.grid{grid-template-columns:1fr}.card-wrap,.card-wrap.tall{height:auto;min-height:220px}}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="wrap">
+<header>
+  <div class="header-meta">&gt; ras_prep // medieval_history // kachchawa_jaipur</div>
+  <h1>Kachchawa &<br><span class="hl">Jaipur</span></h1>
+  <p>Medieval History of Rajasthan &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp;
+     <a href="../index.html">← flashcard home</a> &nbsp;·&nbsp;
+     <a href="../../index.html">← portfolio</a></p>
+</header>
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="filters">
+  
+<button class="filter-btn active" onclick="filterCards(this,'all')">All</button>
+<button class="filter-btn pyq-filter" onclick="filterCards(this,'pyq')">PYQ</button>
+<button class="filter-btn prob-filter" onclick="filterCards(this,'prob')">High Prob</button>
+<button class="filter-btn" onclick="filterCards(this,'amber')">Amber Early</button>
+<button class="filter-btn" onclick="filterCards(this,'mansingh')">Man Singh</button>
+<button class="filter-btn" onclick="filterCards(this,'mirza')">Mirza Raja</button>
+<button class="filter-btn" onclick="filterCards(this,'sawai')">Sawai Jai Singh</button>
+<button class="filter-btn" onclick="filterCards(this,'jaipur')">Jaipur City</button>
+<button class="filter-btn" onclick="filterCards(this,'later_j')">Later Jaipur</button>
+
+</div>
+<div class="grid" id="card-grid"></div>
+</div>
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+const cards=[
+{id:1,topic:'amber',topicLabel:'Kachchawa – Early Amber',q:'Kachchawa origin and first three capitals.',a:`<div class="point"><span>Kachchawas = descendants of Lord Ram → <strong>Raghuwanshi Tilak</strong></span></div><div class="point"><span><strong>Dulherai (1137)</strong>: defeated Burgujars; captured <strong>Dausa = 1st capital</strong></span></div><div class="point"><span>Defeated Meena Raja of Ramgarh; built Jamuwai Mata Temple. Ramgarh = 2nd capital</span></div><div class="point"><span><strong>Jamuwai Mata</strong> = clan deity of Kachchawas</span></div><div class="point"><span><strong>Kakil Dev (1207)</strong>: defeated Meena kings; captured <strong>Amber = 3rd capital</strong></span></div>`,pyq:true,prob:false},
+{id:2,topic:'amber',topicLabel:'Bharmal – First to Accept Mughal Subjection',q:'Bharmal – who was first in Rajasthan to accept Mughal subjection?',a:`<div class="point"><span><strong>Bharmal (1547-1573)</strong> = <strong>first king of Rajasthan</strong> to accept Mughal subjection (1562)</span></div><div class="point"><span>Married daughter <strong>Harkhabai</strong> to Akbar at Sambhar; title: <strong>Maryam Ujjmani</strong></span></div><div class="point"><span>Jahangir = son of Harkhabai</span></div><div class="point"><span>Mansabdar 5000; title: <strong>'Amir-ul-Umara'</strong></span></div>`,pyq:true,prob:false},
+{id:3,topic:'mansingh',topicLabel:'Man Singh (1589-1614)',q:'Man Singh – Kabul, Bihar, Bengal campaigns and key achievements.',a:`<div class="point"><span>Governor of Kabul, Bihar, Bengal; Mansabdar 5000 → 7000</span></div><div class="point"><span><strong>Kabul</strong>: suppressed Mirza Hakim; controlled 5 tribes → Amer flag became <strong>Panchranga</strong> (earlier white)</span></div><div class="point"><span><strong>Bengal</strong>: brought idol of <strong>Shila Mata</strong> to Amber = tutelary goddess of Amber Kachchawa</span></div><div class="point"><span>Queen Kanakavati built <strong>Jagat Shiromani Temple</strong> in Amer (Mughal-Rajput style); has Lord Krishna idol Meerabai worshipped in Chittor</span></div><div class="point"><span>Titles: <strong>Mirza Raja, Farzand (son)</strong></span></div>`,pyq:true,prob:false},
+{id:4,topic:'mansingh',topicLabel:'Bhagwant Das',q:'Bhagwant Das – key roles and his daughter Maan Bai.',a:`<div class="point"><span>Suppressed Mirza rebellion; Mansabdar 5000 + Amir-ul-Umara</span></div><div class="point"><span>Subedar of Punjab for <strong>7 years</strong></span></div><div class="point"><span>Married daughter <strong>Maan Bai</strong> to Jahangir; title: <strong>'Shahe Begum'</strong></span></div><div class="point"><span><strong>Khusro</strong> = son of Maan Bai</span></div>`,pyq:false,prob:true},
+{id:5,topic:'mirza',topicLabel:'Mirza Raja Jai Singh (1621-1667)',q:'Mirza Raja Jai Singh – Treaty of Purander with Shivaji.',a:`<div class="point"><span><strong>Longest tenure</strong> among Kachchawah kings of Amber</span></div><div class="point"><span>Worked with Jahangir, Shah Jahan, Aurangzeb</span></div><div class="point"><span>Shah Jahan gave title <strong>'Mirza Raja'</strong>; sent for Kandhar campaign</span></div><div class="point"><span><strong>Treaty of Purander (1665)</strong> with Shivaji; Italian traveller <strong>Nikolo Manuchi</strong> (book 'Storio Da Mogor') gave info</span></div><div class="point"><span>Built <strong>Jaigarh Fort</strong> (Emergency capital of Amber; earlier Eagle Hill)</span></div><div class="point"><span>Scholar: <strong>Bihari Ji</strong> (Bihari Satsai)</span></div>`,pyq:true,prob:false},
+{id:6,topic:'sawai',topicLabel:'Sawai Jai Singh (1700-1743)',q:'Sawai Jai Singh – Mughal emperor titles, Debari Agreement, and Sambhar battle.',a:`<div class="point"><span>Worked with <strong>7 Mughal emperors</strong></span></div><div class="point"><span>Bahadur Shah I attacked; renamed Amber as <strong>Islamabad & Mominabad</strong></span></div><div class="point"><span><strong>Battle of Sambhar (1709)</strong>: defeated Mughal commander Saiyyad Hussain; recaptured Amber</span></div><div class="point"><span>Gave Deeg Jagir & title <strong>'Brijraj'</strong> to Badan Singh</span></div><div class="point"><span>Mohammad Shah Rangila gave title <strong>'RajRajeshwar'</strong></span></div><div class="point"><span>Appointed Mughal governor of Malwa <strong>3 times</strong></span></div>`,pyq:true,prob:false},
+{id:7,topic:'sawai',topicLabel:'Sawai Jai Singh – Social Reforms',q:'Social reforms of Sawai Jai Singh.',a:`<div class="point"><span>Controlled <strong>Sati custom</strong> and <strong>Child Marriage</strong></span></div><div class="point"><span>Promoted <strong>Widow Remarriage</strong> and <strong>Inter-caste Marriage</strong></span></div><div class="point"><span>Removed internal discrimination among Brahmins</span></div><div class="point"><span>Encouraged saints to live family life; founded <strong>'Vairagpura village'</strong> near Mathura for them</span></div><div class="point"><span>Scholars: <strong>Jagannath Samrat</strong> (translated Euclid into Sanskrit), <strong>Kevalram</strong> (translated French logarithm)</span></div>`,pyq:false,prob:true},
+{id:8,topic:'jaipur',topicLabel:'Jaipur City (Founded 1727)',q:'Jaipur – architect, design theory, and UNESCO status.',a:`<div class="point"><span>Founded <strong>18 Nov 1727</strong>; Architect: <strong>Vidhyadhar Bhattacharya</strong></span></div><div class="point"><span>Portuguese astrologer <strong>Xavier De Silva</strong> helped; modelled on Canton (China) & Baghdad (Iraq)</span></div><div class="point"><span>Based on <strong>9 Squares theory</strong></span></div><div class="point"><span>Badal Mahal = first building; Jaipur = <strong>4th capital of Kachchawas</strong></span></div><div class="point"><span><strong>First planned & modern city of India</strong></span></div><div class="point"><span>UNESCO World Heritage <strong>2019</strong></span></div>`,pyq:true,prob:false},
+{id:9,topic:'jaipur',topicLabel:'Jaipur – Key Monuments',q:'Jantar Mantar, Nahargarh Fort, Govind Dev Ji Temple – key facts.',a:`<div class="point"><span><strong>Jantar Mantar</strong>: 5 total (Delhi=1st, <strong>Jaipur=largest</strong>, Ujjain, Mathura, Varanasi); UNESCO World Heritage <strong>2010</strong></span></div><div class="point"><span><strong>Nahargarh Fort</strong>: built against Marathas; <strong>Watchman of Jaipur</strong>; earlier 'Sudarshangarh'</span></div><div class="point"><span><strong>Govind Dev Ji Temple</strong>: Gaudiya sect; kings = <strong>Deewan of Govind Dev Ji</strong></span></div><div class="point"><span>City Palace (Chandra Mahal): 7 floors; top = <strong>Mukut Mandir</strong></span></div>`,pyq:true,prob:false},
+{id:10,topic:'later_j',topicLabel:'Pratap Singh – Hawa Mahal',q:'Hawa Mahal – architect, floors, windows, and shape.',a:`<div class="point"><span>Built <strong>1799 AD</strong>; Architect: <strong>Lalchand Usta</strong></span></div><div class="point"><span><strong>5 floors</strong>: Sharad Mandir, Ratan Mandir, Vichitra Mandir, Prakash Mandir, <strong>Hawa Mandir</strong></span></div><div class="point"><span>Windows: <strong>365</strong>; Casements: <strong>953</strong></span></div><div class="point"><span>Shape: <strong>Crown of Lord Krishna</strong></span></div><div class="point"><span>Queens watched Teej & Gangaur procession from here</span></div><div class="point"><span>Pratap Singh composed poetry as <strong>'Brij Nidhi'</strong>; 22 scholars = <strong>Gandharva Baisi / Pratap Baisi</strong></span></div>`,pyq:true,prob:false},
+{id:11,topic:'later_j',topicLabel:'Ram Singh II & Man Singh II',q:'Ram Singh II (1835-1880) – Pink City and Albert Hall.',a:`<div class="point"><span>1857: supported British; got <strong>Kotputali Pargana & title 'Sitar-e-Hind'</strong></span></div><div class="point"><span>1857: established <strong>Madrasa-e-Hunari</strong> (now Rajasthan School of Arts and Crafts)</span></div><div class="point"><span>1866: <strong>first girls' school</strong> in any princely state (with Kantichandra Mukherjee)</span></div><div class="point"><span>1868: Jaipur painted <strong>Pink</strong> for arrival of British King Edward V</span></div><div class="point"><span>1876: Prince Albert laid foundation of <strong>Albert Hall</strong>; architect <strong>Steven Jacob</strong></span></div><div class="point"><span><strong>Man Singh II</strong>: 1st & last Rajpramukh; married <strong>Gayatri Devi</strong> of Kuchbihar; she = 1st woman Lok Sabha member from Rajasthan (1962)</span></div>`,pyq:true,prob:false}
+];
+let studied=new Set();
+function renderCards(filter){
+  const grid=document.getElementById('card-grid');grid.innerHTML='';
+  const f=filter==='all'?cards:filter==='pyq'?cards.filter(c=>c.pyq):filter==='prob'?cards.filter(c=>c.prob):cards.filter(c=>c.topic===filter);
+  if(!f.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards.</div>';return}
+  let last='';
+  f.forEach(card=>{
+    if(card.topicLabel!==last){const d=document.createElement('div');d.className='topic-divider';d.innerHTML=`<h2>${card.topicLabel}</h2><hr>`;grid.appendChild(d);last=card.topicLabel}
+    const tall=card.a.length>400;const wrap=document.createElement('div');
+    wrap.className=`card-wrap${tall?' tall':''}${studied.has(card.id)?' flipped':''}`;
+    wrap.onclick=function(){this.classList.toggle('flipped');studied[this.classList.contains('flipped')?'add':'delete'](card.id);updateStats()};
+    const b=`<div class="card-header"><span class="badge">${card.topicLabel}</span>${card.pyq?'<span class="badge badge-pyq">PYQ</span>':''}${card.prob?'<span class="badge badge-prob">HIGH-PROB</span>':''}</div>`;
+    wrap.innerHTML=`<div class="card-inner"><div class="card-front">${b}<div class="question">${card.q}</div><div class="flip-hint">click to reveal ↓</div><span class="card-num">#${card.id}</span></div><div class="card-back">${b}<div class="answer-label">&gt; answer</div><div class="answer">${card.a}</div><span class="card-num">#${card.id}</span></div></div>`;
+    grid.appendChild(wrap);
+  });updateStats();
+}
+function filterCards(btn,filter){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards(filter)}
+function updateStats(){const t=cards.length,p=cards.filter(c=>c.pyq).length,pr=cards.filter(c=>c.prob).length;document.getElementById('total-count').textContent=t;document.getElementById('pyq-count').textContent=p;document.getElementById('prob-count').textContent=pr;document.getElementById('studied-count').textContent=studied.size;document.getElementById('progress-text').textContent=`> ${studied.size} / ${t} studied`;document.getElementById('progress-bar').style.width=(studied.size/t*100)+'%'}
+window.addEventListener('scroll',()=>document.getElementById('scrollBtn').classList.toggle('visible',window.scrollY>300));
+renderCards('all');
+(function(){const c=document.getElementById('starfield'),ctx=c.getContext('2d');let W,H,stars=[],frame=0;function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}function init(){stars=[];const n=Math.min(180,Math.floor(W*H/8000));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.1,speed:Math.random()*.2+.03,opacity:Math.random()*.5+.08,twinkle:Math.random()*Math.PI*2})}function draw(){ctx.clearRect(0,0,W,H);frame+=.008;stars.forEach(s=>{const a=s.opacity*(.75+.25*Math.sin(frame+s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(205,214,244,${a})`;ctx.fill();s.y+=s.speed;if(s.y>H+2){s.y=-2;s.x=Math.random()*W}});requestAnimationFrame(draw)}resize();init();draw();window.addEventListener('resize',()=>{resize();init()})})();
+</script>
+</body>
+</html>
