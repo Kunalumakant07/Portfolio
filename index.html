@@ -751,6 +751,111 @@
         footer .quote-footer { font-style: italic; text-align: right; }
 
         /* ════════════════════════════════════════════
+           FLASHCARDS SECTION
+        ════════════════════════════════════════════ */
+        .fc-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+        }
+
+        .fc-card {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 26px 28px;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.25s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .fc-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 0%;
+            background: var(--accent);
+            transition: height 0.35s ease;
+        }
+
+        .fc-card:hover:not(.fc-card-soon) { border-color: var(--accent-dim); }
+        .fc-card:hover:not(.fc-card-soon)::before { height: 100%; }
+
+        .fc-card-soon { cursor: default; opacity: 0.6; }
+
+        .fc-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fc-id {
+            font-family: 'VT323', monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+            opacity: 0.45;
+            letter-spacing: 1px;
+        }
+
+        .fc-badge {
+            font-size: 0.68rem;
+            padding: 2px 10px;
+            border: 1px solid var(--accent-dim);
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .fc-badge-soon {
+            border-color: var(--border);
+            color: var(--muted);
+        }
+
+        .fc-title {
+            font-family: 'VT323', monospace;
+            font-size: 1.35rem;
+            color: var(--text);
+            letter-spacing: 2px;
+            line-height: 1.2;
+        }
+
+        .fc-desc {
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.75;
+            flex: 1;
+        }
+
+        .fc-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .fc-tag {
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            letter-spacing: 0.5px;
+        }
+
+        .fc-cta {
+            font-size: 0.78rem;
+            color: var(--accent);
+            letter-spacing: 1px;
+            margin-top: 4px;
+            transition: letter-spacing 0.2s;
+        }
+
+        .fc-card:hover:not(.fc-card-soon) .fc-cta { letter-spacing: 2px; }
+
+        /* ════════════════════════════════════════════
            MOBILE RESPONSIVE
         ════════════════════════════════════════════ */
         /* ── 768px TABLET ── */
@@ -760,6 +865,7 @@
             .about-grid { grid-template-columns: 1fr; }
             .profile-wrap { display: flex; align-items: center; gap: 20px; text-align: left; }
             .profile-frame { flex-shrink: 0; }
+            .fc-grid { grid-template-columns: 1fr; }
         }
 
         /* ── 680px MOBILE ── */
@@ -841,6 +947,7 @@
                 <li><a href="#about"><span class="cmd">./</span>about</a></li>
                 <li><a href="#skills"><span class="cmd">./</span>skills</a></li>
                 <li><a href="#projects"><span class="cmd">./</span>projects</a></li>
+                <li><a href="flashcards/rajasthan_ancient_history.html" target="_blank"><span class="cmd">./</span>flashcards</a></li>
                 <li><a href="blog.html"><span class="cmd">./</span>blog</a></li>
                 <li><a href="#contact"><span class="cmd">./</span>contact</a></li>
             </ul>

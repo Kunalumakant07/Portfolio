@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAS Flashcards – Ancient History of Rajasthan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #070b0f;
+    --surface:    #0d1117;
+    --surface2:   #111820;
+    --border:     #1a2633;
+    --accent:     #00ff9f;
+    --accent-dim: #00885a;
+    --blue:       #7dd3fc;
+    --amber:      #fbbf24;
+    --purple:     #a78bfa;
+    --text:       #cdd6f4;
+    --muted:      #5b6b8a;
+    --dim:        #131c27;
+    --red:        #f87171;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* CRT scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Starfield */
+  #starfield {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 28px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .header-meta {
+    font-size: 0.72rem;
+    color: var(--accent-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  header h1 {
+    font-family: 'VT323', monospace;
+    font-size: 2.8rem;
+    color: var(--text);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  header h1 .hl { color: var(--accent); }
+
+  header p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* ── STATS BAR ── */
+  .stats {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 14px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .stat-pill span { color: var(--accent); }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    margin-bottom: 28px;
+  }
+
+  .progress-text {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .progress-bar-track {
+    height: 2px;
+    background: var(--border);
+    max-width: 400px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  /* ── FILTER BUTTONS ── */
+  .filters {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .filter-btn::before { content: '['; color: var(--dim); margin-right: 2px; }
+  .filter-btn::after  { content: ']'; color: var(--dim); margin-left: 2px; }
+
+  .filter-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+
+  .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    font-weight: 700;
+  }
+
+  .filter-btn.active::before,
+  .filter-btn.active::after { color: var(--accent-dim); }
+
+  .filter-btn.pyq-filter.active  { background: var(--red);   border-color: var(--red);   color: var(--bg); }
+  .filter-btn.prob-filter.active { background: var(--amber); border-color: var(--amber); color: var(--bg); }
+
+  /* ── TOPIC DIVIDER ── */
+  .topic-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 24px 0 8px;
+  }
+
+  .topic-divider h2 {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0.7;
+  }
+
+  .topic-divider hr {
+    flex: 1;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── CARD GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2px;
+    max-width: 1100px;
+  }
+
+  /* ── FLASHCARD ── */
+  .card-wrap {
+    perspective: 1000px;
+    height: 220px;
+    cursor: pointer;
+  }
+
+  .card-wrap.tall { height: 280px; }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.2s;
+  }
+
+  /* left-bar hover — same as portfolio project cards */
+  .card-front::before, .card-back::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 0%;
+    background: var(--accent);
+    transition: height 0.3s ease;
+  }
+
+  .card-wrap:hover .card-front::before,
+  .card-wrap:hover .card-back::before { height: 100%; }
+
+  .card-wrap:hover .card-front,
+  .card-wrap:hover .card-back { border-color: var(--accent-dim); }
+
+  .card-back {
+    transform: rotateY(180deg);
+    background: var(--surface2);
+    justify-content: flex-start;
+    overflow-y: auto;
+  }
+
+  /* ── BADGES ── */
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 0.62rem;
+    padding: 1px 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .badge-pyq  { border-color: rgba(241,113,113,0.4); color: var(--red); }
+  .badge-prob { border-color: rgba(251,191,36,0.4);  color: var(--amber); }
+
+  /* ── QUESTION ── */
+  .question {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    letter-spacing: 0.3px;
+  }
+
+  .flip-hint {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+
+  /* ── ANSWER ── */
+  .answer-label {
+    font-size: 0.65rem;
+    color: var(--accent-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+
+  .answer {
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .answer strong { color: var(--amber); }
+
+  .answer .point {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .answer .point::before {
+    content: "›";
+    color: var(--accent-dim);
+    flex-shrink: 0;
+  }
+
+  /* card number */
+  .card-num {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 0.6rem;
+    color: var(--border);
+    letter-spacing: 1px;
+  }
+
+  /* ── SCROLL TOP ── */
+  #scrollBtn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 38px;
+    height: 38px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    transition: all 0.2s;
+    font-size: 1rem;
+  }
+
+  #scrollBtn:hover { border-color: var(--accent-dim); color: var(--accent); }
+  #scrollBtn.visible { display: flex; }
+
+  @media (max-width: 680px) {
+    .wrap { padding: 0 16px 60px; }
+    header h1 { font-size: 2rem; letter-spacing: 2px; }
+    .grid { grid-template-columns: 1fr; }
+    .card-wrap, .card-wrap.tall { height: auto; min-height: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div class="wrap">
+
+<header>
+  <div class="header-meta">&gt; ras_prep // rajasthan_history.init()</div>
+  <h1>Ancient History<br><span class="hl">Flashcards</span></h1>
+  <p>Rajasthan History (English) 2024 &nbsp;·&nbsp; Click any card to flip &nbsp;·&nbsp; <a href="../index.html" style="color:var(--accent-dim);text-decoration:none">← back to portfolio</a></p>
+</header>
+
+<div class="stats">
+  <div class="stat-pill">total <span id="total-count">0</span></div>
+  <div class="stat-pill">pyq <span id="pyq-count">0</span></div>
+  <div class="stat-pill">high-prob <span id="prob-count">0</span></div>
+  <div class="stat-pill">studied <span id="studied-count">0</span></div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-text" id="progress-text">&gt; 0 / 0 studied</div>
+  <div class="progress-bar-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filterCards('all')">All</button>
+  <button class="filter-btn pyq-filter" onclick="filterCards('pyq')">PYQ</button>
+  <button class="filter-btn prob-filter" onclick="filterCards('prob')">High Prob</button>
+  <button class="filter-btn" onclick="filterCards('stone')">Stone Age</button>
+  <button class="filter-btn" onclick="filterCards('chalco')">Chalcolithic</button>
+  <button class="filter-btn" onclick="filterCards('bronze')">Bronze Age</button>
+  <button class="filter-btn" onclick="filterCards('iron')">Iron Age</button>
+  <button class="filter-btn" onclick="filterCards('janpad')">Mahajanpad</button>
+  <button class="filter-btn" onclick="filterCards('maurya')">Mauryan</button>
+  <button class="filter-btn" onclick="filterCards('postmaurya')">Post-Mauryan</button>
+  <button class="filter-btn" onclick="filterCards('gupta')">Gupta</button>
+  <button class="filter-btn" onclick="filterCards('postgupta')">Post-Gupta</button>
+  <button class="filter-btn" onclick="filterCards('sites')">Other Sites</button>
+  <button class="filter-btn" onclick="filterCards('misc')">Coins & Rock Art</button>
+  <button class="filter-btn" onclick="filterCards('mustknow')">Must-Know</button>
+</div>
+
+<div class="grid" id="card-grid"></div>
+
+</div><!-- /wrap -->
+
+<button id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+const cards = [
+
+// ══════════════ STONE AGE ══════════════
+{id:1, topic:'stone', topicLabel:'Stone Age', q:'Who is known as the "Father of Archaeology of India" and the "Father of Archaeology of Rajasthan"?', a:`<div class="point"><span>Father of Archaeology of <strong>India</strong> → <strong>Alexander Cunningham</strong></span></div><div class="point"><span>Father of Archaeology of <strong>Rajasthan</strong> → <strong>Archibald Campbell</strong></span></div>`, pyq:true, prob:false},
+{id:2, topic:'stone', topicLabel:'Stone Age', q:'What is Bagore famous for? Who excavated it and where is it located?', a:`<div class="point"><span>Located near <strong>Kothari River</strong>; site called <strong>Mhasatiya</strong></span></div><div class="point"><span>Excavator: <strong>Virendra Nath Mishra</strong> (Pune University)</span></div><div class="point"><span>Known as <strong>"Cradle of Ancient Civilisation of Rajasthan"</strong></span></div><div class="point"><span>Evidences: Microlith, Agriculture, Domestication of Animals, Copper needle with hole, Iron equipment</span></div>`, pyq:true, prob:false},
+{id:3, topic:'stone', topicLabel:'Stone Age', q:'Bagore is called the "Cradle of Ancient Civilisation of Rajasthan." Who discovered it? What age does it belong to?', a:`<div class="point"><span>Discovered by <strong>L.S. Leshni</strong>; excavated by <strong>Virendra Nath Mishra</strong></span></div><div class="point"><span>Belongs to <strong>Mesolithic Age</strong></span></div><div class="point"><span>Book by Mishra: <em>Bagore & Tilwara – Late Mesolithic Cultures of North West India</em></span></div>`, pyq:true, prob:false},
+{id:4, topic:'stone', topicLabel:'Stone Age', q:'Match the Stone Age sites with their locations: Tilwara, Pachpadra, Jayal, Deedwana, Sojat, Dhaneri', a:`<div class="point"><span><strong>Tilwara</strong> – near Luni River (Balotra)</span></div><div class="point"><span><strong>Pachpadra</strong> – Balotra</span></div><div class="point"><span><strong>Jayal</strong> – Nagore</span></div><div class="point"><span><strong>Deedwana</strong> – Nagore</span></div><div class="point"><span><strong>Sojat</strong> – Pali</span></div><div class="point"><span><strong>Dhaneri</strong> – Pali</span></div>`, pyq:false, prob:true},
+{id:5, topic:'stone', topicLabel:'Stone Age', q:'Name the three sub-divisions of the Stone Age and their key Rajasthan sites.', a:`<div class="point"><span><strong>Palaeolithic</strong>: Deedwana, Jayal, Budha Pushkar, Bhangarh</span></div><div class="point"><span><strong>Mesolithic</strong>: Bagore, Tilwara, Pachpadra, Dhaneri, Sojat</span></div><div class="point"><span><strong>Neolithic</strong>: (transition to Chalcolithic)</span></div><div class="point"><span>In 1870 AD, <strong>C.A. Hacket</strong> found 'hand axe' from Jaipur & Indergarh</span></div>`, pyq:false, prob:true},
+{id:6, topic:'stone', topicLabel:'Stone Age', q:'Virendra Nath Mishra excavated both Bagore and Tilwara. What was his famous book?', a:`<div class="point"><span><em><strong>"Bagore & Tilwara – Late Mesolithic Cultures of North West India"</strong></em></span></div><div class="point"><span>Both sites belong to <strong>Mesolithic Age</strong></span></div><div class="point"><span>Tilwara is located near <strong>Luni River, Balotra</strong></span></div>`, pyq:false, prob:true},
+
+// ══════════════ CHALCOLITHIC ══════════════
+{id:7, topic:'chalco', topicLabel:'Chalcolithic Age', q:'Why is the Chalcolithic Age civilization of Rajasthan also called "Banas Civilization"? What is its most prominent site?', a:`<div class="point"><span>Most sites are located near <strong>River Banas</strong> → called <strong>Banas Civilization</strong></span></div><div class="point"><span>Most prominent site: <strong>Ahar (Udaipur)</strong></span></div><div class="point"><span>Also called <strong>Ahar Civilization</strong></span></div>`, pyq:true, prob:false},
+{id:8, topic:'chalco', topicLabel:'Chalcolithic Age', q:'Describe Ahar (Udaipur) — ancient names, local name, location, and excavators.', a:`<div class="point"><span>Located near river <strong>Bedach / Ayad</strong></span></div><div class="point"><span>Ancient names: <strong>Aghatpur & Atapur</strong></span></div><div class="point"><span>Local name: <strong>Dhoolkot</strong></span></div><div class="point"><span>Excavators: <strong>Akshay Kirti Vyas, Ratan Chandra Agrawal, H.D. Sankaliya</strong> (longest period)</span></div><div class="point"><span>Known as <strong>'Copper City'</strong> (copper furnaces found)</span></div>`, pyq:true, prob:false},
+{id:9, topic:'chalco', topicLabel:'Chalcolithic Age', q:'List key evidences found at Ahar that make it internationally significant.', a:`<div class="point"><span><strong>Copper furnaces</strong> → "Copper City"</span></div><div class="point"><span><strong>Lapis Lazuli</strong> (blue stone) from Afghanistan</span></div><div class="point"><span><strong>Coin with Apollo paintings</strong> from Greece</span></div><div class="point"><span><strong>Without-handle water pot</strong> from Iran</span></div><div class="point"><span><strong>Six stoves</strong> → evidence of joint family</span></div><div class="point"><span><strong>Bull Terracotta</strong> → "Banasian Bull"</span></div><div class="point"><span>Black & Red earthenwares called <strong>Gore & Kothe</strong></span></div>`, pyq:true, prob:false},
+{id:10, topic:'chalco', topicLabel:'Chalcolithic Age', q:'What is Ganeshwar known as? Where is it and who excavated it?', a:`<div class="point"><span>Located near <strong>Kantali River, Neem ka Thana</strong></span></div><div class="point"><span>Excavator: <strong>Ratan Chandra Agrawal</strong></span></div><div class="point"><span>Known as <strong>"Mother of Copper Age Civilization"</strong> and <strong>"Copper Hoard Civilization"</strong></span></div><div class="point"><span>Copper was sent to <strong>Harappa & Mohenjodaro</strong> from here</span></div>`, pyq:true, prob:false},
+{id:11, topic:'chalco', topicLabel:'Chalcolithic Age', q:'Describe Gilund and Balathal — their locations and excavators.', a:`<div class="point"><span><strong>Gilund</strong> – Rajsamand; site called <strong>'Modiya Magri'</strong>; excavators: B.B. Lal, V.S. Shinde, Gregory Poshal</span></div><div class="point"><span>Evidence: Baked Bricks, 5 types of earthenware, Terracotta toys</span></div><div class="point"><span><strong>Balathal</strong> – Udaipur; excavator: <strong>Virendra Nath Mishra</strong></span></div><div class="point"><span>Connected with <strong>Indus Valley Civilization</strong>; house with 11 rooms found</span></div>`, pyq:false, prob:true},
+{id:12, topic:'chalco', topicLabel:'Chalcolithic Age', q:'What were the evidences found at Ojhiyana (Bhilwara)? Who excavated it?', a:`<div class="point"><span>Located near <strong>Khari River, Bhilwara</strong></span></div><div class="point"><span>Excavators: <strong>B.R. Meena & Alok Tripathi</strong></span></div><div class="point"><span>Evidences: <strong>Cow & Bull Terracottas</strong></span></div>`, pyq:false, prob:true},
+
+// ══════════════ BRONZE AGE ══════════════
+{id:13, topic:'bronze', topicLabel:'Bronze Age', q:'Kalibanga (Hanumangarh) — literal meaning, river, and who first gave information?', a:`<div class="point"><span>Literal meaning: <strong>"Black Bangles"</strong></span></div><div class="point"><span>Located near <strong>Ghaggar River</strong></span></div><div class="point"><span>First information given by <strong>L.P. Tessitory</strong></span></div><div class="point"><span>Discovered in 1952 by <strong>Amlanand Ghosh</strong></span></div><div class="point"><span>Museum established in <strong>1985 AD</strong></span></div>`, pyq:true, prob:false},
+{id:14, topic:'bronze', topicLabel:'Bronze Age', q:'List the excavators of Kalibanga and the number of excavation stages found.', a:`<div class="point"><span>Excavators: <strong>B.B. Lal, B.K. Thappar, M.D. Khare, K.M. Shrivastav, S.P. Jain</strong></span></div><div class="point"><span><strong>5 stages</strong> excavated (1900–2600 B.C.)</span></div><div class="point"><span>According to Dashrath Sharma → Kalibanga was <strong>3rd capital of Harappan Civilization</strong></span></div><div class="point"><span>Pre-Harappan + Developed Harappan stages both found</span></div>`, pyq:true, prob:false},
+{id:15, topic:'bronze', topicLabel:'Bronze Age', q:'What unique/special evidences were found at Kalibanga that are not found anywhere else?', a:`<div class="point"><span><strong>7 Fire Altars</strong> (unique to Kalibanga)</span></div><div class="point"><span><strong>Ploughed farm field</strong> (South-East direction) – earliest evidence</span></div><div class="point"><span><strong>Two crops grown simultaneously</strong> (wheat & barley)</span></div><div class="point"><span><strong>Skull with 6 holes</strong> → evidence of brain surgery</span></div><div class="point"><span><strong>Couple burials</strong> found</span></div><div class="point"><span><strong>Cylindrical seal</strong> → Mesopotamian connection</span></div><div class="point"><span><strong>Earthquake evidences</strong></span></div>`, pyq:true, prob:false},
+{id:16, topic:'bronze', topicLabel:'Bronze Age', q:'Kalibanga\'s town planning — how was the town divided?', a:`<div class="point"><span>Town divided into <strong>2 parts</strong>:</span></div><div class="point"><span><strong>Western Part (Higher elevation)</strong> → Citadel (Administrative buildings)</span></div><div class="point"><span><strong>Eastern Part (Lower elevation)</strong> → Lower Town (General buildings)</span></div><div class="point"><span>Roads intersected at <strong>right angles</strong></span></div><div class="point"><span>Doors of houses did NOT open on main road</span></div><div class="point"><span>Both sections surrounded by separate security ramparts</span></div>`, pyq:true, prob:false},
+{id:17, topic:'bronze', topicLabel:'Bronze Age', q:'What is Sothi Civilization? Name its two major centers.', a:`<div class="point"><span>Civilization around <strong>Bikaner</strong> area</span></div><div class="point"><span>Called <strong>Sothi Civilization</strong> or <strong>Kalibanga I</strong></span></div><div class="point"><span><strong>Amlanand Ghosh</strong> called it the origin place of Harappan civilization</span></div><div class="point"><span>Two centers: <strong>1. Savaniya  2. Pugal</strong></span></div>`, pyq:false, prob:true},
+{id:18, topic:'bronze', topicLabel:'Bronze Age', q:'Who conducted the survey of River Ghaggar related to Kalibanga? What was the book written?', a:`<div class="point"><span><strong>Aurel Stein</strong> conducted survey of river Ghaggar</span></div><div class="point"><span>Stein's book: <em><strong>"A Survey Work of Ancient Sites along Lost Saraswati River"</strong></em></span></div><div class="point"><span>Three names: Indus Valley Civilization / Harappan Civilization / <strong>Indus-Saraswati Civilization</strong></span></div>`, pyq:false, prob:true},
+
+// ══════════════ IRON AGE ══════════════
+{id:19, topic:'iron', topicLabel:'Iron Age', q:'Which age is known as Vedic Civilization and why? Name its centers in Rajasthan.', a:`<div class="point"><span>Iron Age is called <strong>Vedic Civilization</strong> because Vedas provide its information</span></div><div class="point"><span>Centers in Rajasthan: <strong>Anupgarh, Tarkhanwala Dera, Chak-64</strong></span></div>`, pyq:false, prob:true},
+{id:20, topic:'iron', topicLabel:'Iron Age', q:'What is Sunari (Neem ka Thana) famous for?', a:`<div class="point"><span>Located near <strong>Kantali River, Neem ka Thana</strong></span></div><div class="point"><span>It was a <strong>Vedic Age colony</strong></span></div><div class="point"><span>Found: <strong>Iron furnaces</strong> (oldest iron furnaces)</span></div>`, pyq:false, prob:true},
+
+// ══════════════ MAHAJANPAD ══════════════
+{id:21, topic:'janpad', topicLabel:'Mahajanpad Age', q:'Which Mahajanpad covered Jaipur, Kotputli, Alwar, Bharatpur? What was its capital?', a:`<div class="point"><span><strong>Matsya Mahajanpad</strong></span></div><div class="point"><span>Capital: <strong>Viratnagar (Kotputli)</strong></span></div><div class="point"><span>Mahabharata provides information about Viratnagar</span></div><div class="point"><span>According to Gopinath Sharma → became powerful after Battle of Mahabharata</span></div><div class="point"><span>Later merged into <strong>Magadh Mahajanpad</strong></span></div>`, pyq:true, prob:false},
+{id:22, topic:'janpad', topicLabel:'Mahajanpad Age', q:'Shivi Janpad — area, capital, and what is Madhyamika famous for?', a:`<div class="point"><span>Area: <strong>Udaipur & Chittorgarh</strong></span></div><div class="point"><span>Capital: <strong>Madhyamika/Nagari (Chittorgarh)</strong></span></div><div class="point"><span>Madhyamika was the <strong>first excavated site of Rajasthan</strong></span></div><div class="point"><span>Discovered by: <strong>A.C.L. Carlleyle</strong></span></div><div class="point"><span>Info sources: Mahabharata, Ashtadhyayi (Pannini), Mahabhashya (Patanjali), Barali Inscription</span></div>`, pyq:true, prob:false},
+{id:23, topic:'janpad', topicLabel:'Mahajanpad Age', q:'What is the Barali Inscription? Why is it historically significant?', a:`<div class="point"><span>Dated <strong>443 B.C.</strong> (Ajmer)</span></div><div class="point"><span>Found in 1912 by <strong>Gauri Shankar Hirachand Ojha</strong> from Bheelot Mata Temple</span></div><div class="point"><span>It is the <strong>oldest/ancient inscription of Rajasthan</strong></span></div><div class="point"><span>Language: <strong>Prakrit</strong>, Script: <strong>Brahmi</strong></span></div><div class="point"><span>According to this inscription → Madhyamika was a <strong>Jain site</strong></span></div>`, pyq:true, prob:false},
+{id:24, topic:'janpad', topicLabel:'Mahajanpad Age', q:'Malav Janpad — capital, area, and what civilization is associated with it?', a:`<div class="point"><span>Area: <strong>Tonk & Jaipur</strong></span></div><div class="point"><span>Capital: <strong>Nagar</strong></span></div><div class="point"><span>Called <strong>Kheda Civilization</strong></span></div><div class="point"><span>Excavator: <strong>Krishan Dev</strong></span></div><div class="point"><span>6000 coins of Malav Janpad collected by Carlleyle</span></div><div class="point"><span>Maximum coins of Malav Janpad found in Rajasthan</span></div>`, pyq:false, prob:true},
+{id:25, topic:'janpad', topicLabel:'Mahajanpad Age', q:'Yauddheya Janpad — area and what was their notable achievement?', a:`<div class="point"><span>Area: <strong>Sri Ganganagar & Hanumangarh</strong></span></div><div class="point"><span>Defeated <strong>Kushans</strong></span></div><div class="point"><span>Adopted title of <strong>'Veer'</strong></span></div><div class="point"><span>Info from: <strong>Junagadh Inscription</strong></span></div>`, pyq:false, prob:true},
+{id:26, topic:'janpad', topicLabel:'Mahajanpad Age', q:'Name all 9 Mahajanpads/Janpads associated with Rajasthan with their key areas.', a:`<div class="point"><span><strong>Matsya</strong> – Jaipur, Alwar, Bharatpur</span></div><div class="point"><span><strong>Shursen</strong> – Bharatpur, Dholpur, Karauli (Capital: Mathura)</span></div><div class="point"><span><strong>Kuru</strong> – N. Alwar (Capital: Indraprastha)</span></div><div class="point"><span><strong>Shivi</strong> – Udaipur, Chittorgarh (Capital: Madhyamika)</span></div><div class="point"><span><strong>Malav</strong> – Tonk, Jaipur (Capital: Nagar)</span></div><div class="point"><span><strong>Arjunayan</strong> – Alwar, Bharatpur, Neem ka Thana</span></div><div class="point"><span><strong>Yauddheya</strong> – Ganganagar, Hanumangarh</span></div><div class="point"><span><strong>Salav</strong> – Alwar</span></div><div class="point"><span><strong>Rajanya</strong> – Bharatpur</span></div>`, pyq:false, prob:true},
+
+// ══════════════ MAURYAN ══════════════
+{id:27, topic:'maurya', topicLabel:'Mauryan Age', q:'Bairath — name both Ashokan inscriptions and from where they were collected.', a:`<div class="point"><span><strong>1st Inscription</strong> → Collected from <strong>Bijak Hill</strong> by Captain Burt (1837); called <strong>Bhabru Inscription</strong></span></div><div class="point"><span>Ashoka referred as <strong>'King of Magadh'</strong></span></div><div class="point"><span>Provides info about <strong>7 Buddhist texts</strong></span></div><div class="point"><span><strong>2nd Inscription</strong> → Collected from <strong>Bheem Hill</strong> by Carlleyle (1871)</span></div>`, pyq:true, prob:false},
+{id:28, topic:'maurya', topicLabel:'Mauryan Age', q:'What did Chinese traveller Hiuen-Tsang say about Bairath?', a:`<div class="point"><span>He called Bairath: <strong>"Pi-Lo-Yo-To-Lo"</strong></span></div><div class="point"><span>According to him, there were <strong>8 Buddhist monasteries</strong> at Bairath demolished by <strong>Hun King</strong></span></div><div class="point"><span>He called bull & sheep of Bairath famous</span></div><div class="point"><span>Same name "Pi-Lo-Yo-To-Lo" also used for <strong>Bhinmal</strong></span></div>`, pyq:false, prob:true},
+{id:29, topic:'maurya', topicLabel:'Mauryan Age', q:'Who excavated Bairath and when? What was found during Ram Singh II\'s reign?', a:`<div class="point"><span>Excavators: <strong>Dayaram Sahani (1936), Neel Ratan Benerjee (1962-63), Kailash Nath Dikshit (1962-63)</strong></span></div><div class="point"><span>Evidences: Rock paintings, Shell script</span></div><div class="point"><span>During Jaipur ruler <strong>Ram Singh II's reign</strong> → excavated & found a <strong>golden box</strong> (probably contained Buddha's remains)</span></div>`, pyq:false, prob:true},
+
+// ══════════════ POST-MAURYAN ══════════════
+{id:30, topic:'postmaurya', topicLabel:'Post-Mauryan Age', q:'What were the key finds at Noh (Bharatpur) and who excavated it?', a:`<div class="point"><span>Excavator: <strong>Ratan Chandra Agrawal</strong></span></div><div class="point"><span>Belongs to <strong>Shunga Age</strong></span></div><div class="point"><span>Evidence: Iron equipment, Ring wells, <strong>Kushan coins</strong> (Vasudev & Huvishka)</span></div><div class="point"><span><strong>Yaksha Idol</strong> found → known as <strong>'Jakh Baba'</strong></span></div>`, pyq:false, prob:true},
+{id:31, topic:'postmaurya', topicLabel:'Post-Mauryan Age', q:'Rangmahal (Hanumangarh) — excavator and evidences.', a:`<div class="point"><span>Excavator: <strong>Dr. Hannarid (Sweden)</strong></span></div><div class="point"><span>Evidence: Rice, Terracotta toy-cart, Red earthenware with black lines</span></div><div class="point"><span><strong>Idol of Teacher & Disciple</strong> (Kushan Age)</span></div>`, pyq:false, prob:true},
+{id:32, topic:'postmaurya', topicLabel:'Post-Mauryan Age', q:'What is the Barwa Inscription (Baran, 238 AD) and what does it tell us?', a:`<div class="point"><span>Provides information about <strong>Maha-Senapati Bal of Mokhari Dynasty</strong></span></div><div class="point"><span>4 pillars found — 3 engraved</span></div><div class="point"><span>Belongs to <strong>Post-Mauryan Age</strong></span></div>`, pyq:false, prob:true},
+{id:33, topic:'postmaurya', topicLabel:'Post-Mauryan Age', q:'Which Indo-Greek king attacked Madhyamika? How many Indo-Greek coins were found at Bairath?', a:`<div class="point"><span>Indo-Greek king <strong>Menander (Milinda)</strong> attacked Madhyamika</span></div><div class="point"><span>Info from: <strong>Mahabhashya</strong></span></div><div class="point"><span><strong>28 Indo-Greek coins</strong> from Bairath — <strong>16 belong to Menander</strong></span></div><div class="point"><span>Also 8 silver panchmark coins (in cotton cloth)</span></div>`, pyq:false, prob:true},
+
+// ══════════════ GUPTA ══════════════
+{id:34, topic:'gupta', topicLabel:'Gupta Age', q:'Bayana (Gupta Age) — what is the Bheem Laat? Who built it?', a:`<div class="point"><span><strong>Vishnu Vardhan</strong> of Varik Dynasty constructed <strong>Bheem Laat</strong> at Bayana</span></div><div class="point"><span>Known as <strong>Victory Tower of Samudragupta</strong></span></div><div class="point"><span>It is the <strong>first/oldest victory tower of Rajasthan</strong></span></div><div class="point"><span>Samudragupta captured Bayana</span></div><div class="point"><span>In medieval age, Bayana was famous for <strong>Indigo agriculture</strong></span></div>`, pyq:true, prob:false},
+{id:35, topic:'gupta', topicLabel:'Gupta Age', q:'Badoli (Gupta Age) — what is it famous for and who brought it to light?', a:`<div class="point"><span>Hun king <strong>Mihirkul</strong> built a <strong>Shiv Temple</strong> at Badoli</span></div><div class="point"><span><strong>James Tod</strong> brought this temple to light</span></div>`, pyq:false, prob:true},
+
+// ══════════════ POST-GUPTA ══════════════
+{id:36, topic:'postgupta', topicLabel:'Post-Gupta Age', q:'What was Bhinmal famous for in Post-Gupta Age? Who was given patronage there?', a:`<div class="point"><span>Capital of <strong>Chawda Rajput</strong></span></div><div class="point"><span>Patronage to <strong>Magh</strong> (poet of Shishupal Vadh) & <strong>Brahmagupta</strong> (Newton of India)</span></div><div class="point"><span>Brahmagupta's books: <strong>Khandkhadyak, Brahmasphuta Siddhanta</strong></span></div><div class="point"><span>Hiuen-Tsang visited Bhinmal</span></div><div class="point"><span>Later captured by <strong>Pratihars</strong></span></div>`, pyq:true, prob:false},
+{id:37, topic:'postgupta', topicLabel:'Post-Gupta Age', q:'Name and describe the 5 important inscriptions of Post-Gupta Age in Rajasthan.', a:`<div class="point"><span><strong>Basantgarh (625 AD)</strong> – Khimel Mata Temple; info about feudal system of Chawda Dynasty</span></div><div class="point"><span><strong>Mansarovar (713 AD)</strong> – 4 Mauryan kings: Maheshwar, Bhim, Bhoj, Man</span></div><div class="point"><span><strong>Kansava/Kota (738 AD)</strong> – Mauryan king Dhawal; <strong>last info of Mauryans in Rajasthan</strong></span></div><div class="point"><span><strong>Buchkala/Jodhpur (815 AD)</strong> – Pratihara king <strong>Nagbhat II</strong></span></div><div class="point"><span><strong>Rajorgarh (960 AD)</strong> – Pratihara king Mathandev; feudal of Mahipal Pratihar</span></div>`, pyq:true, prob:false},
+{id:38, topic:'postgupta', topicLabel:'Post-Gupta Age', q:'What does the Ghosundi Inscription tell us? Why is it unique?', a:`<div class="point"><span>Located at <strong>Chittor</strong>; dated <strong>2nd century B.C.</strong></span></div><div class="point"><span>King <strong>Sarvattat of Gaz dynasty</strong> performed Ashwamedha Yajna</span></div><div class="point"><span><strong>Oldest inscription of Rajasthan</strong> providing information about <strong>Vaishnav Sect (Bhagwat)</strong></span></div><div class="point"><span>Script: <strong>Brahmi</strong>, Language: <strong>Sanskrit</strong></span></div><div class="point"><span>Read by: <strong>D.R. Bhandarkar</strong></span></div><div class="point"><span>Also known as <strong>'Hathibade Inscription'</strong></span></div>`, pyq:true, prob:false},
+
+// ══════════════ OTHER SITES ══════════════
+{id:39, topic:'sites', topicLabel:'Other Archaeological Sites', q:'Raidh (Tonk) — what is it known as and what was found there?', a:`<div class="point"><span>Excavator: <strong>Kaidar Nath Puri</strong></span></div><div class="point"><span>Prominent center of <strong>Malav Janpad</strong></span></div><div class="point"><span>Known as <strong>"Tata Nagar of Ancient India"</strong></span></div><div class="point"><span>Evidence: Iron, Coins, Punchmark coins, Malav coins, Indo-Seserian coins, Apollo coins</span></div><div class="point"><span><strong>115 ring wells</strong> found</span></div>`, pyq:true, prob:false},
+{id:40, topic:'sites', topicLabel:'Other Archaeological Sites', q:'Jodhpura (Kotputli) — location, excavator, and what civilization?', a:`<div class="point"><span>Located near <strong>Sabi River, Kotputli</strong></span></div><div class="point"><span>Excavator: <strong>Ratan Chandra Agrawal</strong></span></div><div class="point"><span>Known as <strong>'Dhartughat Civilization'</strong></span></div><div class="point"><span>Evidence: Iron</span></div>`, pyq:false, prob:true},
+{id:41, topic:'sites', topicLabel:'Other Archaeological Sites', q:'Baror (Sri Ganganagar) — location and key features.', a:`<div class="point"><span>Located near <strong>ancient Saraswati River</strong></span></div><div class="point"><span>Both <strong>Pre-Harappan & Developed Harappan</strong> stages found</span></div><div class="point"><span>Evidence: Button-shaped seals, Lapis Lazuli, 8000 beads, Horse-pulled chariot, Rice</span></div>`, pyq:false, prob:true},
+{id:42, topic:'sites', topicLabel:'Other Archaeological Sites', q:'Naliyasar (Jaipur) — where is it located and what was found?', a:`<div class="point"><span>Located near <strong>Sambhar</strong></span></div><div class="point"><span>Evidence: <strong>105 Kushan coins</strong></span></div>`, pyq:false, prob:false},
+
+// ══════════════ COINS & ROCK ART ══════════════
+{id:43, topic:'misc', topicLabel:'Coins & Rock Paintings', q:'Name the rock painting sites in Rajasthan and their locations.', a:`<div class="point"><span><strong>Dadikar</strong> – Alwar</span></div><div class="point"><span><strong>Harsura</strong> – Alwar</span></div><div class="point"><span><strong>Sohanpura</strong> – Sikar</span></div><div class="point"><span><strong>Kanyadah</strong> – Baran</span></div><div class="point"><span><strong>Gardara</strong> – Bundi</span></div><div class="point"><span><strong>Alaniya</strong> – Kota (Discovered by <strong>Jagat Narayan</strong>)</span></div>`, pyq:true, prob:false},
+{id:44, topic:'misc', topicLabel:'Coins & Rock Paintings', q:'What is Numismatics? Which book was written by Webb on Rajasthan coins?', a:`<div class="point"><span><strong>Numismatics</strong> = Study of Coins</span></div><div class="point"><span>Book by Webb: <em><strong>"The Currencies of Hindu States of Rajputana"</strong></em></span></div><div class="point"><span>Maximum coins of <strong>Malav Janpad</strong> found in Rajasthan</span></div>`, pyq:false, prob:true},
+{id:45, topic:'misc', topicLabel:'Coins & Rock Paintings', q:'Where were Gupta coin hoards (Garuda coins) found in Rajasthan?', a:`<div class="point"><span>Gupta coins (Garuda coins):</span></div><div class="point"><span><strong>Redh & Sayala</strong> – Tonk</span></div><div class="point"><span><strong>Morali</strong> – Jaipur</span></div><div class="point"><span><strong>Ahera</strong> – Ajmer</span></div><div class="point"><span><strong>Degana</strong> – Nagore</span></div><div class="point"><span><strong>Baghera</strong> – Ajmer</span></div>`, pyq:false, prob:true},
+{id:46, topic:'misc', topicLabel:'Coins & Rock Paintings', q:'Where were coins of Mihirbhoj (Adivaarh coins) found in Rajasthan?', a:`<div class="point"><span><strong>Mavaldesar, Nohar, Pallu</strong> – Hanumangarh</span></div><div class="point"><span><strong>Nawa City</strong> – Deedwana</span></div><div class="point"><span>These are called <strong>Adivaarh coins</strong> (Pratihar dynasty)</span></div>`, pyq:false, prob:false},
+
+// ══════════════ MUST-KNOW (PYQ & HIGH PROB) ══════════════
+{id:47, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🔴 PYQ: Famous "nicknames" of sites — match: Bagore / Ahar / Ganeshwar / Raidh', a:`<div class="point"><span><strong>Bagore</strong> → "Cradle of Ancient Civilisation of Rajasthan"</span></div><div class="point"><span><strong>Ahar</strong> → "Copper City" (also Banas / Ahar Civilization)</span></div><div class="point"><span><strong>Ganeshwar</strong> → "Mother of Copper Age Civilization" & "Copper Hoard Civilization"</span></div><div class="point"><span><strong>Raidh (Tonk)</strong> → "Tata Nagar of Ancient India"</span></div>`, pyq:true, prob:false},
+{id:48, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🟡 PROBABLE: What was the Banasian Bull? Where was it found?', a:`<div class="point"><span>A <strong>Bull Terracotta</strong> found at <strong>Ahar (Udaipur)</strong></span></div><div class="point"><span>Called the <strong>"Banasian Bull"</strong></span></div><div class="point"><span>Ahar is the key site of <strong>Banas Civilization</strong></span></div>`, pyq:false, prob:true},
+{id:49, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🔴 PYQ: Kalibanga — which two crops were grown simultaneously? What unique farming evidence was found?', a:`<div class="point"><span><strong>Wheat and Barley</strong> grown simultaneously</span></div><div class="point"><span>From the <strong>Pre-Harappan level</strong> of Kalibanga</span></div><div class="point"><span><strong>Ploughed farmfield</strong> found (South-East direction) – earliest evidence of ploughing</span></div><div class="point"><span>Other crops: bajara, millets, gram, mustard</span></div>`, pyq:true, prob:false},
+{id:50, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🔴 PYQ: "Oldest inscription of Rajasthan" — name TWO and distinguish them.', a:`<div class="point"><span><strong>Barali Inscription (443 B.C.)</strong> → Oldest inscription of Rajasthan (Brahmi script, Prakrit language)</span></div><div class="point"><span><strong>Ghosundi Inscription (2nd century B.C.)</strong> → Oldest giving info about <strong>Vaishnav Sect</strong></span></div><div class="point"><span>Both are frequently asked to distinguish in RAS exam</span></div>`, pyq:true, prob:false},
+{id:51, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🟡 PROBABLE: Bhinmal — two famous scholars, their works, and who patronized them?', a:`<div class="point"><span><strong>Brahmagupta</strong> – "Newton of India"; works: <em>Khandkhadyak, Brahmasphuta Siddhanta</em></span></div><div class="point"><span><strong>Magh</strong> – poet; work: <em>Shishupal Vadh</em></span></div><div class="point"><span>Both patronized by <strong>Chawda Kings</strong> of Bhinmal</span></div>`, pyq:false, prob:true},
+{id:52, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🔴 PYQ: Compare the two Victory Towers — Bheem Laat (Bayana) vs Kirti Stambha (Chittor).', a:`<div class="point"><span><strong>Bheem Laat (Bayana)</strong> – Gupta Age; by <strong>Vishnu Vardhan of Varik Dynasty</strong>; <strong>1st Victory Tower of Rajasthan</strong></span></div><div class="point"><span><strong>Kirti Stambha (Chittor)</strong> – by Kumbha; 9 floors, 122 ft; James Tod compared it to <strong>"Tarjan Tower of Rome"</strong></span></div>`, pyq:true, prob:false},
+{id:53, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🟡 PROBABLE: Ahar shows international trade links. List the foreign items found and their origin.', a:`<div class="point"><span><strong>Lapis Lazuli</strong> – from <strong>Afghanistan</strong> (blue stone)</span></div><div class="point"><span><strong>Without-handle water pot</strong> – from <strong>Iran</strong></span></div><div class="point"><span><strong>Coin with Apollo painting</strong> – from <strong>Greece</strong></span></div><div class="point"><span>Proves Ahar was an international <strong>trade centre</strong></span></div>`, pyq:false, prob:true},
+{id:54, topic:'mustknow', topicLabel:'Must-Know (PYQ & High Prob)', q:'🔴 PYQ: C.A. Hacket / Setancar / B. Alchine — what did each discover and from where?', a:`<div class="point"><span><strong>C.A. Hacket (1870)</strong> – Found 'hand axe' from <strong>Jaipur & Indergarh</strong></span></div><div class="point"><span><strong>Setancar</strong> – Collected stone tools from <strong>Jhalawar</strong></span></div><div class="point"><span><strong>B. Alchine</strong> – Found stone objects from <strong>Jalore</strong></span></div>`, pyq:false, prob:true},
+
+];
+
+// Render all cards
+let studied = new Set();
+let currentFilter = 'all';
+
+function renderCards(filter) {
+  currentFilter = filter;
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+
+  const filtered = filter === 'all' ? cards :
+    filter === 'pyq' ? cards.filter(c => c.pyq) :
+    filter === 'prob' ? cards.filter(c => c.prob) :
+    cards.filter(c => c.topic === filter);
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">No cards in this category.</div>';
+    return;
+  }
+
+  // Group by topic
+  let lastTopic = '';
+  filtered.forEach(card => {
+    if (card.topicLabel !== lastTopic) {
+      const div = document.createElement('div');
+      div.className = 'topic-divider';
+      div.innerHTML = `<h2>${card.topicLabel}</h2><hr>`;
+      grid.appendChild(div);
+      lastTopic = card.topicLabel;
+    }
+
+    const tall = card.a.length > 400;
+    const wrap = document.createElement('div');
+    wrap.className = `card-wrap ${tall ? 'tall' : ''} ${studied.has(card.id) ? 'flipped' : ''}`;
+    wrap.dataset.id = card.id;
+    wrap.onclick = function() {
+      this.classList.toggle('flipped');
+      if (this.classList.contains('flipped')) {
+        studied.add(card.id);
+      } else {
+        studied.delete(card.id);
+      }
+      updateStats();
+    };
+
+    const badges = `
+      <div class="card-header">
+        <span class="badge badge-topic">${card.topicLabel}</span>
+        ${card.pyq ? '<span class="badge badge-pyq">PYQ</span>' : ''}
+        ${card.prob ? '<span class="badge badge-prob">HIGH-PROB</span>' : ''}
+      </div>`;
+
+    wrap.innerHTML = `
+      <div class="card-inner">
+        <div class="card-front">
+          ${badges}
+          <div class="question">${card.q}</div>
+          <div class="flip-hint">Click to reveal answer ↓</div>
+          <span class="card-num">#${card.id}</span>
+        </div>
+        <div class="card-back">
+          ${badges}
+          <div class="answer-label">&gt; answer</div>
+          <div class="answer">${card.a}</div>
+          <span class="card-num">#${card.id}</span>
+        </div>
+      </div>`;
+    grid.appendChild(wrap);
+  });
+  updateStats();
+}
+
+function filterCards(filter) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const map = {'all':0,'pyq':1,'prob':2,'stone':3,'chalco':4,'bronze':5,'iron':6,'janpad':7,'maurya':8,'postmaurya':9,'gupta':10,'postgupta':11,'sites':12,'misc':13,'mustknow':14};
+  document.querySelectorAll('.filter-btn')[map[filter]].classList.add('active');
+  renderCards(filter);
+}
+
+function updateStats() {
+  const total = cards.length;
+  const pyq = cards.filter(c=>c.pyq).length;
+  const prob = cards.filter(c=>c.prob).length;
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('pyq-count').textContent = pyq;
+  document.getElementById('prob-count').textContent = prob;
+  document.getElementById('studied-count').textContent = studied.size;
+  document.getElementById('progress-text').textContent = `> ${studied.size} / ${total} studied`;
+  document.getElementById('progress-bar').style.width = (studied.size/total*100)+'%';
+}
+
+// Scroll button
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollBtn').classList.toggle('visible', window.scrollY > 300);
+});
+
+renderCards('all');
+
+// Starfield
+(function() {
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function init() {
+    stars = [];
+    const n = Math.min(180, Math.floor(W * H / 8000));
+    for (let i = 0; i < n; i++) stars.push({
+      x: Math.random()*W, y: Math.random()*H,
+      r: Math.random()*1.1+0.1, speed: Math.random()*0.2+0.03,
+      opacity: Math.random()*0.5+0.08, twinkle: Math.random()*Math.PI*2
+    });
+  }
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    frame += 0.008;
+    stars.forEach(s => {
+      const a = s.opacity*(0.75+0.25*Math.sin(frame+s.twinkle));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(205,214,244,${a})`;
+      ctx.fill();
+      s.y += s.speed;
+      if (s.y > H+2) { s.y = -2; s.x = Math.random()*W; }
+    });
+    requestAnimationFrame(draw);
+  }
+  resize(); init(); draw();
+  window.addEventListener('resize', () => { resize(); init(); });
+})();
+</script>
+</body>
+</html>
